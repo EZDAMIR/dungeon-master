@@ -1,0 +1,13 @@
+export const gestureConfig = {
+  roi: { minX: .15, maxX: .85, minY: .15, maxY: .85 },
+  smoothingAlpha: .25,
+  pinchEnterRatio: .32,
+  pinchExitRatio: .45,
+  pinchSamples: 3,
+  minPalmWidth: .015,
+  maxPalmWidth: .55,
+  minimumClassificationConfidence: .65,
+  holdMs: 600,
+  releaseMs: 200,
+  cooldownMs: 700,
+}
