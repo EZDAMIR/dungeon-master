@@ -50,7 +50,7 @@ describe('real source lifecycle and scheduling',()=>{
   it('does not emit ready or restart a loop after disposal during model loading',async()=>{
     const s=setup();let resolve!:()=>void
     vi.mocked(s.adapter.initialize).mockImplementation(()=>new Promise(r=>{resolve=r}))
-    const starting=s.source.start();s.source.dispose();resolve();await starting
+    const starting=s.source.start();await Promise.resolve();s.source.dispose();resolve();await starting
     expect(s.events.some(e=>e.type==='camera.ready')).toBe(false);expect(frames.size).toBe(0)
     expect(s.track.stop).toHaveBeenCalledOnce()
   })

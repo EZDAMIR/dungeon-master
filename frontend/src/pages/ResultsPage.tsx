@@ -1,29 +1,18 @@
 import type { WorkoutResult } from '../app/modes'
-
-type Props = {
-  result: WorkoutResult
-  onRestart: () => void
-}
-
-export function ResultsPage({ result, onRestart }: Props) {
-  const { reps, errors } = result
-
-  return (
-    <section>
-      <h2>Session results</h2>
-      <table style={{ borderCollapse: 'collapse', marginBottom: '1rem' }}>
-        <tbody>
-          <tr>
-            <th style={{ textAlign: 'left', paddingRight: '2rem' }}>Reps completed</th>
-            <td style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>{reps}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: 'left', paddingRight: '2rem' }}>Technique errors</th>
-            <td style={{ fontSize: '1.4rem', color: errors > 0 ? '#c0392b' : '#27ae60' }}>{errors}</td>
-          </tr>
-        </tbody>
-      </table>
-      <button onClick={onRestart}>Restart</button>
-    </section>
-  )
+import { recommendation } from '../vision/exercises/squat/resultBuilder'
+import { GestureTarget } from '../features/gesture-navigation/GestureTarget'
+export function ResultsPage({result,onRepeat,onMenu}:{result:WorkoutResult;onRepeat:()=>void;onMenu:()=>void}){
+ return <section><h2>Подход завершён</h2><table><tbody>
+  <tr><th>Всего повторений</th><td>{result.totalReps} / {result.targetReps}</td></tr>
+  <tr><th>Корректные повторения</th><td>{result.acceptedReps}</td></tr>
+  <tr><th>Повторения с ошибками</th><td>{result.rejectedReps}</td></tr>
+  <tr><th>Доля корректных повторений</th><td>{result.totalReps ? Math.round(result.acceptedReps/result.totalReps*100) : 0}%</td></tr>
+  <tr><th>Недостаточная глубина</th><td>{result.errorCounts.depth_insufficient}</td></tr>
+  <tr><th>Слишком быстро</th><td>{result.errorCounts.too_fast}</td></tr>
+  <tr><th>Неполное выпрямление</th><td>{result.errorCounts.incomplete_extension}</td></tr>
+  <tr><th>Среднее время повторения</th><td>{(result.meanRepDurationMs/1000).toFixed(1)} с</td></tr>
+ </tbody></table><p className="instruction">{recommendation(result)}</p>
+ <GestureTarget id="repeat-squat" onSelect={onRepeat}>Повторить подход</GestureTarget>
+ <GestureTarget id="results-menu" onSelect={onMenu}>Вернуться в меню</GestureTarget>
+ <p>👍 Повторить подход · ✊ Вернуться в меню · или выбери кнопку щипком.</p></section>
 }

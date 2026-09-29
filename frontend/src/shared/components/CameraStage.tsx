@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useGestureStore } from '../../features/gesture-navigation/gestureNavigation'
-import type { RealGestureSource } from '../../features/gesture-navigation/RealGestureSource'
+import { PoseOverlay } from '../../features/workout/PoseOverlay'
 
 const connections = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]]
-export function CameraStage({onVideo,sourceRef}:{onVideo:(video:HTMLVideoElement|null)=>void;sourceRef:React.RefObject<RealGestureSource|null>}) {
+export function CameraStage({onVideo,sourceRef,guide=false}:{onVideo:(video:HTMLVideoElement|null)=>void;sourceRef:React.RefObject<{dispose():void}|null>;guide?:boolean}) {
   const video = useRef<HTMLVideoElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const store = useGestureStore()
@@ -43,5 +43,5 @@ export function CameraStage({onVideo,sourceRef}:{onVideo:(video:HTMLVideoElement
     resize(); frame=requestAnimationFrame(draw)
     return () => { cancelAnimationFrame(frame);observer.disconnect();sourceRef.current?.dispose();sourceRef.current=null;onVideo(null) }
   },[store,onVideo,sourceRef])
-  return <div className="camera-preview"><video ref={video} muted playsInline aria-label="Зеркальное изображение камеры" /><canvas ref={canvas} aria-hidden="true" /></div>
+  return <div className="camera-preview"><video ref={video} muted playsInline aria-label="Зеркальное изображение камеры" /><canvas ref={canvas} aria-hidden="true" /><PoseOverlay video={video} />{guide && <div className="frame-guide" aria-hidden="true"/>}</div>
 }

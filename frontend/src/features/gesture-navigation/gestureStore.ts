@@ -25,6 +25,8 @@ export type GestureSnapshot = {
   qualityHint: string | null
 }
 export class GestureStore {
+  pose:import('../workout/RealVisionSource').PosePresentation={sample:null,activeSide:null,fps:0,inferenceMs:0}
+  poseRaw=(presentation:import('../workout/RealVisionSource').PosePresentation)=>{this.pose=presentation}
   readonly registry = new GestureTargetRegistry()
   cursor = {x:0,y:0,visible:false,pinching:false,lostAt:-Infinity}
   sample: HandRecognitionSample | null = null

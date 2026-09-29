@@ -1,7 +1,11 @@
-export function CalibrationPage({onBack,onDone}:{onBack:()=>void;onDone?:()=>void}) {
-  return <section><h2>CALIBRATION</h2><p className="instruction">Bodyweight Squat выбран и подтверждён.</p>
-    <p>Калибровка позы будет реализована в Sprint 2. Sprint 1 завершает сценарий на этом экране.</p>
-    <p>✊ Удерживай кулак, чтобы вернуться в меню.</p>
-    <details className="fallback"><summary>Доступное управление</summary><button type="button" onClick={onBack}>Назад в меню</button>{onDone && <button type="button" onClick={onDone}>Продолжить scaffold demo</button>}</details>
-  </section>
+import type { WorkoutView } from '../app/modes'
+import { readinessMessages } from '../vision/feedback/errorPolicy'
+export function CalibrationPage({onBack,view}:{onBack:()=>void;view:WorkoutView}) {
+ return <section><h2>Калибровка · Bodyweight Squat</h2><p className="instruction">Встань боком к камере. Голова и стопы должны полностью помещаться в кадр.</p>
+  <ol className="readiness-gates"><li>Всё тело видно</li><li>Боковой ракурс</li><li>Спокойное исходное положение</li></ol>
+  <progress max={1} value={view.progress} aria-label="Прогресс калибровки" />
+  <p role="status">{view.issue ? readinessMessages[view.issue] : view.progress>=2/3 ? 'Стой спокойно, собираем исходное положение' : 'Проверяем положение тела и камеры…'}</p>
+  {view.activeSide && <p>Анализируется {view.activeSide==='left' ? 'левая' : 'правая'} сторона</p>}
+  <button type="button" onClick={onBack}>Назад в меню</button>
+ </section>
 }

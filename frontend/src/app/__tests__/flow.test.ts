@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { buildResult } from '../../vision/exercises/squat/resultBuilder'
+import { profile } from '../../../tests/fixtures/pose/profile'
 import { appReducer, INITIAL_STATE, type AppState } from '../modes'
 import { mapVisionEvent } from '../visionEventMapper'
 import { initialTutorial, tutorialTransition, type TutorialState } from '../../features/onboarding/tutorialMachine'
@@ -28,8 +30,8 @@ describe('shared fake/real semantic pipeline', () => {
     expect(selected).toMatchObject({ mode:'MENU',selectedWorkoutId:'bodyweight-squat' })
     const calibrated = pipeline([{type:'gesture.confirmed',at:3000,command:'confirm'}],selected).state
     expect(calibrated.mode).toBe('CALIBRATION')
-    const result = [{type:'CALIBRATION_DONE' as const},{type:'COUNTDOWN_DONE' as const},{type:'WORKOUT_DONE' as const,result:{reps:10,errors:3}}].reduce(appReducer,calibrated)
-    expect(result).toMatchObject({mode:'RESULTS',workoutResult:{reps:10,errors:3}})
+    const result = pipeline([{type:'calibration.completed',at:3100,profile},{type:'workout.countdown_done',at:6100},{type:'workout.completed',at:10000,result:buildResult([],0)}],calibrated).state
+    expect(result).toMatchObject({mode:'RESULTS',workoutResult:{totalReps:0}})
     expect(appReducer(result,{type:'RESTART'}).mode).toBe('TUTORIAL')
   })
   it('ignores confirm without selection, pinch outside target and unrelated events', () => {
