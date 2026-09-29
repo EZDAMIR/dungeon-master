@@ -29,7 +29,7 @@ Track progress here. Update after each commit.
 
 ---
 
-## Phase 0 — Architecture Scaffold (2026-09-30)
+## Sprint 0 — Architecture Scaffold (2026-09-30)
 
 **Completed:**
 - Copied all documentation and instruction files from the blueprint template:

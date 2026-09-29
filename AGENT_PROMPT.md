@@ -1,4 +1,4 @@
-# Coding Agent Task: Phase 0 Architecture Bootstrap
+# Coding Agent Task: Sprint 0 Architecture Bootstrap
 
 You are working in the repository `EZDAMIR/dungeon-master`.
 
@@ -100,8 +100,8 @@ Add tests for:
 
 ### 5. Keep the backend unchanged
 
-Run the existing backend checks. Fix only regressions caused by Phase 0. Do not
-create backend domain tables or endpoints in this phase.
+Run the existing backend checks. Fix only regressions caused by Sprint 0. Do not
+create backend domain tables or endpoints in this sprint.
 
 ### 6. Update documentation
 
@@ -109,7 +109,7 @@ create backend domain tables or endpoints in this phase.
 - Fill only verified facts.
 - Keep the pre-existing scaffold disclosure template and mark unknown commit/time
   values as TODO rather than inventing them.
-- Add a dated Phase 0 entry to the development log.
+- Add a dated Sprint 0 entry to the development log.
 
 ## Verification
 
@@ -138,7 +138,7 @@ Run and report:
 Use this exact format:
 
 ```text
-Phase: 0 — Architecture and runnable shells
+Sprint: 0 — Architecture and runnable shells
 
 Acceptance criteria completed:
 - ...
@@ -159,11 +159,11 @@ Existing files intentionally preserved:
 - ...
 
 Known limitations:
-- Real visual recognition is Phase 1.
-- Pose workout analysis is Phase 2.
-- Backend domains are Phase 3.
-- External integrations are Phase 4.
+- Real visual recognition is Sprint 1.
+- Pose workout analysis is Sprint 2.
+- Backend domains are Sprint 3.
+- External integrations are Sprint 4.
 
 Next safe task:
-- Phase 1 gesture navigation.
+- Sprint 1 gesture navigation.
 ```

@@ -44,7 +44,7 @@ Confirm the exact available Make targets in `backend/Makefile`.
 
 ### Frontend
 
-The frontend setup is created during implementation Phase 0.
+The frontend setup is created during implementation Sprint 0.
 
 ```bash
 cd frontend

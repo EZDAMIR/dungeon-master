@@ -1,9 +1,9 @@
 # Implementation Plan
 
-Implement one phase at a time. P0 visual functionality is more important than
+Implement one sprint at a time. P0 visual functionality is more important than
 optional integrations.
 
-## Phase 0 — Architecture and runnable shells
+## Sprint 0 — Architecture and runnable shells
 
 Goal: establish the monorepo structure without changing backend behavior.
 
@@ -26,7 +26,7 @@ Acceptance:
 - No camera or backend domain work is required yet.
 - Existing backend architecture files are unchanged.
 
-## Phase 1 — Gesture navigation
+## Sprint 1 — Gesture navigation
 
 Goal: complete browser navigation without mouse or keyboard after permission.
 
@@ -50,7 +50,7 @@ Acceptance:
 - The menu is usable at normal webcam distance.
 - The user always sees what the system recognizes.
 
-## Phase 2 — Squat workout and error mode
+## Sprint 2 — Squat workout and error mode
 
 Goal: complete the fitness scenario locally.
 
@@ -75,7 +75,7 @@ Acceptance:
 - The full scenario ends with a result screen.
 - No backend or provider is required.
 
-## Phase 3 — Core backend domains
+## Sprint 3 — Core backend domains
 
 Goal: persist profile, catalog, plans and sessions using the existing architecture.
 
@@ -104,7 +104,7 @@ Acceptance:
 - The frontend can work in guest/local mode and optionally sync.
 - Session sync contains aggregates only.
 
-## Phase 4 — Optional integrations
+## Sprint 4 — Optional integrations
 
 Implement independently behind capability checks.
 
@@ -131,7 +131,7 @@ Implement independently behind capability checks.
 - Browser speech remains the fallback.
 - Never call remote TTS per frame or repetition.
 
-## Phase 5 — Submission hardening
+## Sprint 5 — Submission hardening
 
 - Deploy frontend over HTTPS.
 - Deploy backend and database.

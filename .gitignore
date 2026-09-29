@@ -208,3 +208,4 @@ __marimo__/
 /src/static/
 .agent-related
 agent-related/
+.DS_Store

@@ -19,4 +19,4 @@ feedback when those services are unavailable.
 - A deterministic fallback plan is mandatory.
 - Browser speech or cached audio is mandatory.
 - Failed synchronization is shown as retryable rather than blocking.
-- Integration phases begin only after the local scenario is stable.
+- Integration sprints begin only after the local scenario is stable.

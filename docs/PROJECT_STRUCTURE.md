@@ -4,7 +4,7 @@ Legend:
 
 - `[existing]` — already present; preserve unless explicitly changing behavior.
 - `[new]` — create during architecture bootstrap.
-- `[phase N]` — create when that capability is implemented.
+- `[sprint N]` — create when that capability is implemented.
 - `*` — nearest instruction file must be read before editing below it.
 
 ```text
@@ -33,26 +33,26 @@ dungeon-master/
 │   ├── CLAUDE.md                          [new] *
 │   ├── AGENTS.md                          [new] *
 │   ├── AGENT.md                           [new]
-│   ├── package.json                       [phase 0]
-│   ├── package-lock.json                  [phase 0, generated]
-│   ├── tsconfig.json                      [phase 0]
-│   ├── vite.config.ts                     [phase 0]
-│   ├── index.html                         [phase 0]
+│   ├── package.json                       [sprint 0]
+│   ├── package-lock.json                  [sprint 0, generated]
+│   ├── tsconfig.json                      [sprint 0]
+│   ├── vite.config.ts                     [sprint 0]
+│   ├── index.html                         [sprint 0]
 │   ├── public/
 │   │   ├── models/                        [model assets]
 │   │   └── audio/                         [cached fallback clips]
 │   ├── src/
-│   │   ├── main.tsx                       [phase 0]
+│   │   ├── main.tsx                       [sprint 0]
 │   │   ├── app/
-│   │   │   ├── App.tsx                    [phase 0]
+│   │   │   ├── App.tsx                    [sprint 0]
 │   │   │   ├── providers/
 │   │   │   └── router/
 │   │   ├── pages/
-│   │   │   ├── TutorialPage.tsx           [phase 1]
-│   │   │   ├── MenuPage.tsx               [phase 1]
-│   │   │   ├── CalibrationPage.tsx        [phase 2]
-│   │   │   ├── WorkoutPage.tsx            [phase 2]
-│   │   │   └── ResultsPage.tsx            [phase 2]
+│   │   │   ├── TutorialPage.tsx           [sprint 1]
+│   │   │   ├── MenuPage.tsx               [sprint 1]
+│   │   │   ├── CalibrationPage.tsx        [sprint 2]
+│   │   │   ├── WorkoutPage.tsx            [sprint 2]
+│   │   │   └── ResultsPage.tsx            [sprint 2]
 │   │   ├── features/
 │   │   │   ├── onboarding/
 │   │   │   ├── gesture-navigation/
@@ -65,29 +65,29 @@ dungeon-master/
 │   │   │   ├── AGENTS.md                  [new] *
 │   │   │   ├── AGENT.md                   [new]
 │   │   │   ├── core/
-│   │   │   │   ├── events.ts              [phase 1]
-│   │   │   │   ├── geometry.ts            [phase 1]
-│   │   │   │   ├── smoothing.ts           [phase 1]
-│   │   │   │   ├── stabilizer.ts          [phase 1]
-│   │   │   │   └── clock.ts               [phase 1]
+│   │   │   │   ├── events.ts              [sprint 1]
+│   │   │   │   ├── geometry.ts            [sprint 1]
+│   │   │   │   ├── smoothing.ts           [sprint 1]
+│   │   │   │   ├── stabilizer.ts          [sprint 1]
+│   │   │   │   └── clock.ts               [sprint 1]
 │   │   │   ├── gestures/
-│   │   │   │   ├── handRecognizer.ts      [phase 1]
-│   │   │   │   ├── cursorMapper.ts        [phase 1]
-│   │   │   │   ├── pinchDetector.ts       [phase 1]
-│   │   │   │   └── gestureEngine.ts       [phase 1]
+│   │   │   │   ├── handRecognizer.ts      [sprint 1]
+│   │   │   │   ├── cursorMapper.ts        [sprint 1]
+│   │   │   │   ├── pinchDetector.ts       [sprint 1]
+│   │   │   │   └── gestureEngine.ts       [sprint 1]
 │   │   │   ├── pose/
-│   │   │   │   ├── poseRecognizer.ts      [phase 2]
-│   │   │   │   ├── visibility.ts          [phase 2]
-│   │   │   │   └── calibration.ts         [phase 2]
+│   │   │   │   ├── poseRecognizer.ts      [sprint 2]
+│   │   │   │   ├── visibility.ts          [sprint 2]
+│   │   │   │   └── calibration.ts         [sprint 2]
 │   │   │   ├── exercises/
 │   │   │   │   └── squat/
-│   │   │   │       ├── analyzer.ts         [phase 2]
-│   │   │   │       ├── stateMachine.ts     [phase 2]
-│   │   │   │       ├── rules.ts            [phase 2]
-│   │   │   │       └── types.ts            [phase 2]
+│   │   │   │       ├── analyzer.ts         [sprint 2]
+│   │   │   │       ├── stateMachine.ts     [sprint 2]
+│   │   │   │       ├── rules.ts            [sprint 2]
+│   │   │   │       └── types.ts            [sprint 2]
 │   │   │   ├── feedback/
-│   │   │   │   ├── errorPolicy.ts          [phase 2]
-│   │   │   │   └── feedbackQueue.ts        [phase 2]
+│   │   │   │   ├── errorPolicy.ts          [sprint 2]
+│   │   │   │   └── feedbackQueue.ts        [sprint 2]
 │   │   │   └── workers/
 │   │   ├── audio/
 │   │   ├── api/
@@ -121,36 +121,36 @@ dungeon-master/
 │   │   │   ├── CLAUDE.md                  [new] *
 │   │   │   ├── AGENT.md                   [new]
 │   │   │   ├── prompts/                   [new]
-│   │   │   ├── openai.py                  [phase 4]
-│   │   │   └── speech.py                  [phase 4]
+│   │   │   ├── openai.py                  [sprint 4]
+│   │   │   └── speech.py                  [sprint 4]
 │   │   ├── api/
 │   │   │   ├── CLAUDE.md                  [existing] *
 │   │   │   ├── schemas/
-│   │   │   │   ├── profiles.py            [phase 3]
-│   │   │   │   ├── exercises.py           [phase 3]
-│   │   │   │   ├── training_plans.py      [phase 3]
-│   │   │   │   ├── workout_sessions.py    [phase 3]
-│   │   │   │   └── integrations.py        [phase 4]
+│   │   │   │   ├── profiles.py            [sprint 3]
+│   │   │   │   ├── exercises.py           [sprint 3]
+│   │   │   │   ├── training_plans.py      [sprint 3]
+│   │   │   │   ├── workout_sessions.py    [sprint 3]
+│   │   │   │   └── integrations.py        [sprint 4]
 │   │   │   ├── models/
-│   │   │   │   ├── users.py               [phase 3]
-│   │   │   │   ├── profiles.py            [phase 3]
-│   │   │   │   ├── exercises.py           [phase 3]
-│   │   │   │   ├── training_plans.py      [phase 3]
-│   │   │   │   ├── workout_sessions.py    [phase 3]
-│   │   │   │   └── integrations.py        [phase 4]
+│   │   │   │   ├── users.py               [sprint 3]
+│   │   │   │   ├── profiles.py            [sprint 3]
+│   │   │   │   ├── exercises.py           [sprint 3]
+│   │   │   │   ├── training_plans.py      [sprint 3]
+│   │   │   │   ├── workout_sessions.py    [sprint 3]
+│   │   │   │   └── integrations.py        [sprint 4]
 │   │   │   ├── controllers/
-│   │   │   │   ├── profiles.py            [phase 3]
-│   │   │   │   ├── training_plans.py      [phase 3]
-│   │   │   │   ├── workout_sessions.py    [phase 3]
-│   │   │   │   └── integrations.py        [phase 4]
+│   │   │   │   ├── profiles.py            [sprint 3]
+│   │   │   │   ├── training_plans.py      [sprint 3]
+│   │   │   │   ├── workout_sessions.py    [sprint 3]
+│   │   │   │   └── integrations.py        [sprint 4]
 │   │   │   ├── v1/endpoints/
-│   │   │   │   ├── profiles.py            [phase 3]
-│   │   │   │   ├── exercises.py           [phase 3]
-│   │   │   │   ├── training_plans.py      [phase 3]
-│   │   │   │   ├── workout_sessions.py    [phase 3]
-│   │   │   │   └── integrations.py        [phase 4]
+│   │   │   │   ├── profiles.py            [sprint 3]
+│   │   │   │   ├── exercises.py           [sprint 3]
+│   │   │   │   ├── training_plans.py      [sprint 3]
+│   │   │   │   ├── workout_sessions.py    [sprint 3]
+│   │   │   │   └── integrations.py        [sprint 4]
 │   │   │   └── webhooks/
-│   │   │       └── google_calendar.py      [phase 4]
+│   │   │       └── google_calendar.py      [sprint 4]
 │   │   └── migrations/postgres/
 │   │       ├── CLAUDE.md                  [existing] *
 │   │       └── versions/                  [created by first domain migration]

@@ -142,7 +142,7 @@ Before reporting completion:
 - Verify behavior when the hand or body leaves the frame.
 - Verify provider failures fall back without breaking the workout.
 - Update `docs/development-log.md` or the repository development log after each
-  completed phase.
+  completed sprint.
 
 A task is not complete when only folders exist. It is complete when the current
-phase's acceptance criteria pass and the relevant documentation reflects reality.
+sprint's acceptance criteria pass and the relevant documentation reflects reality.

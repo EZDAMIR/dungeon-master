@@ -1,7 +1,7 @@
 # Domain Model
 
 This document describes the target data model. Implement only the tables required
-by the current phase.
+by the current sprint.
 
 ## 1. MVP entities
 

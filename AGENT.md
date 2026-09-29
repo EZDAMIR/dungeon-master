@@ -12,5 +12,5 @@ Before editing:
 5. Preserve the existing backend instruction files; never overwrite them during
    scaffolding.
 
-Start with Phase 0 in `AGENT_PROMPT.md` unless the user explicitly names another
-phase.
+Start with Sprint 0 in `AGENT_PROMPT.md` unless the user explicitly names another
+sprint.

@@ -126,7 +126,7 @@ Returns compact totals and recent sessions.
 
 ## 6. Google Calendar
 
-Optional phase.
+Optional sprint.
 
 ### `GET /integrations/google/authorize`
 
@@ -145,7 +145,7 @@ stored external-event links.
 
 ## 7. Voice assets
 
-Optional phase.
+Optional sprint.
 
 ### `POST /voice-assets/render`
 

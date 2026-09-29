@@ -28,13 +28,13 @@ For backend work, also read the existing:
 For every task:
 
 1. Inspect the current tree, relevant files, tests, and `git status`.
-2. State the exact phase and acceptance criterion being implemented.
+2. State the exact sprint and acceptance criterion being implemented.
 3. Make the smallest coherent change.
 4. Add or update automated tests.
 5. Run focused checks, then the broader relevant suite.
 6. Summarize changed files, commands run, results, and remaining risks.
 
-Do not silently expand the task into later phases.
+Do not silently expand the task into later sprints.
 
 ## Architecture constraints
 
@@ -72,7 +72,7 @@ and tested.
 ## Completion report format
 
 ```text
-Phase:
+Sprint:
 Acceptance criteria completed:
 Files changed:
 Tests/checks run:
