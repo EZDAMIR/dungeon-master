@@ -14,7 +14,7 @@ Test:
 - pinch hysteresis;
 - hold, release and cooldown;
 - application mode transitions;
-- squat phase transitions;
+- squat state transitions;
 - repetition completion;
 - error activation and recovery;
 - feedback priority and rate limiting.
@@ -95,3 +95,16 @@ Record observations as thresholds are tuned.
 - voice provider unavailable.
 
 The local workout and result must survive all optional-provider failures.
+
+
+## Sprint 2 automated coverage and manual boundary
+
+All algorithm tests use provider-neutral synthetic poses and a monotonic clock; no camera or real model is needed. Versioned JSON files cover side standing, front view, cropped body, correct/shallow/fast cycles, incomplete extension, mid-rep tracking loss, raised hands and standing jitter. `tests/fixtures/pose/builder.ts` generates readable motions and `generate.ts` regenerates the stored JSON. No personal biometric sequences, photos or video are fixtures.
+
+Checks include finite geometry/degenerate vectors, normalized side score, stable side choice, visibility and margins, EMA/outliers/reset, all sequential calibration gates, full-cycle transitions, duplicates/jitter/partials/timeouts, three error rules/multiple errors and deterministic result aggregation. Session tests pass JSON through smoothing, readiness, calibration and analyzer. Pose pause checks hold/release/cooldown and ignored movement. Feedback priority, readiness stabilization and expiry are pure tests; browser speech is mocked to check cooldown, critical interruption and failure isolation.
+
+Shared-source integration tests replay MENU → selection/confirmation → CALIBRATION → COUNTDOWN → WORKOUT → five total cycles → RESULTS. They cover readiness/countdown cancellation, rejected counts, recovery, pause/resume preservation, repeat reset and menu reset. A rendered App test verifies the same UI/corrections/results. Existing gesture fixtures/tests remain. Camera/model lifecycle tests verify one stream, serial close/initialize, switching back to hand mode, bounded inference, stale callbacks, disposal during startup and tab visibility. Canvas tests check mirror/letterboxing/DPR/cleanup without retaining camera images.
+
+Production checks must include both normal and `/dungeon-master/` builds, preview HTTP responses/checksums for both models and installed WASM, absence of fake controls from the production bundle, and a clean clone with `npm ci` and automatic asset preparation. Check that cached valid assets need no download and a downloaded checksum mismatch fails without installing a file. Backend regression uses existing `make check` / `make test`; product backend code is unchanged.
+
+Real-camera verification is **not performed** here. [Sprint 2 manual acceptance](SPRINT_2_MANUAL_CHECKLIST.md) remains mandatory before accepting real counting reliability or tuning defaults. Mocked model performance does not establish inference speed.

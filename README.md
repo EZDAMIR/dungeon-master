@@ -21,11 +21,11 @@ audio feedback.
 ## Architecture
 
 - `frontend/`: React, TypeScript, browser camera, MediaPipe, local visual logic.
-- `backend/`: existing FastAPI scaffold, PostgreSQL, plans, sessions and
-  integrations.
+- `backend/`: existing FastAPI scaffold; product domains/persistence are planned
+  for Sprint 3.
 - `docs/`: architecture, visual pipeline, API contract and implementation plan.
 
-Raw camera frames are processed locally and are not uploaded by default.
+Raw camera frames and landmarks are processed locally; no frames are uploaded or recorded.
 
 ## Local development
 
@@ -44,8 +44,8 @@ Confirm the exact available Make targets in `backend/Makefile`.
 
 ### Frontend
 
-Sprint 1 provides local camera gesture navigation through tutorial and menu to the
-CALIBRATION placeholder. Use Node.js 22.12+ and a webcam on localhost or HTTPS.
+Sprint 2 extends gesture navigation into side-view pose calibration, countdown,
+five total squat cycles, pause/resume and local results. Use Node.js 22.12+ and a webcam on localhost or HTTPS.
 
 ```bash
 cd frontend
@@ -61,7 +61,15 @@ controls. Frames remain local and are not uploaded or recorded.
 Checks: `npm run lint`, `npm run type-check`, `npm run test`,
 `npm run test:coverage`, `npm run build`. Development fake mode is available at
 `?fakeVision=1` and is hidden in production. See [frontend instructions](frontend/README.md)
-for assets, troubleshooting and the pending real-camera checklist.
+for assets and troubleshooting. Real-camera acceptance is **not performed**; use
+[the Sprint 2 checklist](docs/SPRINT_2_MANUAL_CHECKLIST.md).
+
+
+## Sprint 2 demo behavior
+
+Во время приседаний приложение анализирует полный цикл движения и отдельные метрики повторения. Если пользователь не достигает заданной глубины, двигается слишком быстро или не возвращается в исходное положение, приложение показывает конкретную визуальную и локальную звуковую подсказку. При потере тела из кадра или неподходящем ракурсе подсчёт приостанавливается, незавершённый цикл отменяется.
+
+The demo finishes after five total cycles, including repetitions rejected by the three implemented rules. Results report accepted/rejected counts, per-error breakdown and mean repetition duration. The single exercise profile is `bodyweight_squat_side_v1`; there is no backend persistence, multiple-exercise support, remote vision or GPT personalization. Side-view readiness and thresholds are heuristics; real-camera tuning is pending.
 
 ## Pre-existing scaffold disclosure
 

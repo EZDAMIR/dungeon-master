@@ -58,9 +58,9 @@ recorded in `development-log.md`. CALIBRATION remains a placeholder.
 
 Real webcam verification and person/device threshold tuning are pending. Acceptance
 of recognition reliability remains pending until `SPRINT_1_MANUAL_CHECKLIST.md` is
-performed. Sprint 2 has not started.
+performed. Sprint 2 implementation is recorded below.
 
-## Sprint 2 — Squat workout and error mode
+## Sprint 2 — Pose Calibration and Squat Coaching
 
 Goal: complete the fitness scenario locally.
 
@@ -69,9 +69,9 @@ Tasks:
 - Pose recognizer.
 - Side-view and full-body calibration.
 - Pose smoothing.
-- Squat phase state machine.
+- Squat movement state machine.
 - Complete-cycle repetition counting.
-- At least two concrete technique errors.
+- Three concrete technique errors: depth_insufficient, too_fast, incomplete_extension.
 - Pause/resume.
 - Results summary.
 - Browser speech or cached local audio.
@@ -84,6 +84,18 @@ Acceptance:
 - Loss of visibility pauses analysis rather than inventing results.
 - The full scenario ends with a result screen.
 - No backend or provider is required.
+
+Sprint 2 implementation status (2026-09-30): official pinned Pose Landmarker Lite,
+one-camera serial recognizer switching, sequential stable calibration, active-side
+locking, EMA, skeleton, countdown readiness cancellation, complete-cycle squat
+counting, three rejecting technique rules, recovery, pose pause/resume, local audio,
+five-total-cycle results and development fake pose replay are implemented. Pure,
+lifecycle and rendered semantic-flow tests cover these behaviors. Backend remains
+unchanged. Automated/asset verification is in the development log.
+
+Real camera acceptance and person/device threshold tuning: **not performed**.
+Use `SPRINT_2_MANUAL_CHECKLIST.md` before claiming reliable real-world recognition.
+Implementation does not establish clinical accuracy or injury assessment.
 
 ## Sprint 3 — Core backend domains
 
