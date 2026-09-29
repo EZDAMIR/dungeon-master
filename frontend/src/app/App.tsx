@@ -32,7 +32,7 @@ function CameraExperience({fake,audio,state}:{fake:boolean;audio:WorkoutAudio;st
   useLayoutEffect(()=>source.current?.setMode(state.mode),[state.mode])
   const start=()=>{
     void audio.enable()
-    if (fake) { store.emit({type:'camera.ready',at:performance.now()});return }
+    if (fake) { store.emit({type:'camera.ready',at:store.replayClock.read()});return }
     if (!video.current) return
     source.current?.dispose()
     source.current=new RealVisionSource(video.current,store.emit,store.raw,undefined,store.poseRaw)

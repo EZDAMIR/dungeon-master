@@ -1,6 +1,6 @@
 import type { AppState } from '../../app/modes'
 import type { GestureCommand, VisionEvent } from '../../types/vision'
-import { now } from '../../vision/core/clock'
+import { now, ReplayClock } from '../../vision/core/clock'
 import { visionConfig } from '../../vision/core/config'
 import { clamp, distance } from '../../vision/core/geometry'
 import { gestureConfig } from '../../vision/gestures/gestureConfig'
@@ -25,6 +25,7 @@ export type GestureSnapshot = {
   qualityHint: string | null
 }
 export class GestureStore {
+  readonly replayClock=new ReplayClock()
   pose:import('../workout/RealVisionSource').PosePresentation={sample:null,activeSide:null,fps:0,inferenceMs:0}
   poseRaw=(presentation:import('../workout/RealVisionSource').PosePresentation)=>{this.pose=presentation}
   readonly registry = new GestureTargetRegistry()

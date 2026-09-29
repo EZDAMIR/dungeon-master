@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest'
+import { ReplayClock } from '../../vision/core/clock'
 import { FakePoseSource } from '../../features/workout/FakePoseSource'
 import { poseStage } from '../../features/workout/RealVisionSource'
 import { appReducer, INITIAL_STATE } from '../modes'
@@ -31,4 +32,12 @@ it('pause/resume preserves results and conventional back resets calibration',()=
  s.source.standing(26000);s.source.play('pause-gesture',28000);expect(s.state().mode).toBe('WORKOUT');expect(s.state().workout.reps).toHaveLength(1)
  const calibration={...s.state(),mode:'CALIBRATION' as const}
  expect(appReducer(calibration,{type:'BACK'})).toMatchObject({mode:'MENU',workout:{profile:null,reps:[]}})
+})
+it('hand controls and immediate pose replay share a monotonic clock',()=>{
+ const clock=new ReplayClock()
+ const events:VisionEvent[]=[],source=new FakePoseSource(e=>events.push(e),()=>{},clock)
+ source.play('standing-side',100)
+ const at=clock.read(120);expect(at).toBeGreaterThan(120)
+ events.push({type:'gesture.confirmed',at,command:'back'})
+ expect(events.every((e,i)=>!i||e.at>=events[i-1].at)).toBe(true)
 })

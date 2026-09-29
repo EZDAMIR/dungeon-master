@@ -5,7 +5,7 @@ import { useGestureStore } from '../gesture-navigation/gestureNavigation'
 import { now } from '../../vision/core/clock'
 import type { AppMode } from '../../app/modes'
 export function FakePoseControls({mode}:{mode:AppMode}){
- const store=useGestureStore(),[source]=useState(()=>new FakePoseSource(store.emit,store.poseRaw))
+ const store=useGestureStore(),[source]=useState(()=>new FakePoseSource(store.emit,store.poseRaw,store.replayClock))
  useLayoutEffect(()=>{const stage=poseStage(mode);if(stage)source.setStage(stage);else source.reset()},[mode,source])
  if(!poseStage(mode))return null
  return <details open className="fake-controls"><summary>Fake pose · только development</summary>

@@ -1,8 +1,8 @@
 import { useGestureStore } from '../features/gesture-navigation/gestureNavigation'
-import { now } from '../vision/core/clock'
 import type { VisionEvent } from '../types/vision'
 export function FakeSource() {
   const store=useGestureStore()
+  const now=()=>store.replayClock.read()
   const emit=(event:VisionEvent)=>store.emit(event)
   const cursor=()=>{
     const target=store.registry.rect(store.getSnapshot().tutorial.step<3 ? 'tutorial-target' : 'bodyweight-squat')
