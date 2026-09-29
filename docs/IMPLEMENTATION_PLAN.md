@@ -50,6 +50,16 @@ Acceptance:
 - The menu is usable at normal webcam distance.
 - The user always sees what the system recognizes.
 
+Sprint 1 implementation status (2026-09-30): camera lifecycle, MediaPipe adapter,
+self-hosted verified assets, pointer/pinch/holds, targets/HUD/overlay, interactive
+five-step tutorial and MENU selection/confirmation are implemented. Fake events
+share the real semantic mapper. Automated frontend/backend checks and build are
+recorded in `development-log.md`. CALIBRATION remains a placeholder.
+
+Real webcam verification and person/device threshold tuning are pending. Acceptance
+of recognition reliability remains pending until `SPRINT_1_MANUAL_CHECKLIST.md` is
+performed. Sprint 2 has not started.
+
 ## Sprint 2 — Squat workout and error mode
 
 Goal: complete the fitness scenario locally.

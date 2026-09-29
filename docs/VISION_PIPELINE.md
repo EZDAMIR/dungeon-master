@@ -8,7 +8,7 @@ side-view squat. It runs in the browser and emits semantic events.
 It is not a general action-recognition model and must not be described as
 clinical-grade biomechanics.
 
-## 2. Mode-to-model mapping
+## 2. Planned mode-to-model mapping
 
 | Application mode | Active visual capability |
 |---|---|
@@ -19,6 +19,10 @@ clinical-grade biomechanics.
 | Workout | pose recognizer; limited pause gesture |
 | Paused | hand or pose pause/resume command |
 | Results | hand recognizer |
+
+Sprint 1 implements the hand recognizer in tutorial/menu and keeps it active in
+the CALIBRATION placeholder so fist can return to MENU. Pose and workout entries
+in this table are planned for later Sprints and are not implemented yet.
 
 Avoid running both full models continuously unless profiling proves it is stable on
 target hardware.
@@ -196,3 +200,43 @@ Store normalized landmark sequences as small JSON fixtures:
 - partial body visibility.
 
 Unit tests should be deterministic and use a fake monotonic clock.
+
+## 11. Sprint 1 implementation
+
+`RealGestureSource` owns camera/model startup, a single visibility-aware animation
+loop and bounded inference (55 ms minimum interval, new playable frames only).
+`CameraManager` requests video only after the start button, waits for `play`,
+handles permission/device errors and closes all tracks/listeners. The adapter
+normalizes MediaPipe 1.0.1 results and tries GPU then CPU once during initialization.
+All model/WASM assets are self-hosted with Vite BASE_URL; see frontend/model README.
+
+The deterministic engine maps landmark 8 through mirrored ROI and exponential
+smoothing; pinch uses landmarks 4/8 normalized by 5/17 with hysteresis and three
+consecutive entry samples. Fist/Thumb Up use one hold gate: 600 ms hold, 200 ms
+neutral release and 700 ms cooldown. Loss resets the gates, focus and cursor.
+Release and cooldown do not suppress cursor events.
+
+The React target registry resolves registered button rectangles and enriches a
+select event with its focused ID. Visual core modules never query DOM targets or
+click elements. A feature-specific external store publishes semantic HUD/tutorial
+state, while cursor position and raw landmarks stay outside App state. Canvas and
+cursor animate from mutable references. Video is CSS-mirrored; the cursor and
+canvas map original X with `1 - x` independently, once each.
+
+`FakeSource` is explicit development-only `?fakeVision=1` and emits VisionEvent.
+Both sources pass through the same target registry, tutorial machine,
+`visionEventMapper` and pure app reducer. Pinch selects Bodyweight Squat in MENU;
+Thumb Up requires that selection to enter CALIBRATION. Tutorial interprets fist
+and Thumb Up as learning steps rather than normal navigation. Conventional buttons
+are accessible fallbacks. Optional Web Audio tones run only on semantic commands.
+
+Tracking stability needs 350 ms of continued cursor samples; no timer skips an
+unperformed tutorial gesture. Returning from MENU restarts tutorial tracking even
+when the recognizer already sees the hand. Camera errors stop the source and expose
+Retry. Hiding the document cancels the scheduled frame and resets tracking;
+returning schedules a single frame. Pending camera/model promises check disposal
+and release late resources.
+
+Pure fixture, camera-mock, adapter-mock, source lifecycle and rendered React tests
+cover the Sprint 1 scenario. These do not replace live-camera acceptance; see
+`SPRINT_1_MANUAL_CHECKLIST.md` for the pending check.

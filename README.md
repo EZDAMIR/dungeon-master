@@ -44,15 +44,24 @@ Confirm the exact available Make targets in `backend/Makefile`.
 
 ### Frontend
 
-The frontend setup is created during implementation Sprint 0.
+Sprint 1 provides local camera gesture navigation through tutorial and menu to the
+CALIBRATION placeholder. Use Node.js 22.12+ and a webcam on localhost or HTTPS.
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-Camera access requires `localhost` or HTTPS.
+The first dev/build command automatically prepares the official model and pinned
+MediaPipe WASM; the build host needs Internet access for the initial download.
+Click «Включить камеру», grant permission, then learn pointer/pinch/fist/Thumb Up
+controls. Frames remain local and are not uploaded or recorded.
+
+Checks: `npm run lint`, `npm run type-check`, `npm run test`,
+`npm run test:coverage`, `npm run build`. Development fake mode is available at
+`?fakeVision=1` and is hidden in production. See [frontend instructions](frontend/README.md)
+for assets, troubleshooting and the pending real-camera checklist.
 
 ## Pre-existing scaffold disclosure
 
