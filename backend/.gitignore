@@ -1,0 +1,43 @@
+# Credentials / local config
+.creds/
+conf/*.toml
+!conf/*.toml.example
+.env
+.env.*
+!.env.example
+
+# Byte-compiled / optimized / cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Packaging / build artifacts
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Test / coverage
+*.log
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.uvpy/
+.venv313/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+.DS_Store
+.claude/
