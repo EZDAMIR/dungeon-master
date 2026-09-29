@@ -12,6 +12,7 @@ export class GestureEngine {
   private hold = new HoldGate()
   private tracked = false
   private candidate: GestureCommand | null = null
+  private wasPinched = false
   update(sample: HandRecognitionSample | null, at: number, viewport: Viewport): VisionEvent[] {
     const events: VisionEvent[] = []
     if (!sample || sample.landmarks.length !== 21 || sample.landmarks.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) {
@@ -28,14 +29,16 @@ export class GestureEngine {
     const hold = this.hold.update(command, at)
     // Pinch geometry can look closed inside a fist. A recognized held command takes priority.
     const pinch = this.pinch.update(sample.landmarks)
+    if (this.wasPinched && !pinch.pinched) events.push({ type: 'gesture.cancelled', at, command: 'select' })
+    this.wasPinched = pinch.pinched
     const nextCandidate = hold.command ?? (!command && pinch.progress > 0 && !pinch.pinched ? 'select' : null)
     if (this.candidate && this.candidate !== nextCandidate) events.push({ type: 'gesture.cancelled', at, command: this.candidate })
     this.candidate = nextCandidate
     if (hold.command) events.push({ type: 'gesture.candidate', at, command: hold.command, progress: hold.progress, confidence: classification?.confidence })
     else if (nextCandidate === 'select') events.push({ type: 'gesture.candidate', at, command: 'select', progress: pinch.progress })
-    if (hold.confirmed && hold.command) events.push({ type: 'gesture.confirmed', at, command: hold.command })
+    if (hold.confirmed && hold.command) { events.push({ type: 'gesture.confirmed', at, command: hold.command }); this.candidate = null }
     if (pinch.confirmed && !command) events.push({ type: 'gesture.confirmed', at, command: 'select' })
     return events
   }
-  reset() { this.tracked = false; this.candidate = null; this.cursor.reset(); this.pinch.reset(); this.hold.reset() }
+  reset() { this.tracked = false; this.candidate = null; this.wasPinched = false; this.cursor.reset(); this.pinch.reset(); this.hold.reset() }
 }

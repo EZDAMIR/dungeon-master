@@ -17,8 +17,13 @@ export class CameraManager {
   private disposed = false
   private starting: Promise<boolean> | null = null
   private listeners: Array<() => void> = []
-  constructor(private video: HTMLVideoElement, private emit: (event: VisionEvent) => void,
-    private env: Environment = { secure: window.isSecureContext, getUserMedia: navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices) }) {}
+  private video: HTMLVideoElement
+  private emit: (event: VisionEvent) => void
+  private env: Environment
+  constructor(video: HTMLVideoElement, emit: (event: VisionEvent) => void,
+    env: Environment = { secure: window.isSecureContext, getUserMedia: navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices) }) {
+    this.video = video; this.emit = emit; this.env = env
+  }
 
   start(): Promise<boolean> {
     if (this.disposed) return Promise.resolve(false)

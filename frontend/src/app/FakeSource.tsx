@@ -1,49 +1,26 @@
-import type { AppMode, AppAction } from './modes'
-
-type Props = {
-  mode: AppMode
-  dispatch: (action: AppAction) => void
-}
-
-const BTN_STYLE: React.CSSProperties = { marginLeft: '0.5rem', cursor: 'pointer' }
-
-export function FakeSource({ mode, dispatch }: Props) {
-  return (
-    <div
-      style={{
-        background: '#fffbe6',
-        border: '1px solid #ffe58f',
-        borderRadius: 4,
-        padding: '0.5rem 1rem',
-        fontSize: '0.85rem',
-      }}
-    >
-      <strong>Dev controls</strong>
-      {mode === 'TUTORIAL' && (
-        <button style={BTN_STYLE} onClick={() => dispatch({ type: 'TUTORIAL_DONE' })}>
-          Complete Tutorial →
-        </button>
-      )}
-      {mode === 'MENU' && (
-        <button style={BTN_STYLE} onClick={() => dispatch({ type: 'MENU_SELECT' })}>
-          Select Workout →
-        </button>
-      )}
-      {mode === 'CALIBRATION' && (
-        <button style={BTN_STYLE} onClick={() => dispatch({ type: 'CALIBRATION_DONE' })}>
-          Calibration Done →
-        </button>
-      )}
-      {mode === 'COUNTDOWN' && (
-        <button style={BTN_STYLE} onClick={() => dispatch({ type: 'COUNTDOWN_DONE' })}>
-          Skip Countdown →
-        </button>
-      )}
-      {mode === 'RESULTS' && (
-        <button style={BTN_STYLE} onClick={() => dispatch({ type: 'RESTART' })}>
-          Restart →
-        </button>
-      )}
-    </div>
-  )
+import { useGestureStore } from '../features/gesture-navigation/gestureNavigation'
+import { now } from '../vision/core/clock'
+import type { VisionEvent } from '../types/vision'
+export function FakeSource() {
+  const store=useGestureStore()
+  const emit=(event:VisionEvent)=>store.emit(event)
+  const cursor=()=>{
+    const target=store.registry.rect(store.getSnapshot().tutorial.step<3 ? 'tutorial-target' : 'bodyweight-squat')
+    emit({type:'cursor.moved',at:now(),x:target ? target.left+target.width/2 : window.innerWidth/2,y:target ? target.top+target.height/2 : window.innerHeight/2})
+  }
+  const command=(command:'select'|'back'|'confirm')=>{
+    emit({type:'gesture.candidate',at:now(),command,progress:1,confidence:.99})
+    emit({type:'gesture.confirmed',at:now(),command})
+  }
+  return <details open className="fake-controls"><summary>Fake vision · только development</summary>
+    <button type="button" onClick={()=>emit({type:'camera.ready',at:now()})}>Camera ready</button>
+    <button type="button" onClick={()=>emit({type:'tracking.acquired',at:now(),target:'hand'})}>Hand found</button>
+    <button type="button" onClick={cursor}>Move cursor to target</button>
+    <button type="button" onClick={()=>emit({type:'focus.changed',at:now(),targetId:null})}>Clear focus</button>
+    <button type="button" onClick={()=>command('select')}>Pinch / select</button>
+    <button type="button" onClick={()=>command('back')}>Fist hold</button>
+    <button type="button" onClick={()=>command('confirm')}>Thumb Up hold</button>
+    <button type="button" onClick={()=>emit({type:'tracking.lost',at:now(),target:'hand'})}>Hand lost</button>
+    <button type="button" onClick={()=>emit({type:'camera.error',at:now(),code:'not_readable',message:'Камера отключена. Повтори запуск.'})}>Camera error</button>
+  </details>
 }

@@ -1,47 +1,49 @@
 import { describe, it, expect } from 'vitest'
-import { appReducer, INITIAL_STATE, type AppAction, type AppState } from '../modes'
+import { appReducer, INITIAL_STATE, type AppState } from '../modes'
+import { mapVisionEvent } from '../visionEventMapper'
+import { initialTutorial, tutorialTransition, type TutorialState } from '../../features/onboarding/tutorialMachine'
+import type { VisionEvent } from '../../types/vision'
 
-function runFlow(actions: AppAction[]): AppState {
-  return actions.reduce(appReducer, INITIAL_STATE)
+function pipeline(events: VisionEvent[], start: AppState = INITIAL_STATE) {
+  let state = start
+  let tutorial: TutorialState = initialTutorial
+  for (const event of events) {
+    if (state.mode === 'TUTORIAL') tutorial = tutorialTransition(tutorial,event)
+    const action = mapVisionEvent(event,state,tutorial)
+    if (action) state = appReducer(state,action)
+  }
+  return {state,tutorial}
 }
-
-describe('complete fake-event flow', () => {
-  const FULL_FLOW: AppAction[] = [
-    { type: 'TUTORIAL_DONE' },
-    { type: 'MENU_SELECT' },
-    { type: 'CALIBRATION_DONE' },
-    { type: 'COUNTDOWN_DONE' },
-    { type: 'WORKOUT_DONE', result: { reps: 10, errors: 3 } },
-  ]
-
-  it('reaches RESULTS after the full forward sequence', () => {
-    const final = runFlow(FULL_FLOW)
-    expect(final.mode).toBe('RESULTS')
-    expect(final.workoutResult).toEqual({ reps: 10, errors: 3 })
+const tutorialFlow: VisionEvent[] = [
+  {type:'camera.ready',at:0}, {type:'tracking.acquired',at:10,target:'hand'},
+  {type:'cursor.moved',at:400,x:100,y:200}, {type:'focus.changed',at:410,targetId:'tutorial-target'},
+  {type:'gesture.confirmed',at:420,command:'select',targetId:'tutorial-target'},
+  {type:'gesture.confirmed',at:1100,command:'back'}, {type:'gesture.confirmed',at:2000,command:'confirm'},
+]
+describe('shared fake/real semantic pipeline', () => {
+  it('completes tutorial, selects with pinch then confirms to calibration', () => {
+    const menu = pipeline(tutorialFlow)
+    expect(menu.state.mode).toBe('MENU'); expect(menu.tutorial.step).toBe(5)
+    const selected = pipeline([{type:'gesture.confirmed',at:2100,command:'select',targetId:'bodyweight-squat'}],menu.state).state
+    expect(selected).toMatchObject({ mode:'MENU',selectedWorkoutId:'bodyweight-squat' })
+    const calibrated = pipeline([{type:'gesture.confirmed',at:3000,command:'confirm'}],selected).state
+    expect(calibrated.mode).toBe('CALIBRATION')
+    const result = [{type:'CALIBRATION_DONE' as const},{type:'COUNTDOWN_DONE' as const},{type:'WORKOUT_DONE' as const,result:{reps:10,errors:3}}].reduce(appReducer,calibrated)
+    expect(result).toMatchObject({mode:'RESULTS',workoutResult:{reps:10,errors:3}})
+    expect(appReducer(result,{type:'RESTART'}).mode).toBe('TUTORIAL')
   })
-
-  it('can restart and reach RESULTS again', () => {
-    const afterFirst = runFlow(FULL_FLOW)
-    const secondRun: AppAction[] = [
-      { type: 'RESTART' },
-      { type: 'TUTORIAL_DONE' },
-      { type: 'MENU_SELECT' },
-      { type: 'CALIBRATION_DONE' },
-      { type: 'COUNTDOWN_DONE' },
-      { type: 'WORKOUT_DONE', result: { reps: 7, errors: 0 } },
-    ]
-    const final = secondRun.reduce(appReducer, afterFirst)
-    expect(final.mode).toBe('RESULTS')
-    expect(final.workoutResult).toEqual({ reps: 7, errors: 0 })
+  it('ignores confirm without selection, pinch outside target and unrelated events', () => {
+    const menu = pipeline(tutorialFlow).state
+    expect(pipeline([{type:'gesture.confirmed',at:2100,command:'confirm'}],menu).state).toBe(menu)
+    expect(pipeline([{type:'gesture.confirmed',at:2100,command:'select'}],menu).state).toBe(menu)
+    expect(pipeline([{type:'gesture.confirmed',at:2100,command:'pause'}],menu).state).toBe(menu)
+    expect(pipeline([{type:'gesture.confirmed',at:2200,command:'back'}],menu).state.mode).toBe('TUTORIAL')
   })
-
-  it('ignores out-of-sequence actions mid-flow', () => {
-    const atMenu = appReducer(INITIAL_STATE, { type: 'TUTORIAL_DONE' })
-    const stayed = appReducer(atMenu, { type: 'TUTORIAL_DONE' })
-    expect(stayed.mode).toBe('MENU')
-
-    const atWorkout = runFlow(FULL_FLOW.slice(0, 4))
-    const prematureResult = appReducer(atWorkout, { type: 'RESTART' })
-    expect(prematureResult.mode).toBe('WORKOUT')
+  it('cannot skip steps and requires fresh stable tracking after loss', () => {
+    let state = tutorialTransition(initialTutorial,{type:'tracking.acquired',at:0,target:'hand'})
+    state = tutorialTransition(state,{type:'tracking.lost',at:300,target:'hand'})
+    expect(tutorialTransition(state,{type:'cursor.moved',at:1000,x:0,y:0}).step).toBe(0)
+    expect(tutorialTransition(state,{type:'gesture.confirmed',at:1200,command:'confirm'}).step).toBe(0)
+    expect(pipeline(tutorialFlow.slice(0,-1)).state.mode).toBe('TUTORIAL')
   })
 })
