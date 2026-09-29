@@ -7,11 +7,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc -b --pretty false",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare:vision": "node scripts/prepare-vision-assets.mjs",
+    "predev": "npm run prepare:vision",
+    "prebuild": "npm run prepare:vision",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.0.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
@@ -26,5 +31,8 @@
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

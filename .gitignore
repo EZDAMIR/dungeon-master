@@ -209,3 +209,9 @@ __marimo__/
 .agent-related
 agent-related/
 .DS_Store
+
+# Sprint 1 reproducible browser vision assets
+frontend/public/models/*.task
+frontend/public/models/*.tmp
+frontend/public/mediapipe/
+frontend/coverage/
