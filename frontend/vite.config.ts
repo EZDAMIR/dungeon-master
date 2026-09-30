@@ -3,4 +3,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: { '/api/v1': { target: process.env.DUNGEON_MASTER_API_PROXY || 'http://127.0.0.1:8000', changeOrigin: false } },
+  },
 })

@@ -13,6 +13,7 @@ import { condition } from "./conditionEvaluator";
 import { genericResult } from "./resultBuilder";
 import { localized } from "./types";
 import type { GenericView, Language, MovementSpec } from "./types";
+function freezeSpec<T>(value:T):T { if(value && typeof value==='object'){Object.values(value).forEach(freezeSpec);Object.freeze(value)}return value }
 export class GenericAnalyzer {
   private evaluator: FeatureEvaluator;
   private machine: PhaseMachine;
@@ -38,15 +39,18 @@ export class GenericAnalyzer {
   private secondary = "";
   private correction = false;
   private done = false;
+  private lostSince: number | null = null;
+  private visibilitySum = 0;
+  private visibilityCount = 0;
   readonly spec: MovementSpec;
   readonly target: number;
   readonly language: Language;
   constructor(spec: MovementSpec, target: number, language: Language = "ru") {
-    this.spec = spec;
+    this.spec = freezeSpec(structuredClone(spec));
     this.target = target;
     this.language = language;
-    this.evaluator = new FeatureEvaluator(spec);
-    this.machine = new PhaseMachine(spec);
+    this.evaluator = new FeatureEvaluator(this.spec);
+    this.machine = new PhaseMachine(this.spec);
   }
   activeSide() {
     return this.side;
@@ -69,6 +73,7 @@ export class GenericAnalyzer {
     this.previous = {};
     this.pending.clear();
     this.holds.clear();
+    this.visibilitySum=0;this.visibilityCount=0;
   }
   private issue(s: PoseRecognitionSample | null): CalibrationIssue | null {
     if (!validPose(s)) return "body_not_fully_visible";
@@ -136,11 +141,16 @@ export class GenericAnalyzer {
       this.cancelPartial();
       this.stableAt = null;
       this.anchor = null;
+      if(this.calibrated && this.stage==='workout') {
+        this.calibrated=false;this.lastAt=at;
+        return [{type:'calibration.required',at}];
+      }
     }
     this.lastAt = at;
     const events: VisionEvent[] = [],
       issue = this.issue(sample);
     if (issue || !sample) {
+      this.lostSince ??= at;
       this.cancelPartial();
       this.stableAt = null;
       this.anchor = null;
@@ -178,12 +188,13 @@ export class GenericAnalyzer {
         },
         this.view(at, false),
       );
-      if (this.stage === "countdown") {
+      if (this.stage === "countdown" || (this.calibrated && (this.stage==='workout'||this.stage==='paused') && (issue==='wrong_camera_angle'||at-this.lostSince>=500))) {
         this.calibrated = false;
         events.push({ type: "calibration.required", at });
       }
       return events;
     }
+    this.lostSince=null;
     if (!this.tracked) {
       this.tracked = true;
       events.push({ type: "pose.tracking_acquired", at });
@@ -291,6 +302,10 @@ export class GenericAnalyzer {
     }
     const previous = this.previous;
     const cycle = this.machine.update(values, previous, at);
+    if(cycle.changed || this.machine.stage !== this.spec.repetition.start_phase) {
+      this.visibilitySum += this.spec.camera.required_landmarks.reduce((sum, point) => sum + sample.landmarks[pointIndex(point, this.side)].visibility, 0) / this.spec.camera.required_landmarks.length;
+      this.visibilityCount++;
+    }
     this.previous = values;
     if (cycle.completed) {
       for (const rule of this.spec.error_rules.filter(
@@ -337,24 +352,25 @@ export class GenericAnalyzer {
           at,
         );
       events.push({
-        type: "workout.rep_completed",
+        type: "workout.generic_rep_completed",
         at,
         repIndex: this.total,
         accepted: !rejected,
-        errors: [],
+        errors: [...this.pending],
         metrics: {
-          minKneeAngle: 0,
-          maxReturnKneeAngle: 0,
-          descentDurationMs: 0,
-          ascentDurationMs: 0,
+          minKneeAngle: null,
+          maxReturnKneeAngle: null,
+          descentDurationMs: null,
+          ascentDurationMs: null,
           totalDurationMs: cycle.duration,
-          depthScore: 0,
-          meanVisibility: 1,
-          tempo: rejected ? "fast" : "ok",
+          depthScore: null,
+          meanVisibility: this.visibilityCount ? this.visibilitySum / this.visibilityCount : null,
+          tempo: cycle.duration < this.spec.repetition.minimum_duration_ms ? "fast" : "ok",
         },
       });
       this.pending.clear();
       this.holds.clear();
+      this.visibilitySum=0;this.visibilityCount=0;
       this.evaluator.resetRep();
       if (this.total >= this.target) {
         this.done = true;

@@ -54,7 +54,11 @@ def build_weekly_plan(profile: dict, eligible: list[dict], starts_on: datetime.d
     }
 
 
-async def generate(current_user: schemas.UserCurrent, ai_metadata: dict | None = None) -> dict:
+async def generate(
+    current_user: schemas.UserCurrent,
+    ai_metadata: dict | None = None,
+    job_guard: dict | None = None,
+) -> dict:
     profile = await controllers.profiles.get_profile(current_user)
     eligible = controllers.exercises.eligible_exercises(
         await models.exercises.exercise_list(),
@@ -78,6 +82,7 @@ async def generate(current_user: schemas.UserCurrent, ai_metadata: dict | None =
             current_user.id,
             data['plan'],
             data['items'],
+            job_guard=job_guard,
         )
     except models.PlanGenerationConflict as exc:
         raise exceptions.HTTPConflictException(

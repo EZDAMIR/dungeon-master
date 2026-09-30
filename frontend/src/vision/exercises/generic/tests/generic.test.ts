@@ -23,9 +23,16 @@ describe("Sprint 4A declarative camera runtime", () => {
       events.push(...analyzer.update(sample, sample.at));
     for (const sample of calfCycle(3900, 0.047))
       events.push(...analyzer.update(sample, sample.at));
-    const reps = events.filter((e) => e.type === "workout.rep_completed");
+    const reps = events.filter((e) => e.type === "workout.generic_rep_completed");
     expect(reps).toHaveLength(2);
     expect(reps.map((e) => e.accepted)).toEqual([true, false]);
+    expect(reps[1].errors).toEqual(['range_too_small']);
+    expect(reps[1].metrics.tempo).toBe('ok');
+    expect(reps[1].metrics.minKneeAngle).toBeNull();
+    expect(reps[1].metrics.descentDurationMs).toBeNull();
+    expect(reps[1].metrics.totalDurationMs).toBeGreaterThan(0);
+    expect(reps[1].metrics.meanVisibility).toBeGreaterThan(0);
+
     expect(
       events.some(
         (e) =>
@@ -155,3 +162,8 @@ describe("Sprint 4A declarative camera runtime", () => {
     expect(m.update({ movement: 0 }, {}, 2000).completed).toBe(false);
   });
 });
+it('freezes interpreter inputs for a set and requests recalibration after sustained tracking loss',()=>{
+ const parsed=validateSpec(fixture);if(!parsed.valid)throw Error('fixture');const analyzer=new GenericAnalyzer(parsed.spec,3);parsed.spec.transitions.splice(0);parsed.spec.error_rules.splice(0)
+ for(let at=0;at<=800;at+=50)analyzer.update(calfPose(at),at);analyzer.setStage('workout');const events=calfCycle(850).flatMap(sample=>analyzer.update(sample,sample.at));expect(events.filter(event=>event.type==='workout.generic_rep_completed')).toHaveLength(1)
+ const last=events.at(-1)!.at;analyzer.update(null,last+50);expect(analyzer.update(null,last+550).some(event=>event.type==='calibration.required')).toBe(true)
+})

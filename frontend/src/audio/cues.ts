@@ -1,0 +1,122 @@
+// Exact public cue text contract published by A1; keep subtitles aligned with server speech.
+export const cueTexts = {
+  "welcome": {
+    "ru": "Я помогу настроиться и пройти первую тренировку",
+    "kk": "Алғашқы жаттығуға дайындалуға көмектесемін",
+    "en": "I will help you prepare for your first workout"
+  },
+  "context_choice": {
+    "ru": "Выбери свой профиль или демо-пример",
+    "kk": "Өз профиліңді немесе демо үлгіні таңда",
+    "en": "Choose your profile or a demo input"
+  },
+  "plan_generating": {
+    "ru": "Готовлю план по подтверждённым данным",
+    "kk": "Расталған деректерден жоспар дайындаймын",
+    "en": "Preparing a plan from your confirmed data"
+  },
+  "plan_ready": {
+    "ru": "План готов. Посмотри упражнения",
+    "kk": "Жоспар дайын. Жаттығуларды қара",
+    "en": "Your plan is ready. Review the exercises"
+  },
+  "camera_permission": {
+    "ru": "Нажми кнопку и разреши камеру в браузере",
+    "kk": "Түймені басып, браузерде камераға рұқсат бер",
+    "en": "Press the button and allow camera access in your browser"
+  },
+  "gesture_point": {
+    "ru": "Наводи указательным пальцем",
+    "kk": "Сұқ саусағыңмен бағытта",
+    "en": "Point with your index finger"
+  },
+  "gesture_pinch": {
+    "ru": "Соедини большой и указательный пальцы для выбора",
+    "kk": "Таңдау үшін бас және сұқ саусақты қос",
+    "en": "Pinch your thumb and index finger to select"
+  },
+  "gesture_fist": {
+    "ru": "Покажи кулак, чтобы вернуться",
+    "kk": "Қайту үшін жұдырық көрсет",
+    "en": "Make a fist to go back"
+  },
+  "gesture_thumb": {
+    "ru": "Большой палец вверх — подтвердить",
+    "kk": "Растау үшін бас бармақты көтер",
+    "en": "Thumbs up to confirm"
+  },
+  "tracking_recovery": {
+    "ru": "Вернись в кадр и займи исходное положение",
+    "kk": "Кадрға оралып, бастапқы қалыпқа тұр",
+    "en": "Return into view and stand in your starting position"
+  },
+  "stop": {
+    "ru": "Остановись и сделай паузу",
+    "kk": "Тоқтап, үзіліс жаса",
+    "en": "Stop and take a break"
+  },
+  "countdown_3": {
+    "ru": "Три",
+    "kk": "Үш",
+    "en": "Three"
+  },
+  "countdown_2": {
+    "ru": "Два",
+    "kk": "Екі",
+    "en": "Two"
+  },
+  "countdown_1": {
+    "ru": "Один",
+    "kk": "Бір",
+    "en": "One"
+  },
+  "start": {
+    "ru": "Начали",
+    "kk": "Баста",
+    "en": "Start"
+  },
+  "good_rep": {
+    "ru": "Хорошее повторение",
+    "kk": "Жақсы қайталау",
+    "en": "Good repetition"
+  },
+  "set_complete": {
+    "ru": "Подход завершён",
+    "kk": "Сет аяқталды",
+    "en": "Set complete"
+  },
+  "rest": {
+    "ru": "Отдых. Следи за таймером",
+    "kk": "Демал. Таймерді бақыла",
+    "en": "Rest. Follow the timer"
+  },
+  "next_exercise": {
+    "ru": "Перейдём к следующему упражнению",
+    "kk": "Келесі жаттығуға өтейік",
+    "en": "Move to the next exercise"
+  },
+  "workout_complete": {
+    "ru": "Тренировка завершена. Посмотри результаты",
+    "kk": "Жаттығу аяқталды. Нәтижені қара",
+    "en": "Workout complete. Review your results"
+  },
+  "depth_insufficient": {
+    "ru": "Опустись немного ниже",
+    "kk": "Сәл төмен түс",
+    "en": "Lower a little more"
+  },
+  "too_fast": {
+    "ru": "Медленнее вниз",
+    "kk": "Төменге баяуырақ",
+    "en": "Lower more slowly"
+  },
+  "incomplete_extension": {
+    "ru": "Заверши подъём",
+    "kk": "Толық көтеріл",
+    "en": "Finish standing up"
+  }
+} as const;
+export function cueText(cue: string, language: string = "ru", fallback = "") {
+  const value = cueTexts[cue as keyof typeof cueTexts];
+  return value ? value[language === "kk" ? "kk" : language === "en" ? "en" : "ru"] : fallback;
+}

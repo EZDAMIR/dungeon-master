@@ -40,6 +40,14 @@ export function ProgressPage({
               <dd>{progress.total_reps}</dd>
             </div>
             <div>
+              <dt>Оценены камерой</dt>
+              <dd>{progress.camera_total_reps ?? progress.total_reps}</dd>
+            </div>
+            <div>
+              <dt>Подходов вручную</dt>
+              <dd>{progress.manual_completed_sets ?? 0}</dd>
+            </div>
+            <div>
               <dt>Корректные</dt>
               <dd>{progress.accepted_reps}</dd>
             </div>

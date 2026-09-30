@@ -1,0 +1,522 @@
+{
+  "rows": [
+    {
+      "screen": "hands",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "hands",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "hands",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "hands",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "hands",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "hands",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "voice",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "voice",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "voice",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "voice",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "voice",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "voice",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "schedule-coach-ptt",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "schedule-coach-ptt",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "schedule-coach-ptt",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "schedule-coach-ptt",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "schedule-coach-ptt",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "schedule-coach-ptt",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "plan",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "plan",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "plan",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "plan",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "plan",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "plan",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "calibration",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "calibration",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "calibration",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "calibration",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "calibration",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "calibration",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "workout",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "workout",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "workout",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "workout",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "workout",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "workout",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "rest",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "rest",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "rest",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "rest",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "rest",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "rest",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "next-exercise",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "next-exercise",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "next-exercise",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "next-exercise",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "next-exercise",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "next-exercise",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "results",
+      "width": 360,
+      "height": 800,
+      "overflow": false,
+      "viewport": 360,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "results",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "viewport": 390,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "results",
+      "width": 768,
+      "height": 1024,
+      "overflow": false,
+      "viewport": 768,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "results",
+      "width": 834,
+      "height": 1194,
+      "overflow": false,
+      "viewport": 834,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "results",
+      "width": 844,
+      "height": 390,
+      "overflow": false,
+      "viewport": 844,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    },
+    {
+      "screen": "results",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "viewport": 1440,
+      "smallButtons": [],
+      "overlappingButtonText": []
+    }
+  ],
+  "errors": [],
+  "stableVideoDOM": true,
+  "progress": {
+    "camera_total_reps": 24,
+    "total_sets": 4,
+    "manual_completed_sets": 0,
+    "completed_sessions": 1,
+    "total_reps": 24,
+    "accepted_reps": 24,
+    "rejected_reps": 0,
+    "acceptance_rate": 1,
+    "error_counts": {
+      "depth_insufficient": 0,
+      "too_fast": 0,
+      "incomplete_extension": 0
+    },
+    "recent_sessions": [
+      {
+        "id": "4d2c77c7-cf41-48ef-b0eb-48cdc9a2b700",
+        "exercise_key": "calf_raise_7581f87de559_dc1420d8bfcf",
+        "completed_at": "2026-09-30T17:43:48.744000Z",
+        "total_reps": 24,
+        "accepted_reps": 24,
+        "duration_ms": 122000,
+        "dominant_error": null,
+        "generic_error_counts": {}
+      }
+    ]
+  },
+  "icsDownloaded": true,
+  "ptt": "permission denied→text fallback",
+  "providerStatus": "live BLOCKED missing configuration"
+}

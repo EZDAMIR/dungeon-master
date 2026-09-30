@@ -63,3 +63,16 @@ created for routing.
 | 3:134–3:140 | Coaching / correction / recovery / pause / manual | `/workout`, `/workout/paused` | CameraCoachShell | Local pose engine / manual timer | Desktop / 3:157–3:158 mobile |
 | 3:141 | Results | `/results` / RESULTS | ResultsPage | Current aggregate | Desktop / 3:159 mobile |
 | 3:143 | Progress | `/progress` / PROGRESS | ProgressPage | Existing durable history | Desktop / responsive |
+
+## Sprint4B extension mapping
+
+Existing frames/tokens remain the design baseline. New compositions below have no claimed Figma node or fresh live Figma audit.
+
+| Screen/state | Code component | Data source | Responsive evidence |
+|---|---|---|---|
+| Hands-first modal | HandsOnboarding + stable CameraStage host | Local preferences/gesture store |360/390mobile,768/834tablet,landscape |
+| Voice foreground modal | VoiceSelection | Authenticated account voices/preferences | Wrapped tone controls/scroll/focus |
+| Coach and calendar | CoachPanel/SchedulePanel | Owned API proposals/calendar |44px controls/stacked mobile layout |
+| Full workout/rest/next/results | CameraCoachShell/RestView/NextExerciseView/SessionResults | Frozen runner snapshot/all durable sets | Primary workout cue first on mobile |
+
+Measured screenshots: [Sprint4B integration report](SPRINT_4B_INTEGRATION_REPORT.md).
