@@ -201,3 +201,8 @@ The initial canonical-name check missed existing user-authorized legacy provider
 ## 2026-09-30 — User-requested fresh canonical ElevenLabs retry
 
 Current canonical ELEVENLABS_API_KEY reread into process memory only, no legacy overwrite/env edit/OpenAI repeat/sourceDB. Real /v1/models again returnsHTTP401 invalid_api_key,1597ms; no voices/language/audio success claimed. Updated sanitized proof/report only; unchanged implementation gates remain green. A valid canonical ElevenLabs key is still required.
+
+
+## 2026-09-30 — Verified user-updated ElevenLabs candidate and canonical synchronization
+
+Root detected distinct canonical/legacy entries after the user updated the familiar legacy name. Freshlegacy-only candidate realmodelsHTTP200/11models,6accountvoices and oneRUFlash2.5MP3preview66499bytes60chars4900ms VERIFIED. Metadata confirmsKKeleven_v3 but noKK/ENaudio claimed. Canonical key synchronized atomically600 only after success and concurrent-changecheck; unrelatedconfig preserved, nosecretcopies/commits/sourceDB/OpenAIrepeat. Updated sanitized proof/report/FINAL; no source application changes or unrelated test reruns.
