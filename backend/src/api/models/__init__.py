@@ -9,6 +9,7 @@ Add domain models as they are created::
 """
 
 from . import (
+    exercises,  # noqa: F401
     profiles,  # noqa: F401
     users,  # noqa: F401
 )
