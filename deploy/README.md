@@ -1,18 +1,18 @@
 # Dungeon Master continuous deployment
 
-The [pipeline](../.github/workflows/ci.yml) has three separate jobs:
-**CI → Smoke tests → CD**. CI runs backend/frontend checks and unit tests through
-[checks.yml](../.github/workflows/checks.yml). Smoke tests then verify both
+The [pipeline](../.github/workflows/ci.yml) uses plain job names:
+**CI (Back)** and **CI (Front)** run backend/frontend checks and unit tests.
+**Smoke tests** then verifies both
 frontend production builds and an isolated Docker stack. If either stage fails
 or is cancelled, GitHub skips downstream jobs and CD cannot start.
 
-On `main`, [CD](../.github/workflows/cd.yml) verifies the exact SHA and successful
-CI/smoke jobs, builds both applications from that SHA, publishes the backend to
-GHCR and deploys to **https://dungeon-master.helpmake-id.live**.
+On `main`, **Verify release** checks the exact SHA and successful CI/smoke jobs.
+**Build release** builds both applications from that SHA and publishes the backend
+to GHCR. **CD** deploys to **https://dungeon-master.helpmake-id.live**.
 PR runs receive no deployment secrets and cannot deploy. The API gate checks
 completed prerequisite jobs in the current pipeline; it does not wait for the
-whole pipeline to finish while CD itself is still running. Manual CD requires
-a completed successful pipeline for its requested SHA.
+whole pipeline to finish while CD itself is still running. Manual runs execute
+the same CI and smoke prerequisites before deploying the tested SHA.
 
 The production Environment allows only `main`. Actions are pinned to verified
 commit hashes. Main pipelines and deployments queue without cancelling migrations; a VPS `flock`
@@ -48,14 +48,15 @@ environment values into `VITE_*` or the release artifact.
 make check-deploy             # Deployment regression tests, syntax and style
 make vps-status               # Deployment manifest and owned container status
 make vps-logs                 # Follow the owned backend logs
-gh workflow run cd.yml --ref main -f sha=FULL_SUCCESSFULLY_TESTED_COMMIT_SHA
+gh workflow run ci.yml --ref main # Run CI, smoke tests and CD manually
 ```
 
 `make release` and `make deploy` are the same commands used by Actions. They need
 the environment variables listed in their scripts and a Linux runner; `make deploy`
 also needs Playwright 1.58.2 with Chromium installed separately. No app dependency
-or generated lockfile was changed. Manual CD must target a commit containing this
-deployment implementation, use the `main` workflow ref, and have successful CI.
+or generated lockfile was changed. Manual runs must use the `main` workflow ref;
+they deploy only after their own CI and smoke jobs pass, including when automatic
+deployment is disabled with `DEPLOY_AUTOMATIC=false`.
 
 On the VPS:
 

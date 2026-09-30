@@ -32,14 +32,14 @@ requires the guides. Dungeon Master context stays in the backend overview.
 
 The root `Makefile` provides `fix`/`format`, `check`, `ci` and per-job CI targets.
 `.github/workflows/ci.yml` orchestrates CI, then smoke tests, then main-only CD.
-Backend/frontend checks run through reusable `checks.yml`; frontend production
+`CI (Back)` / `CI (Front)` run backend/frontend checks; frontend production
 and isolated Docker smoke tests must succeed before CD. A failed/cancelled
 prerequisite skips downstream jobs. `scripts/check_frontend_build.py` validates real HTTP
 asset delivery; its regression tests cover SPA fallbacks and incorrect builds.
 `scripts/check-docker.sh` owns the ephemeral stack described by
 `backend/docker-compose.ci.yml` and always cleans up its own project/volume.
 
-Reusable `.github/workflows/cd.yml` deploys successfully tested `main` SHAs. `deploy/`
+The pipeline's `CD` job deploys successfully tested `main` SHAs. `deploy/`
 contains the isolated VPS Compose, Nginx/setup templates, deployment state and
 public release checker. Root scripts validate CI trust, build release bundles,
 transfer them over verified SSH and run Chromium smoke. `make release`, `deploy`,

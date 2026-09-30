@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-REQUIRED_JOBS = {"CI / Backend", "CI / Frontend", "Smoke tests"}
+REQUIRED_JOBS = {"CI (Back)", "CI (Front)", "Smoke tests"}
 
 
 def github(path):

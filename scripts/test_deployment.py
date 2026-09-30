@@ -150,6 +150,14 @@ class ReleaseTrustTests(unittest.TestCase):
             check_release_ci.verify("main", "main")
         self.api.assert_not_called()
 
+    def test_old_namespaced_jobs_cannot_authorize_a_release(self):
+        self.jobs = [
+            {"name": name, "conclusion": "success"}
+            for name in ["CI / Backend", "CI / Frontend", "Smoke tests"]
+        ]
+        with self.assertRaises(ValueError):
+            check_release_ci.verify(SHA, "main", "123")
+
     def test_pr_fork_wrong_sha_wrong_branch_and_wrong_workflow_are_rejected(self):
         for field, value in [
             ("event", "pull_request"),

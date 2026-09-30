@@ -192,11 +192,11 @@ response validation bounds and custom error schemas are more explicit.
 
 ## GitHub Actions and local Make targets
 
-`.github/workflows/ci.yml` runs separate **CI → Smoke tests → CD** jobs.
-Reusable `checks.yml` runs `ci-backend` (Python 3.12/PostgreSQL 17) and
-`ci-frontend-checks` (Node 24). After CI passes, `smoke-tests` verifies frontend
-production builds and an isolated Compose stack. Only then can the reusable CD
-workflow deploy the same `main` SHA. Failed/cancelled prerequisites skip CD.
+`.github/workflows/ci.yml` runs separate **CI (Back)** and **CI (Front)** jobs,
+calling `ci-backend` (Python 3.12/PostgreSQL 17) and `ci-frontend-checks` (Node 24).
+After both pass, **Smoke tests** verifies frontend production builds and an
+isolated Compose stack. **Verify release** and **Build release** then prepare
+the exact tested SHA for **CD**. Failed/cancelled prerequisites skip CD.
 Pushes, pull requests and manual runs trigger the pipeline; PRs cannot deploy.
 Actions are pinned; CI/smoke permissions remain read-only and credentials are
 disposable. Deployment secrets and package access are scoped to main CD.

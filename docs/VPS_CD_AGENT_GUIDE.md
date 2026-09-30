@@ -312,12 +312,12 @@ WASM/MediaPipe. Документация FastAPI `/docs` не проксируе
 
 ## 7. CD через GitHub Actions
 
-`.github/workflows/ci.yml` выполняет отдельные jobs CI → Smoke tests → CD.
-Reusable `checks.yml` проверяет backend/frontend, затем smoke job проверяет
-production frontend и изолированный Docker stack. Только после их успеха
-reusable `.github/workflows/cd.yml` публикует тот же SHA через серверный script.
-Failed/cancelled CI или smoke блокирует CD. Поддерживается manual CD через
-`workflow_dispatch` с проверенным SHA. Автоматическая ветка — `main`; это не
+`.github/workflows/ci.yml` выполняет отдельные jobs `CI (Back)` / `CI (Front)` →
+`Smoke tests` → `Verify release` → `Build release` → `CD`, без вложенных workflow.
+Smoke job проверяет production frontend и изолированный Docker stack. Только
+после успеха CI/smoke проверяется и публикуется тот же SHA через серверный script.
+Failed/cancelled CI или smoke блокирует CD. Manual `workflow_dispatch` на `main`
+заново выполняет все проверки перед CD. Автоматическая ветка — `main`; это не
 разрешение публикации на другой сервер.
 
 Требования к реализации CD:
@@ -332,7 +332,7 @@ Failed/cancelled CI или smoke блокирует CD. Поддерживает
 4. Не передавать deploy secrets в PR jobs и не выполнять произвольный PR-код
    в привилегированном deploy job. Ограничить token permissions нужными
    `contents: read` / `packages: write` в соответствующих jobs.
-5. Использовать отдельную concurrency group для VPS с `cancel-in-progress: false`
+5. Сериализовать main pipeline для VPS с `cancel-in-progress: false`
    и серверный `flock`, чтобы SSH/manual deploy не пересекались. Не обрывать
    выполняющуюся миграцию из-за нового push. Для очереди релизов фиксировать SHA;
    В default режиме новая pending job заменяет прежнюю; если нужны все релизы,
