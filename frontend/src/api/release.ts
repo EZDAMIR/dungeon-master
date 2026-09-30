@@ -15,11 +15,12 @@ export type GenerationJob = { id: string; status: 'queued' | 'running' | 'comple
 export class ReleaseClient {
   readonly backend: BackendStore;
   constructor(backend: BackendStore) { this.backend = backend; }
+  capabilities(signal?: AbortSignal) { return this.backend.request<Capabilities>("/capabilities", undefined, "GET", signal); }
   preferences(signal?: AbortSignal) { return this.backend.request<VoicePreferences>('/coach/preferences', undefined, 'GET', signal); }
   savePreferences(value: Omit<VoicePreferences, 'revision'>, signal?: AbortSignal) { return this.backend.request<VoicePreferences>('/coach/preferences', value, 'PUT', signal); }
   voices(language: Language, signal?: AbortSignal) { return this.backend.request<VoiceList>(`/voices?language=${language}&page_size=6`, undefined, 'GET', signal); }
   preview(voice: string, language: Language, style: VoicePreferences['style'], signal: AbortSignal) { return this.backend.requestBlob(`/voices/${encodeURIComponent(voice)}/preview`, { language, style }, 'POST', signal); }
-  speech(body: { cue_id: string } | { message_id: string }, signal: AbortSignal) { return this.backend.requestBlob('/speech', body, 'POST', signal); }
-  turn(text: string, conversation_id: string | null, screen: string, signal?: AbortSignal) { return this.backend.request<CoachTurn>('/coach/turns', { operation_id: crypto.randomUUID(), text, conversation_id, screen, exercise_key: null }, 'POST', signal); }
+  speech(body: { cue_id: string; exercise_key?: string; spec_revision?: string } | { message_id: string }, signal: AbortSignal) { return this.backend.requestBlob('/speech', body, 'POST', signal); }
+  turn(text: string, conversation_id: string | null, screen: string, signal?: AbortSignal, operation_id: string = crypto.randomUUID()) { return this.backend.request<CoachTurn>('/coach/turns', { operation_id, text, conversation_id, screen, exercise_key: null }, 'POST', signal); }
   decide(id: string, decision: 'confirm' | 'reject', operation_id: string, signal?: AbortSignal) { return this.backend.request<Proposal>(`/coach/proposals/${encodeURIComponent(id)}/${decision}`, { operation_id }, 'POST', signal); }
 }

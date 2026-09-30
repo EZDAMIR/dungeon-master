@@ -1,8 +1,11 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { cueText } from "../../audio/cues";
+import { productText } from "../../shared/productCopy";
+import type { Language } from "../../api/release";
 import type { AudioCoordinator } from '../../audio/audioCoordinator';
 import type { ReleaseClient } from '../../api/release';
 import { GuideMachine, type GuideEvent } from './guideMachine';
-export function GuidedTour({ audio, client, screen, event, planReady = false, enabled = true, onDone }: { audio: AudioCoordinator; client?: ReleaseClient; screen: string; event?: GuideEvent; planReady?: boolean; enabled?: boolean; onDone?: () => void }) {
+export function GuidedTour({ audio, client, screen, event, language = "ru", planReady = false, enabled = true, onDone }: { audio: AudioCoordinator; client?: ReleaseClient; screen: string; event?: GuideEvent; language?: Language; planReady?: boolean; enabled?: boolean; onDone?: () => void }) {
   const [guide] = useState(() => new GuideMachine());
   const current = useSyncExternalStore(guide.subscribe, guide.getSnapshot);
   useEffect(() => {
@@ -18,9 +21,9 @@ export function GuidedTour({ audio, client, screen, event, planReady = false, en
     const target = document.querySelector<HTMLElement>(`[data-guide-target="${current.target}"]`);
     if (!target || target.closest('[inert]')) return;
     target.dataset.guideHighlight = 'true';
-    audio.enqueue({ id: `guide:${current.event}`, text: current.text, priority: 'guide', load: client ? signal => client.speech({ cue_id: current.cue }, signal) : undefined });
+    audio.enqueue({ id: `guide:${current.event}`, text: cueText(current.cue, language, current.text), priority: 'guide', load: client ? signal => client.speech({ cue_id: current.cue }, signal) : undefined });
     return () => { delete target.dataset.guideHighlight; };
-  }, [enabled, current, screen, client, audio]);
+  }, [enabled, current, screen, client, audio, language]);
   if (!enabled || !current) return null;
-  return <aside className="guided-tour" aria-label="Обучение"><p>{current.text}</p><div className="dm-actions"><button onClick={() => { audio.enqueue({ id: `repeat:${Date.now()}`, text: current.text, priority: 'guide', load: client ? signal => client.speech({ cue_id: current.cue }, signal) : undefined }); }}>Повторить</button><button onClick={() => { guide.skip(); }}>Пропустить шаг</button><button onClick={() => { audio.stop(); guide.stop(); onDone?.(); }}>Остановить обучение</button><button onClick={() => audio.setMuted(true)}>Продолжить без звука</button></div></aside>;
+  return <aside className="guided-tour" aria-label="Обучение"><p>{language === "ru" ? current.text : cueText(current.cue, language, current.text)}</p><div className="dm-actions"><button onClick={() => { audio.enqueue({ id: `repeat:${Date.now()}`, text: cueText(current.cue, language, current.text), priority: 'guide', load: client ? signal => client.speech({ cue_id: current.cue }, signal) : undefined }); }}>{productText(language, "repeat")}</button><button onClick={() => { guide.skip(); }}>{productText(language, "skipStep")}</button><button onClick={() => { audio.stop(); guide.stop(); onDone?.(); }}>{productText(language, "stopGuide")}</button><button onClick={() => audio.setMuted(true)}>{productText(language, "silent")}</button></div></aside>;
 }

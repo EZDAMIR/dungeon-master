@@ -35,3 +35,11 @@ it('preview change cancels previous card and expiry prevents delayed playback', 
   expect(audio.getSnapshot().activeId).not.toBe('first'); audio.stop(); now = 100;
   const load = vi.fn(); audio.enqueue({ id: 'expired', text: 'Expired', priority: 'guide', expiresAt: 99, load }); expect(load).not.toHaveBeenCalled(); audio.close();
 });
+it('semantic repeated errors use one request and preloaded cues reuse private audio', async () => {
+  const { audio, player } = setup(), load = vi.fn().mockResolvedValue(blob()); audio.configure(load); await audio.prepare(['depth_insufficient']);
+  for (let index = 0; index < 30; index++) audio.event({ type: 'workout.technique_error', at: index * 20, code: 'depth_insufficient', correction: 'Опустись немного ниже', severity: 'hint' });
+  await vi.waitFor(() => expect(player.play).toHaveBeenCalledOnce()); expect(load).toHaveBeenCalledOnce(); audio.close();
+});
+it('recording suspends narration without changing mute preference', () => {
+  const { audio, player } = setup(), load = vi.fn(); audio.setRecording(true); audio.enqueue({ id: 'chat', text: 'Chat', priority: 'chat', load }); expect(load).not.toHaveBeenCalled(); expect(audio.isMuted()).toBe(false); expect(player.play).not.toHaveBeenCalled(); audio.setRecording(false); audio.close();
+});

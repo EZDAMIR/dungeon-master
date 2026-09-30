@@ -1,3 +1,4 @@
+import { cueText } from "./cues";
 import { GestureAudio } from './gestureAudio';
 import type { VisionEvent } from '../types/vision';
 
@@ -12,6 +13,10 @@ export class AudioCoordinator extends GestureAudio {
   private queue: AudioIntent[] = [];
   private active: { intent: AudioIntent; controller: AbortController; generation: number } | null = null;
   private generation = 0;
+  private recording = false;
+  private lastGenericPrimary = "";
+  private prepared = new Map<string, Blob>();
+  private prepareController: AbortController | null = null;
   private muted = true;
   private unlocked = false;
   private blocked: AudioIntent | null = null;
@@ -27,15 +32,29 @@ export class AudioCoordinator extends GestureAudio {
   getSnapshot = () => this.snapshot;
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private publish(patch: Partial<AudioSnapshot>) { this.snapshot = { ...this.snapshot, ...patch }; for (const listener of this.listeners) listener(); }
-  configure(loader: ((cue: string, signal: AbortSignal) => Promise<Blob>) | null, language = 'ru') { this.stop(); this.loader = loader; this.language = language; this.seen.clear(); }
-  setScope(scope: string) { if (scope !== this.scope) { this.scope = scope; this.stop(); this.seen.clear(); } }
+  configure(loader: ((cue: string, signal: AbortSignal) => Promise<Blob>) | null, language = 'ru') { this.stop(); this.loader = loader; this.language = language; this.prepared.clear(); this.lastGenericPrimary = ""; this.seen.clear(); }
+  setScope(scope: string) { if (scope !== this.scope) { this.scope = scope; this.stop(); this.prepared.clear(); this.seen.clear(); } }
+  setRecording(value: boolean) { this.recording = value; if (value) this.stop(); }
+  async prepare(cues: readonly string[]) {
+    if (!this.loader || this.muted || this.recording) return;
+    this.prepareController?.abort(); const controller = new AbortController(); this.prepareController = controller;
+    const load = this.loader, pending = cues.slice(0, 8).filter(cue => !this.prepared.has(cue));
+    const worker = async () => {
+      while (pending.length && !controller.signal.aborted) {
+        const cue = pending.shift()!;
+        try { const blob = await load(cue, controller.signal); if (!controller.signal.aborted && blob.type.startsWith('audio/') && blob.size <= 1024 * 1024) { this.prepared.set(cue, blob); while (this.prepared.size > 8) this.prepared.delete(this.prepared.keys().next().value!); } } catch { /* Preview and visual coaching remain available. */ }
+      }
+    };
+    await Promise.all([worker(), worker()]);
+  }
+  private loadCue(cue: string, signal: AbortSignal) { const cached = this.prepared.get(cue); return cached ? Promise.resolve(cached) : this.loader!(cue, signal); }
   isMuted() { return this.muted; }
   status() { return this.snapshot.status === 'muted' ? 'Voice muted' : this.snapshot.provider === 'system' ? 'Системный голос' : this.snapshot.status === 'blocked' ? 'Включить звук' : this.snapshot.status === 'unavailable' ? 'Звук недоступен · субтитры' : 'Voice on'; }
   setMuted(muted: boolean) { this.muted = muted; if (muted) this.stop(); this.publish({ status: muted ? 'muted' : 'idle' }); }
   unlock() { this.unlocked = true; void super.enable(); if (this.blocked) { const intent = this.blocked; this.blocked = null; this.seen.delete(intent.id); this.enqueue(intent); } }
   override async enable() { this.unlock(); }
   enqueue(intent: AudioIntent) {
-    if (this.muted || !intent.text.trim()) return;
+    if (this.muted || this.recording || !intent.text.trim()) return;
     if ((this.seen.get(intent.id) ?? -Infinity) > this.now() - 8000) return;
     this.seen.set(intent.id, this.now());
     if (this.seen.size > 100) this.seen.delete(this.seen.keys().next().value!);
@@ -56,7 +75,7 @@ export class AudioCoordinator extends GestureAudio {
     if (this.url) { URL.revokeObjectURL(this.url); this.url = null; }
     try { window.speechSynthesis?.cancel(); } catch { /* Text remains visible. */ }
   }
-  stop() { this.blocked = null; this.queue = []; this.cancelActive(); this.publish({ status: this.muted ? 'muted' : 'idle', subtitle: '', activeId: null, provider: null }); }
+  stop() { this.prepareController?.abort(); this.prepareController = null; this.blocked = null; this.queue = []; this.cancelActive(); this.publish({ status: this.muted ? 'muted' : 'idle', subtitle: '', activeId: null, provider: null }); }
   private async drain() {
     if (this.active || this.muted || document.hidden) return;
     const intent = this.queue.shift(); if (!intent) return;
@@ -76,9 +95,9 @@ export class AudioCoordinator extends GestureAudio {
       this.player.onended = finish;
       this.player.onerror = () => { if (!current()) return; this.cancelActive(); this.publish({ status: 'unavailable', provider: null, activeId: null }); };
       await this.player.play();
-      if (current()) this.publish({ status: 'playing', provider: 'elevenlabs' });
+      if (current()) this.publish({ status: 'playing', provider: 'elevenlabs' }); else if (this.active === active) finish();
     } catch (error) {
-      if (!current()) return;
+      if (!current()) { if (this.active === active) finish(); return; }
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
         this.cancelActive(); this.blocked = intent; this.publish({ status: 'blocked', subtitle: intent.text, activeId: intent.id, provider: null }); return;
       }
@@ -101,9 +120,11 @@ export class AudioCoordinator extends GestureAudio {
     if (event.type === 'workout.completed') { cue = 'workout_complete'; text = 'Тренировка завершена'; kind = 'guide'; }
     if (event.type === 'workout.rep_completed' && event.accepted) { cue = 'good_rep'; text = 'Хорошее повторение'; kind = 'motivation'; }
     if (event.type === 'workout.generic_updated') {
+      if (event.view.primary === this.lastGenericPrimary) return;
+      this.lastGenericPrimary = event.view.primary;
       text = event.view.primary; cue = event.view.tracking ? '' : 'tracking_recovery'; kind = event.view.tracking ? 'technique' : 'recovery';
     }
-    if (text) this.enqueue({ id: `${cue}:${text}`, text, priority: kind, load: cue && this.loader ? signal => this.loader!(cue, signal) : undefined });
+    if (text) this.enqueue({ id: `${cue}:${text}`, text: cueText(cue, this.language, text), priority: kind, load: cue && this.loader ? signal => this.loadCue(cue, signal) : undefined });
   }
   override close() { this.stop(); this.unlocked = false; super.close(); }
 }

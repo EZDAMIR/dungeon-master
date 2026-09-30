@@ -89,7 +89,7 @@ export class BackendStore {
     storage: SafeStorage = browserStorage(),
   ) {
     this.client = client;
-    this.client.setAuthRecovery(() => this.refreshAuth());
+    this.client.setAuthRecovery(failedToken => this.state.auth?.accessToken !== failedToken && this.authVerified ? Promise.resolve(this.state.auth!.accessToken) : this.refreshAuth());
     this.storage = storage;
     this.queue = new PendingQueue(storage);
     const auth = readAuth(storage),

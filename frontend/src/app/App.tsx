@@ -54,6 +54,7 @@ import type { AppState } from "./modes";
 import { CameraStage } from "../features/workout/CameraStage";
 import { CameraPermissionView } from "../shared/components/CameraPermissionView";
 import { CameraErrorView } from "../shared/components/CameraErrorView";
+import { cueText } from "../audio/cues";
 import { AudioCoordinator } from "../audio/audioCoordinator";
 import { ReleaseClient, defaultVoice, type VoicePreferences } from "../api/release";
 import { VoiceSelection } from "../features/voice/VoiceSelection";
@@ -215,6 +216,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     return value;
   });
   const [release] = useState(() => new ReleaseClient(backend));
+  const pendingGreeting = useRef(false);
   const [voiceStorage] = useState(browserStorage);
   const cachedVoice = readVoiceCache(voiceStorage, remote.auth?.user.id ?? null);
   const [voicePreferences, setVoicePreferences] = useState<VoicePreferences>(cachedVoice?.preferences ?? defaultVoice);
@@ -239,12 +241,20 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
   }, [release, audio, remoteOwner, remoteConnecting, voiceStorage]);
   useEffect(() => {
     audio.setScope(`${state.mode}:${voicePreferences.revision}`);
+    const cues = state.mode === "PROFILE" ? ["welcome", "context_choice"] : state.mode === "PLAN" ? ["plan_ready", "camera_permission"] : state.mode === "CALIBRATION" ? ["tracking_recovery", "countdown_3", "countdown_2", "countdown_1", "start", "depth_insufficient", "too_fast", "incomplete_extension"] : [];
+    void audio.prepare(cues);
   }, [audio, state.mode, voicePreferences.revision]);
   useEffect(() => {
     const hidden = () => { if (document.hidden) audio.stop(); };
     document.addEventListener("visibilitychange", hidden);
     return () => document.removeEventListener("visibilitychange", hidden);
   }, [audio]);
+  useEffect(() => {
+    if (voiceOpen || !pendingGreeting.current) return;
+    pendingGreeting.current = false;
+    audio.enqueue({ id: `welcome:${voicePreferences.revision}`, text: cueText("welcome", voicePreferences.language), priority: "guide", load: signal => release.speech({ cue_id: "welcome" }, signal) });
+    void audio.prepare(["welcome", "camera_permission", "gesture_point", "gesture_pinch", "gesture_fist", "gesture_thumb", "tracking_recovery", "stop"]);
+  }, [audio, release, voiceOpen, voicePreferences]);
   const fake = fakeVisionEnabled(import.meta.env.DEV, window.location.search);
   useEffect(() => () => audio.close(), [audio]);
   const send = useCallback(
@@ -384,7 +394,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     if (!muted) void audio.enable();
     setVoice(audio.status());
   };
-  const planning = ["PROFILE", "PLAN", "PROGRESS", "RESULTS"].includes(
+  const planning = ["PROFILE", "PLAN", "PROGRESS", "RESULTS", "SCHEDULE"].includes(
     state.mode,
   );
   const inWorkout = !!poseStage(state.mode);
@@ -461,8 +471,8 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
             </div>
           )}
           <main data-guide-target={state.mode === "PROFILE" ? "context" : state.mode === "PLAN" ? "plan" : state.mode === "CALIBRATION" ? "calibration" : state.mode === "COUNTDOWN" ? "countdown" : state.mode === "WORKOUT" ? "workout" : state.mode === "RESULTS" ? "results" : state.mode === "PROGRESS" ? "progress" : undefined}>
-            {state.mode === "SCHEDULE" && <SchedulePanel client={release} audio={audio} />}
-            <GuidedTour audio={audio} client={release} screen={state.mode} event={guideEvent} planReady={!!remote.plan} enabled={guideEnabled && !voiceOpen} onDone={() => setGuideEnabled(false)} />
+            {state.mode === "SCHEDULE" && <SchedulePanel key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} language={voicePreferences.language} />}
+            <GuidedTour audio={audio} client={release} screen={state.mode} event={guideEvent} language={voicePreferences.language} planReady={!!remote.plan} enabled={guideEnabled && !voiceOpen} onDone={() => setGuideEnabled(false)} />
             {state.mode === "TUTORIAL" && (
               <TutorialPage onDone={() => send({ type: "TUTORIAL_DONE" })} />
             )}
@@ -622,7 +632,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
                 }}
               />
             )}
-            {planning && !voiceOpen && <CoachPanel key={state.mode + (remote.auth?.user.id ?? "")} client={release} audio={audio} screen={state.mode === "SCHEDULE" ? "schedule" : state.mode === "RESULTS" ? "results" : "planning"} onAction={(action) => {
+            {planning && !voiceOpen && <CoachPanel key={state.mode + (remote.auth?.user.id ?? "")} client={release} audio={audio} language={voicePreferences.language} screen={state.mode === "SCHEDULE" ? "schedule" : state.mode === "RESULTS" ? "results" : "planning"} onAction={(action) => {
               if (action === "open_plan" || action === "open_exercise" || action === "open_camera") send({ type: "OPEN_PLAN" });
               if (action === "open_schedule") send({ type: "OPEN_SCHEDULE" });
               if (action === "open_progress") send({ type: "OPEN_PROGRESS" });
@@ -635,7 +645,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
         </footer>
         <div className="audio-status"><span role="status">{audio.status()}</span><button onClick={() => { audio.unlock(); audio.setMuted(false); setVoice(audio.status()); }}>Включить звук</button><button onClick={() => audio.stop()}>Остановить звук</button><button onClick={() => setVoiceOpen(true)}>Голос тренера</button><button onClick={() => { setGuideEnabled(true); setGuideEvent("voice.selected"); }}>Обучение</button></div>
         {audioState.subtitle && <p className="audio-subtitle" aria-live="polite">{audioState.subtitle}</p>}
-        {voiceOpen && <VoiceSelection client={release} audio={audio} initial={voicePreferences} onComplete={(preferences, persisted) => { writeVoiceCache(voiceStorage, remote.auth?.user.id ?? null, preferences, persisted); setVoicePreferences(preferences); audio.configure((cue, signal) => release.speech({ cue_id: cue }, signal), preferences.language); audio.setMuted(!preferences.audio_enabled); setVoiceOpen(false); setGuideEnabled(true); setGuideEvent("voice.selected"); setVoice(audio.status()); }} />}
+        {voiceOpen && <VoiceSelection key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} initial={voicePreferences} onComplete={(preferences, persisted) => { pendingGreeting.current = true; writeVoiceCache(voiceStorage, remote.auth?.user.id ?? null, preferences, persisted); setVoicePreferences(preferences); audio.configure((cue, signal) => release.speech({ cue_id: cue }, signal), preferences.language); audio.setMuted(!preferences.audio_enabled); setVoiceOpen(false); setGuideEnabled(true); setGuideEvent("voice.selected"); setVoice(audio.status()); }} />}
         <label>
           <input
             type="checkbox"

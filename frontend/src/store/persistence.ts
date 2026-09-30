@@ -351,7 +351,13 @@ export function readProgress(
         row.dominant_error as Progress["recent_sessions"][number]["dominant_error"],
     });
   }
+  const generic = parseGenericErrors(p.generic_error_counts);
+  if (!generic) return null;
   return {
+    ...(typeof p.total_sets === "number" ? { total_sets: p.total_sets } : {}),
+    ...(typeof p.camera_total_reps === "number" ? { camera_total_reps: p.camera_total_reps } : {}),
+    ...(typeof p.manual_completed_sets === "number" ? { manual_completed_sets: p.manual_completed_sets } : {}),
+    ...(Object.keys(generic).length ? { generic_error_counts: generic } : {}),
     completed_sessions: p.completed_sessions,
     total_reps: p.total_reps,
     accepted_reps: p.accepted_reps,

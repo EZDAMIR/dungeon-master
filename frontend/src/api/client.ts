@@ -30,11 +30,11 @@ export class ApiClient {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
   private readonly transport: typeof fetch;
-  private recover: (() => Promise<string>) | null = null;
-  setAuthRecovery(recover: () => Promise<string>) { this.recover = recover; }
+  private recover: ((failedToken: string) => Promise<string>) | null = null;
+  setAuthRecovery(recover: (failedToken: string) => Promise<string>) { this.recover = recover; }
   constructor(
     baseUrl = import.meta.env.VITE_API_BASE_URL ||
-      "http://localhost:8000/api/v1",
+      "/api/v1",
     timeoutMs = 7000,
     transport: typeof fetch = (...args) => fetch(...args),
   ) {
@@ -83,7 +83,7 @@ export class ApiClient {
         },
       );
       if (response.status === 401 && options.token && this.recover && !recovered) {
-        const token = await this.recover();
+        const token = await this.recover(options.token);
         return this.request<T>(path, { ...options, token }, true);
       }
       requestId = response.headers.get("X-Request-ID");
@@ -141,7 +141,7 @@ export class ApiClient {
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
       });
       if (response.status === 401 && options.token && this.recover && !recovered) {
-        const token = await this.recover();
+        const token = await this.recover(options.token);
         return this.blob(path, { ...options, token }, true);
       }
       if (!response.ok) throw new ApiError("http", response.status);

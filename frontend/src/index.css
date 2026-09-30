@@ -933,3 +933,8 @@ button.source-chip {
 .audio-subtitle { padding: 16px; font-size: 22px; overflow-wrap: anywhere; }
 .audio-status { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 @media(max-width: 600px) { .voice-screen { padding: 20px; } .coach-panel { padding: 16px; } }
+[hidden] { display: none !important; }
+.app-shell header, .planning-content, .experience main, .schedule-panel, .coach-panel { min-width: 0; }
+.schedule-panel h2, .voice-screen h2 { overflow-wrap: anywhere; }
+@media(max-width: 834px) { .app-shell header { flex-wrap: wrap; } .planning-nav { order: 3; width: 100%; } .backend-badge { margin-left: auto; } }
+@media(max-width: 600px) { .app-shell { padding: 20px; } .schedule-panel h2, .voice-screen h2 { font-size: 40px; line-height: 1.1; } .availability-row input { width: 100%; } .schedule-panel input { width: 100%; margin-top: 8px; } .planning-nav a { flex: 1 1 40%; font-size: 14px; } .schedule-panel .dm-actions button { flex: 1 1 100%; } .audio-status button { flex: 1 1 45%; } }

@@ -22,7 +22,7 @@ export class GuideMachine {
   private seen = new Set<GuideEvent>();
   getSnapshot = () => this.stopped || this.step >= guideSteps.length ? null : guideSteps[this.step];
   consume(event: GuideEvent) { if (this.stopped) return; this.seen.add(event); this.advance(); this.publish(); }
-  private advance() { while (this.step < guideSteps.length && this.seen.has(guideSteps[this.step].event)) this.step++; }
+  private advance() { while (this.step < guideSteps.length && (this.seen.has(guideSteps[this.step].event) || (guideSteps[this.step].event === "rest.started" && this.seen.has("results.opened")))) this.step++; }
   skip() { this.step++; this.advance(); this.publish(); }
   stop() { this.stopped = true; this.publish(); }
   restart() { this.step = 0; this.stopped = false; this.seen.clear(); this.publish(); }
