@@ -146,6 +146,11 @@ CREATE DATABASE rights, and a running Docker daemon. The individual targets are:
   metadata, then verifies readiness during a database outage. It publishes no
   host ports and removes only its unique Compose project and test volume.
 
+Run the smoke tests directly with `make smoke-tests`, or select
+`make smoke-tests-frontend` / `make smoke-tests-docker`. These targets reuse the
+same production-asset and container checks included in CI. GitHub Actions labels
+the container job **Smoke tests (Docker)** and the corresponding steps explicitly.
+
 [GitHub Actions CI](.github/workflows/ci.yml) runs these three targets on pushes,
 pull requests and manual dispatch. It uses Python 3.12, Node 24 and PostgreSQL 17,
 with pinned action commits, read-only repository permission and test-only

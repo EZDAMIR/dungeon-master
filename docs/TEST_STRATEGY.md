@@ -205,6 +205,13 @@ both production builds and Docker checks. It never formats source. The backend
 fixture verifies a fresh migration chain and metadata drift, and Docker verifies
 the shipped runtime reaches the same schema without drift.
 
+### Smoke tests
+
+`make smoke-tests` runs the existing frontend and Docker checks together.
+`make smoke-tests-frontend` and `make smoke-tests-docker` select either suite.
+The CI frontend target delegates to the named frontend smoke target; the Docker
+job is labeled **Smoke tests (Docker)** and calls the named Docker smoke target.
+
 The frontend build checker starts a bounded temporary preview for each base,
 compares served JS/CSS/model/WASM bytes and rejects development fake controls.
 Five HTTP regression tests exercise successful root/subdirectory delivery,

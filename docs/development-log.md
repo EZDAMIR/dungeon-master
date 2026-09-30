@@ -501,3 +501,16 @@ The local Docker daemon remains unavailable, so the shipped image/runtime checks
 are assigned to the new hosted Docker job. The previous absence of hosted CI is
 resolved by this workflow; its first run follows the authorized push. No existing
 Colima profile, environment file or application database was changed by this work.
+
+## Sprint 3 maintenance — Explicit smoke-test naming (2026-09-30)
+
+Added root `smoke-tests`, `smoke-tests-frontend` and `smoke-tests-docker` targets
+for the existing checks. Frontend CI delegates to its smoke target after coverage;
+`ci-docker` remains an alias to the Docker smoke target. GitHub Actions labels the
+container job **Smoke tests (Docker)** and identifies smoke tests in its step
+names. Updated the Make help, README and testing guide. Check behavior is intact;
+no application code or test assertions changed.
+
+Verification: Make target dry runs, `make check`, workflow validation and both
+frontend production smoke checks passed. Local Docker execution still requires
+a running daemon; hosted verification is triggered by the authorized push.

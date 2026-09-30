@@ -4,6 +4,7 @@ RUFF ?= backend/.venv/bin/ruff
 
 .DEFAULT_GOAL := help
 .PHONY: help fix format check check-architecture check-automation check-backend check-frontend ci ci-backend ci-frontend ci-docker
+.PHONY: smoke-tests smoke-tests-frontend smoke-tests-docker
 
 help:
 	@echo 'make fix          Format Python and apply frontend lint fixes'
@@ -13,6 +14,7 @@ help:
 	@echo 'make ci-backend   Run backend checks and database-backed tests'
 	@echo 'make ci-frontend  Run frontend checks, tests and both production builds'
 	@echo 'make ci-docker    Build and smoke-test an isolated Docker stack'
+	@echo 'make smoke-tests  Run frontend and Docker smoke tests'
 
 fix:
 	$(MAKE) -C backend format
@@ -49,10 +51,17 @@ ci-backend: check-architecture check-automation
 ci-frontend: check-frontend
 	$(PYTHON) -m unittest discover -s scripts -p 'test_*.py'
 	$(NPM) --prefix frontend run test:coverage
+	$(MAKE) smoke-tests-frontend
+
+smoke-tests: smoke-tests-frontend smoke-tests-docker
+
+smoke-tests-frontend:
 	$(NPM) --prefix frontend run build
 	$(PYTHON) scripts/check_frontend_build.py
 	$(NPM) --prefix frontend run build -- --base=/dungeon-master/
 	$(PYTHON) scripts/check_frontend_build.py --base=/dungeon-master/
 
-ci-docker:
+ci-docker: smoke-tests-docker
+
+smoke-tests-docker:
 	bash scripts/check-docker.sh
