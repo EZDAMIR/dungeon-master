@@ -1,6 +1,7 @@
 export type HandLandmark = { x: number; y: number; z: number }
 export type HandRecognitionSample = {
   at: number
+  aspectRatio?: number
   landmarks: readonly HandLandmark[]
   gesture: { name: string; confidence: number } | null
   handedness: 'Left' | 'Right' | null

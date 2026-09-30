@@ -19,20 +19,19 @@ export function sample(at: number, ratio = .6, name = 'Open_Palm', confidence = 
 }
 
 describe('cursor mapping', () => {
-  it('mirrors exactly once and maps ROI corners to viewport', () => {
-    const c = new CursorMapper()
-    const left = c.map({ x: .85, y: .15 }, { width: 100, height: 200 })
-    expect(left.x).toBeCloseTo(0); expect(left.y).toBe(0)
-    c.reset()
-    expect(c.map({ x: .15, y: .85 }, { width: 100, height: 200 })).toEqual({ x: 100, y: 200 })
+  it('mirrors exactly once on initialization and retains location on clutch', () => {
+    const left = new CursorMapper().map({x:.85,y:.15},{width:100,height:200},0)
+    expect(left.x).toBeCloseTo(0);expect(left.y).toBe(0)
+    const right=new CursorMapper().map({x:.15,y:.85},{width:100,height:200},0)
+    expect(right.x).toBeCloseTo(100);expect(right.y).toBe(200)
+    const c=new CursorMapper();c.map({x:.5,y:.5},{width:100,height:100},0);c.reset()
+    expect(c.map({x:.1,y:.1},{width:200,height:100},200)).toEqual({x:100,y:50})
   })
-  it('clamps, smooths, scales after resize and resets', () => {
-    const c = new CursorMapper()
-    expect(c.map({ x: 2, y: -1 }, { width: 100, height: 100 })).toEqual({ x: 0, y: 0 })
-    expect(c.map({ x: -1, y: 2 }, { width: 100, height: 100 })).toEqual({ x: 25, y: 25 })
-    expect(c.map({ x: -1, y: 2 }, { width: 200, height: 200 })).toEqual({ x: 87.5, y: 87.5 })
-    c.reset()
-    expect(c.map({ x: .5, y: .5 }, { width: 200, height: 100 })).toEqual({ x: 100, y: 50 })
+  it('smooths with elapsed time and scales position after resize', () => {
+    const c=new CursorMapper();c.map({x:.5,y:.5},{width:100,height:100},0)
+    const p=c.map({x:.43,y:.57},{width:100,height:100},80)
+    expect(p.x).toBeCloseTo(50+10*(1-Math.exp(-1)))
+    c.reset();expect(c.map({x:.9,y:.1},{width:200,height:200},1000)).toEqual({x:p.x*2,y:p.y*2})
   })
 })
 describe('pinch hysteresis', () => {
@@ -105,11 +104,16 @@ describe('gesture engine sequences', () => {
   })
   it('rejects low confidence; cancels candidate on loss and recovers', () => {
     const e = new GestureEngine()
-    expect(e.update(sample(0, .6, 'Thumb_Up', .5), 0, viewport).some(x => x.type === 'gesture.candidate')).toBe(false)
-    e.reset()
+    expect(new GestureEngine().update(sample(0, .6, 'Thumb_Up', .5), 0, viewport).some(x => x.type === 'gesture.candidate')).toBe(false)
+    const guarded = new GestureEngine()
+    guarded.reset()
+    expect(guarded.update(sample(0,.6,'Thumb_Up'),0,viewport).some(event=>event.type==='gesture.confirmed')).toBe(false)
     const events = lost.frames.flatMap(at => e.update(at === null ? null : sample(at, .6, 'Thumb_Up'), at ?? 350, viewport))
     expect(events.some(x => x.type === 'gesture.cancelled')).toBe(true)
     expect(events.filter(x => x.type === 'tracking.acquired')).toHaveLength(2)
-    expect(events.filter(x => x.type === 'gesture.confirmed')).toHaveLength(1)
+    expect(events.filter(x => x.type === 'gesture.confirmed')).toHaveLength(0)
+    for(const at of [1400,1700])e.update(sample(at,.6,'Open_Palm'),at,viewport)
+    e.update(sample(1750,.6,'Thumb_Up'),1750,viewport)
+    expect(e.update(sample(2350,.6,'Thumb_Up'),2350,viewport).some(event=>event.type==='gesture.confirmed')).toBe(true)
   })
 })

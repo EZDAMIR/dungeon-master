@@ -65,6 +65,11 @@ export class GestureStore {
     handProgress: 0,
     qualityHint: null,
   };
+  onPhysicalInteraction: () => void = () => {};
+  private scope: HTMLElement | null = null;
+  private scopedListeners = new Set<(event: VisionEvent) => void>();
+  subscribeEvents = (callback: (event: VisionEvent) => void) => { this.scopedListeners.add(callback); return () => { this.scopedListeners.delete(callback) } };
+  setTargetScope(scope: HTMLElement | null) { this.scope = scope; this.registry.setScope(scope); this.publish({ focused: null, candidate: null, progress: 0 }) }
   onEvent: (event: VisionEvent, tutorial: TutorialState) => AppState | void =
     () => {};
   connect(
@@ -250,6 +255,12 @@ export class GestureStore {
       }
     }
     const targetMode = this.mode;
+    const hadScope = this.scope !== null;
+    this.scopedListeners.forEach(callback => callback(event));
+    if (hadScope) {
+      if (event.type === 'gesture.confirmed' && event.command === 'select' && event.targetId) this.registry.activate(event.targetId);
+      return;
+    }
     const state = this.onEvent(event, tutorial);
     if (state) this.setAppState(state);
     if (

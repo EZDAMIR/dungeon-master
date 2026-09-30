@@ -95,6 +95,9 @@ export class RealVisionSource {
       if (event.type === "camera.error") this.dispose();
     });
   }
+  configureInput(settings: import("../../vision/gestures/cursorMapper").CursorSettings) { this.engine.configureInput(settings) }
+  requireNeutralRelease() { this.engine.requireRelease() }
+  cancelPartial(at = now()) { this.session.cancelPartial(at) }
   finishGeneric() {
     return this.session.finishGeneric(now());
   }

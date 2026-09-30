@@ -33,10 +33,15 @@ export class PoseSession {
     language: Language = "ru",
   ) {
     this.reset();
+    this.target = Number.isInteger(target) && target >= 1 && target <= 100 ? target : 5;
     const analyzer = analyzerFactory(key, spec, target, language);
     this.generic = analyzer instanceof GenericAnalyzer ? analyzer : null;
+    this.manual = key !== "bodyweight_squat" && this.generic === null;
     return this.generic !== null;
   }
+  cancelPartial(at: number) { this.generic?.cancelPartial(); this.analyzer?.cancelPartial(at) }
+  private target = 5;
+  private manual = false;
   private calibration = new PoseCalibration();
   private smoother = new PoseSmoother();
   private policy = new ErrorPolicy();
@@ -96,6 +101,7 @@ export class PoseSession {
   }
   reset() {
     this.generic = null;
+    this.manual = false;
     this.calibration.reset();
     this.smoother.reset();
     this.policy.reset();
@@ -145,6 +151,7 @@ export class PoseSession {
   }
   update(raw: PoseRecognitionSample | null, at: number): VisionEvent[] {
     const events: VisionEvent[] = [];
+    if(this.manual) return events;
     if (this.generic) {
       const sample = validPose(raw) ? this.smoother.update(raw) : null;
       this.latest = sample;
@@ -215,7 +222,7 @@ export class PoseSession {
         this.profile = result.profile;
         this.calibrationEmitted = true;
         if (this.analyzer) this.analyzer.recalibrate(result.profile);
-        else this.analyzer = new SquatAnalyzer(result.profile);
+        else this.analyzer = new SquatAnalyzer(result.profile, this.target);
         events.push({
           type: "calibration.completed",
           at,
