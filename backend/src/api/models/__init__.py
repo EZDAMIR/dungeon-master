@@ -8,5 +8,9 @@ Add domain models as they are created::
     from . import entity   # noqa: F401
 """
 
-from . import users  # noqa: F401
+from . import (
+    profiles,  # noqa: F401
+    users,  # noqa: F401
+)
+from .profiles import ProfileDoesNotExist  # noqa: F401
 from .users import UserDoesNotExist  # noqa: F401

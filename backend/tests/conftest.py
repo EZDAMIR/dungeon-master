@@ -102,3 +102,25 @@ async def database(disposable_database_url, monkeypatch):
 
 def pytest_configure(config):
     config.addinivalue_line('markers', 'xdist_group(name): keep disposable DB tests together')
+
+
+@pytest_asyncio.fixture
+async def guest(database, client):
+    response = await client.post('/api/v1/auth/guest')
+    assert response.status_code == 200
+    data = response.json()
+    return {'Authorization': 'Bearer ' + data['access_token']}, data['user']['id']
+
+
+@pytest.fixture
+def profile_payload():
+    return {
+        'goal': 'general_fitness',
+        'experience_level': 'beginner',
+        'days_per_week': 3,
+        'session_minutes': 20,
+        'equipment': ['none'],
+        'locale': 'ru-RU',
+        'timezone': 'Asia/Almaty',
+        'confirmed_constraints': [],
+    }

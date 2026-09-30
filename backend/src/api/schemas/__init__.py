@@ -29,4 +29,7 @@ __all__ = [
     'UserCurrent',
 ]
 
-from . import users  # noqa: F401
+from . import (
+    profiles,  # noqa: F401
+    users,  # noqa: F401
+)
