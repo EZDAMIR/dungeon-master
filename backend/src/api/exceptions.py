@@ -74,3 +74,8 @@ class HTTPInternalServerException(AppException):
 class HTTPServiceUnavailableException(AppException):
     status_code = 503
     default_detail = 'Service unavailable'
+
+
+class HTTPTooManyRequestsException(AppException):
+    status_code = 429
+    default_detail = 'Request budget exceeded'

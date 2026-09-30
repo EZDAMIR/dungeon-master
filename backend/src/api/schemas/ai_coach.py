@@ -165,6 +165,8 @@ class AIUserProfileV1(StrictObject):
 
 
 class AIProfileGet(pydantic.BaseModel):
+    input_revision: str | None = None
+    provenance: dict | None = None
     id: uuid.UUID
     version: typing.Annotated[int, pydantic.Field(strict=True, ge=1)]
     profile: AIUserProfileV1
@@ -239,6 +241,7 @@ class AIPlanV1(StrictObject):
 
 
 class ExerciseSpecGet(pydantic.BaseModel):
+    spec_revision: uuid.UUID
     id: uuid.UUID
     exercise_key: Identifier
     display_name: Title

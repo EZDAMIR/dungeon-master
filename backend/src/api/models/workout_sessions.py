@@ -101,6 +101,21 @@ WorkoutSetResults = sa.Table(
         nullable=False,
         index=True,
     ),
+    sa.Column(
+        'assessment_mode',
+        pg.ENUM('camera', 'manual', name='workout_sets_assessment_enum'),
+        nullable=False,
+        server_default='camera',
+    ),
+    sa.Column(
+        'completion_status',
+        pg.ENUM('completed', 'partial', name='workout_sets_completion_enum'),
+        nullable=False,
+        server_default='completed',
+    ),
+    sa.Column('spec_revision', sa.UUID, nullable=True),
+    sa.Column('target_snapshot', pg.JSONB, nullable=True),
+    sa.Column('engine_version', sa.Text, nullable=False),
     sa.Column('set_index', sa.Integer, nullable=False),
     sa.Column('total_reps', sa.Integer, nullable=False),
     sa.Column('accepted_reps', sa.Integer, nullable=False),
@@ -124,6 +139,13 @@ WorkoutSetResults = sa.Table(
         sa.DateTime(timezone=True),
         nullable=False,
         server_default=sa.func.now(),
+    ),
+    sa.CheckConstraint(
+        sa.func.length(sa.column('engine_version')).between(1, 50), name='ck_set_engine_length'
+    ),
+    sa.CheckConstraint(
+        sa.or_(sa.column('assessment_mode') != 'manual', sa.column('accepted_reps') == 0),
+        name='ck_manual_no_accepted',
     ),
     sa.UniqueConstraint('session_id', 'set_index', name='uq_set_results_index'),
     sa.UniqueConstraint('session_id', 'client_set_id', name='uq_set_results_client'),
@@ -222,7 +244,10 @@ async def set_create(
         started = parent is not None
         if parent is None:
             parent = await session_get(session, user_id, session_id)
-        if engine_version != parent['client_engine_version']:
+        if (
+            parent['client_engine_version'] != 'workout-session-v1'
+            and engine_version != parent['client_engine_version']
+        ):
             raise SessionConflict
         exercise = await session.fetch_one(
             models.exercises.Exercises.select().where(
@@ -235,7 +260,15 @@ async def set_create(
         )
         if exercise is None:
             raise SetExerciseDoesNotExist
-        values = dict(data)
+        values = {**data, 'engine_version': engine_version}
+        if values.get('spec_revision'):
+            values['spec_revision'] = uuid.UUID(values['spec_revision'])
+            try:
+                await models.ai_coach.spec_revision_get(
+                    session, user_id, exercise_key, values['spec_revision']
+                )
+            except models.AISourceNotFound as exc:
+                raise SetExerciseDoesNotExist from exc
         values.update(
             client_set_id=uuid.UUID(data['client_set_id']),
             session_id=session_id,
@@ -256,7 +289,7 @@ async def set_create(
             return {
                 **existing,
                 'exercise_key': exercise_key,
-                'engine_version': parent['client_engine_version'],
+                'engine_version': existing['engine_version'],
             }
         if not started:
             raise SessionConflict
@@ -268,7 +301,7 @@ async def set_create(
         return {
             **created,
             'exercise_key': exercise_key,
-            'engine_version': parent['client_engine_version'],
+            'engine_version': created['engine_version'],
         }
 
 
@@ -279,6 +312,10 @@ async def session_complete(
     session_id: uuid.UUID,
     data: dict,
 ) -> dict:
+    data = {
+        **data,
+        'summary': {key: value for key, value in data['summary'].items() if value is not None},
+    }
     completed_at = datetime.datetime.fromisoformat(data['completed_at'])
     async with session.transaction():
         updated = await session.fetch_one(
@@ -313,7 +350,21 @@ async def session_complete(
             key: sum(row[key] for row in rows)
             for key in ['total_reps', 'accepted_reps', 'duration_ms']
         }
-        totals['rejected_reps'] = totals['total_reps'] - totals['accepted_reps']
+        camera_rows = [row for row in rows if row['assessment_mode'] == 'camera']
+        camera_total = sum(row['total_reps'] for row in camera_rows)
+        totals['rejected_reps'] = camera_total - totals['accepted_reps']
+        for key, value in {
+            'total_sets': len(rows),
+            'camera_total_reps': camera_total,
+            'manual_completed_sets': sum(
+                row['assessment_mode'] == 'manual' and row['completion_status'] == 'completed'
+                for row in rows
+            ),
+        }.items():
+            if data['summary'].get(key) is not None:
+                totals[key] = value
+            else:
+                data['summary'].pop(key, None)
         totals['error_counts'] = {
             key: sum(row['error_counts'][key] for row in rows)
             for key in ['depth_insufficient', 'too_fast', 'incomplete_extension']

@@ -23,6 +23,9 @@ class RecentSession(pydantic.BaseModel):
 
 
 class ProgressSummary(pydantic.BaseModel):
+    camera_total_reps: int = 0
+    total_sets: int = 0
+    manual_completed_sets: int = 0
     completed_sessions: typing.Annotated[int, pydantic.Field(strict=True, ge=0)]
     total_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=0)]
     accepted_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=0)]

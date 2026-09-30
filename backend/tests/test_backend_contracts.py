@@ -156,6 +156,12 @@ async def test_set_controller_sends_only_persistence_fields(monkeypatch, set_pay
         if key not in {'exercise_key', 'engine_version'}
     }
     expected['generic_error_counts'] = {}
+    expected.update(
+        assessment_mode='camera',
+        completion_status='completed',
+        spec_revision=None,
+        target_snapshot=None,
+    )
     persist.assert_awaited_once_with(
         user.id,
         session_id,

@@ -19,6 +19,7 @@ ERRORS = responses.gen_responses(
         responses.APIResponseBadRequest,
         responses.APIResponseNotFound,
         responses.APIResponseConflict,
+        responses.APIResponseBudgetExceeded,
     ]
 )
 
@@ -117,7 +118,10 @@ async def review_fact(
 @router.post(
     '/ai-profile/generate',
     summary='Generate Sprint 4A personalized profile',
-    dependencies=[permission.PermsRequired([permission.Perm.PLAN_GENERATE])],
+    dependencies=[
+        permission.PermsRequired([permission.Perm.PLAN_GENERATE]),
+        fastapi.Depends(controllers.speech.limit_ip),
+    ],
     response_model=schemas.ai_coach.AIProfileGet,
     response_description='Profile with coach persona and source highlights',
     responses=ERRORS,
@@ -160,7 +164,10 @@ async def get_exercise_spec(
 @router.post(
     '/exercise-specs/{exercise_key}/regenerate',
     summary='Regenerate Sprint 4A movement specification',
-    dependencies=[permission.PermsRequired([permission.Perm.PLAN_GENERATE])],
+    dependencies=[
+        permission.PermsRequired([permission.Perm.PLAN_GENERATE]),
+        fastapi.Depends(controllers.speech.limit_ip),
+    ],
     response_model=schemas.ai_coach.ExerciseSpecGet,
     response_description='Validated or manual-only owned specification',
     responses=ERRORS,

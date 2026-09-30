@@ -10,10 +10,9 @@ def dominant_error(counts: dict) -> str | None:
 
 async def summary(current_user: schemas.UserCurrent, recent_limit: int) -> dict:
     data = await models.progress.progress_summary(current_user.id, recent_limit)
-    data['rejected_reps'] = data['total_reps'] - data['accepted_reps']
-    data['acceptance_rate'] = (
-        data['accepted_reps'] / data['total_reps'] if data['total_reps'] else 0.0
-    )
+    camera_total = data.get('camera_total_reps', data['total_reps'])
+    data['rejected_reps'] = camera_total - data['accepted_reps']
+    data['acceptance_rate'] = data['accepted_reps'] / camera_total if camera_total else 0.0
     for row in data['recent_sessions']:
         row['generic_error_counts'] = row.get('generic_error_counts') or {}
         legacy = row.pop('error_counts')

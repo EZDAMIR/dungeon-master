@@ -16,6 +16,21 @@ async def progress_summary(session, user_id: uuid.UUID, recent_limit: int) -> di
     totals = await session.fetch_one(
         sa.select(
             sa.func.count().label('completed_sessions'),
+            sa.func.coalesce(
+                sa.func.sum(
+                    sa.func.coalesce(
+                        sessions.c.summary['camera_total_reps'].as_integer(),
+                        sessions.c.summary['total_reps'].as_integer(),
+                    )
+                ),
+                0,
+            ).label('camera_total_reps'),
+            sa.func.coalesce(
+                sa.func.sum(sessions.c.summary['total_sets'].as_integer()), 0
+            ).label('total_sets'),
+            sa.func.coalesce(
+                sa.func.sum(sessions.c.summary['manual_completed_sets'].as_integer()), 0
+            ).label('manual_completed_sets'),
             *[
                 sa.func.coalesce(sa.func.sum(sessions.c.summary[key].as_integer()), 0).label(
                     key,
@@ -61,6 +76,19 @@ async def progress_summary(session, user_id: uuid.UUID, recent_limit: int) -> di
         )
         .limit(recent_limit),
     )
+    set_totals = await session.fetch_one(
+        sa.select(
+            sa.func.count().label('total_sets'),
+            sa.func.count()
+            .filter(
+                sets.c.assessment_mode == 'manual', sets.c.completion_status == 'completed'
+            )
+            .label('manual_completed_sets'),
+        )
+        .select_from(sets.join(sessions))
+        .where(sessions.c.user_id == user_id, sessions.c.status == 'completed')
+    )
+    totals.update(set_totals)
     totals['error_counts'] = {key: totals.pop(key) for key in errors}
     totals['recent_sessions'] = recent
     totals.pop('duration_ms')

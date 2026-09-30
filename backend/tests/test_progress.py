@@ -14,6 +14,9 @@ async def test_progress_empty_totals_history_isolation(
     headers, _ = guest
     empty = (await client.get('/api/v1/progress/summary', headers=headers)).json()
     assert empty == {
+        'camera_total_reps': 0,
+        'total_sets': 0,
+        'manual_completed_sets': 0,
         'completed_sessions': 0,
         'total_reps': 0,
         'accepted_reps': 0,

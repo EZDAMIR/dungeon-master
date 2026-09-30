@@ -158,3 +158,30 @@ def test_configure_logging_production():
 
     root = logging.getLogger()
     assert any(isinstance(h.formatter, JSONFormatter) for h in root.handlers)
+
+
+def test_access_log_strips_oauth_callback_secrets_in_both_formats():
+    from src.core.logging import HumanFormatter
+    from src.core.logging import JSONFormatter
+    from src.core.logging import PrivateRequestFilter
+
+    for formatter in (JSONFormatter(), HumanFormatter()):
+        record = logging.LogRecord(
+            'uvicorn.access',
+            logging.INFO,
+            '',
+            0,
+            '%s - "%s %s HTTP/%s" %d',
+            (
+                '127.0.0.1',
+                'GET',
+                '/api/v1/integrations/google/callback?code=private-code&state=private-state',
+                '1.1',
+                200,
+            ),
+            None,
+        )
+        assert PrivateRequestFilter().filter(record)
+        output = formatter.format(record)
+        assert '/api/v1/integrations/google/callback' in output
+        assert 'private-code' not in output and 'private-state' not in output
