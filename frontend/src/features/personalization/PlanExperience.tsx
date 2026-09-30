@@ -23,12 +23,14 @@ export function PlanExperience({
   backend,
   onStart,
   onContext,
+  onDetails,
 }: {
   plan: AIPlanMetadata;
   planId: string;
   backend: BackendStore;
   onStart: (exercise: ActiveExercise) => void;
   onContext: () => void;
+  onDetails?: () => void;
 }) {
   const [details, setDetails] = useState<{
       item: AIPlanExercise;
@@ -51,6 +53,7 @@ export function PlanExperience({
           ? null
           : await backend.exerciseSpec(item.exercise_key);
       setDetails({ item, spec });
+      onDetails?.();
     } catch {
       setError("Не удалось открыть инструкции. Повторите после подключения.");
     } finally {
@@ -70,6 +73,7 @@ export function PlanExperience({
       },
       spec: parsed.valid ? parsed.spec : null,
       planId,
+      specRevision: spec?.spec_revision ?? null,
       language: plan.coach_persona.language,
     });
   };
@@ -236,6 +240,7 @@ export function PlanExperience({
       <dialog
         ref={dialog}
         className="dm-sheet"
+        data-guide-target="exercise"
         onCancel={() => setDetails(null)}
       >
         {details && (

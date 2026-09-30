@@ -6,6 +6,7 @@ import { readRoute, routeUrl, type ContextStep } from "./routes";
 export function useBrowserRoutes(
   state: AppState,
   send: (action: AppAction) => AppState,
+  suspended = false,
 ) {
   const base = import.meta.env.BASE_URL;
   const [contextStep, setContextStep] = useState<ContextStep>(
@@ -16,6 +17,7 @@ export function useBrowserRoutes(
   const step = useRef(contextStep);
   const mode = useRef(state.mode);
   useLayoutEffect(() => {
+    if (suspended) return;
     const onPop = () => {
       const route = readRoute(window.location.pathname, base);
       const next = send({ type: "NAVIGATE", mode: route.mode });
@@ -31,8 +33,9 @@ export function useBrowserRoutes(
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [base, send]);
+  }, [base, send, suspended]);
   useLayoutEffect(() => {
+    if (suspended) return;
     // A normal return to context opens intake; browser history restores its step.
     if (
       state.mode === "PROFILE" &&
@@ -64,6 +67,6 @@ export function useBrowserRoutes(
     }
     first.current = false;
     previousMode.current = state.mode;
-  }, [base, contextStep, state.mode]);
+  }, [base, contextStep, state.mode, suspended]);
   return { contextStep, setContextStep };
 }

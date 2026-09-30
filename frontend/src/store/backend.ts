@@ -1,3 +1,4 @@
+import type { GenerationJob } from "../api/release";
 import type {
   AIContext,
   AIProfileResponse,
@@ -7,7 +8,7 @@ import type {
   PersonaKey,
 } from "../api/aiCoach";
 import { ApiClient, ApiError } from "../api/client";
-import { createGuest, getMe } from "../api/auth";
+import { createGuest, getMe, refreshGuest } from "../api/auth";
 import { getExercises } from "../api/exercises";
 import { getProfile, putProfile } from "../api/profile";
 import { generatePlan, getCurrentPlan } from "../api/plans";
@@ -37,6 +38,7 @@ import {
   type PendingEntry,
 } from "./persistence";
 export type BackendSnapshot = {
+  generationJob: GenerationJob | null;
   context: AIContext | null;
   documents: DocumentSource[];
   aiProfile: AIProfileResponse | null;
@@ -73,6 +75,7 @@ export function defaultProfile(): ProfileUpdate {
 export class BackendStore {
   private state: BackendSnapshot;
   private listeners = new Set<() => void>();
+  private refreshFlight: Promise<string> | null = null;
   private bootstrapFlight: Promise<void> | null = null;
   private syncFlight: Promise<void> | null = null;
   private controller = new AbortController();
@@ -86,6 +89,7 @@ export class BackendStore {
     storage: SafeStorage = browserStorage(),
   ) {
     this.client = client;
+    this.client.setAuthRecovery(() => this.refreshAuth());
     this.storage = storage;
     this.queue = new PendingQueue(storage);
     const auth = readAuth(storage),
@@ -97,6 +101,7 @@ export class BackendStore {
         ? readProfile(draft.profile)
         : null;
     this.state = {
+      generationJob: null,
       context: null,
       documents: [],
       aiProfile: null,
@@ -175,21 +180,9 @@ export class BackendStore {
     try {
       let auth = this.state.auth ?? readAuth(this.storage);
       if (auth) {
-        try {
-          auth = {
-            ...auth,
-            user: await getMe(
-              this.client,
-              auth.accessToken,
-              this.controller.signal,
-            ),
-          };
-        } catch (error) {
-          if (error instanceof ApiError && error.status === 401) {
-            auth = null;
-            this.authVerified = false;
-          } else throw error;
-        }
+        auth = { ...auth, user: await getMe(this.client, auth.accessToken, this.controller.signal) };
+        // ApiClient may have refreshed while verifying. Preserve its renewed access token.
+        if (this.state.auth?.user.id === auth.user.id) auth = { ...auth, accessToken: this.state.auth.accessToken, expiresAt: this.state.auth.expiresAt };
       }
       if (!auth) {
         const response = await createGuest(this.client, this.controller.signal);
@@ -364,6 +357,26 @@ export class BackendStore {
       }
     }
   }
+  refreshAuth(): Promise<string> {
+    if (this.refreshFlight) return this.refreshFlight;
+    const owner = this.state.auth?.user.id;
+    this.refreshFlight = refreshGuest(this.client, this.controller.signal).then(response => {
+      if (owner && response.user.id !== owner) throw new ApiError("protocol");
+      const auth = { accessToken: response.access_token, user: response.user,
+        expiresAt: Date.now() + response.expires_in * 1000 };
+      this.storage.write(AUTH_KEY, auth);
+      this.authVerified = true;
+      this.publish({ auth });
+      return auth.accessToken;
+    }).finally(() => { this.refreshFlight = null; });
+    return this.refreshFlight;
+  }
+  async request<T>(path: string, body?: unknown, method: "GET" | "POST" | "PUT" | "DELETE" = "GET", signal?: AbortSignal) {
+    return this.client.json<T>(path, { ...this.authenticated(), method, body, signal: signal ?? this.controller.signal });
+  }
+  async requestBlob(path: string, body?: unknown, method: "GET" | "POST" = "GET", signal?: AbortSignal) {
+    return this.client.blob(path, { ...this.authenticated(), method, body, signal: signal ?? this.controller.signal, timeoutMs: 30000 });
+  }
   private authenticated() {
     const auth = this.state.auth;
     if (!auth || !this.authVerified) throw new ApiError("offline");
@@ -372,15 +385,16 @@ export class BackendStore {
   async loadContext(): Promise<void> {
     const options = this.authenticated(),
       owner = this.state.auth!.user.id;
-    const [context, documents] = await Promise.all([
+    const [context, documents, aiProfile] = await Promise.all([
       this.client.json<AIContext>("/ai-context", options).catch((error) => {
         if (error instanceof ApiError && error.status === 404) return null;
         throw error;
       }),
       this.client.json<DocumentSource[]>("/documents", options),
+      this.client.json<AIProfileResponse>("/ai-profile/current", options).catch(error => { if (error instanceof ApiError && error.status === 404) return null; throw error; }),
     ]);
     if (this.state.auth?.user.id === owner)
-      this.publish({ context, documents });
+      this.publish({ context, documents, aiProfile });
   }
   async saveContext(context: AIContext) {
     const saved = await this.client.json<AIContext>("/ai-context", {
@@ -488,18 +502,37 @@ export class BackendStore {
     this.publish({ aiProfile: profile });
     return profile;
   }
+  private generationController: AbortController | null = null;
+  async cancelGeneration() {
+    const job = this.state.generationJob;
+    this.generationController?.abort();
+    if (job && ["queued", "running"].includes(job.status)) {
+      const stopped = await this.request<GenerationJob>(`/generation-jobs/${job.id}/cancel`, { operation_id: crypto.randomUUID() }, "POST");
+      this.publish({ generationJob: stopped });
+    }
+  }
   async generatePersonalized() {
-    const plan = await this.client.json<TrainingPlan>(
-      "/training-plans/generate",
-      {
-        ...this.authenticated(),
-        method: "POST",
-        body: { mode: "ai_assisted" },
-        timeoutMs: 95000,
-      },
-    );
-    this.publish({ plan, planMessage: null });
-    return plan;
+    if (this.generationController && !this.generationController.signal.aborted) throw new ApiError("http", 409);
+    const controller = new AbortController(); this.generationController = controller;
+    const abort = () => controller.abort(); this.controller.signal.addEventListener("abort", abort, { once: true });
+    try {
+      let job = await this.request<GenerationJob>("/generation-jobs", { operation_id: crypto.randomUUID(), execution_mode: "live" }, "POST", controller.signal);
+      this.publish({ generationJob: job });
+      const deadline = Date.now() + 190000;
+      while (["queued", "running"].includes(job.status)) {
+        if (Date.now() >= deadline) throw new ApiError("timeout");
+        await new Promise<void>((resolve, reject) => {
+          const cancelled = () => { clearTimeout(timer); reject(new ApiError("aborted")); };
+          const timer = setTimeout(() => { controller.signal.removeEventListener("abort", cancelled); resolve(); }, 1000);
+          if (controller.signal.aborted) cancelled(); else controller.signal.addEventListener("abort", cancelled, { once: true });
+        });
+        job = await this.request<GenerationJob>(`/generation-jobs/${job.id}`, undefined, "GET", controller.signal);
+        this.publish({ generationJob: job });
+      }
+      if (!["completed", "fallback"].includes(job.status)) throw new ApiError("http", 503, job.error_category);
+      const plan = await this.request<TrainingPlan>("/training-plans/current", undefined, "GET", controller.signal);
+      this.publish({ plan, planMessage: null }); return plan;
+    } finally { this.controller.signal.removeEventListener("abort", abort); this.generationController = null; }
   }
   async exerciseSpec(key: string) {
     return this.client.json<ExerciseSpec>(
@@ -581,6 +614,19 @@ export class BackendStore {
     if (added) void this.retry();
     return added;
   }
+  recordSets(start: SessionCreate, sets: import("../api/types").SetCreate[]): boolean {
+    if (!sets.length) return false;
+    const errors = { depth_insufficient: 0, too_fast: 0, incomplete_extension: 0 }, generic: Record<string, number> = {};
+    for (const set of sets) {
+      for (const key of Object.keys(errors) as (keyof typeof errors)[]) errors[key] += set.error_counts[key];
+      for (const [key,count] of Object.entries(set.generic_error_counts ?? {})) generic[key] = (generic[key] ?? 0) + count;
+    }
+    const camera = sets.filter(set => set.assessment_mode !== "manual").reduce((n,set) => n + set.total_reps, 0), accepted = sets.reduce((n,set) => n + set.accepted_reps, 0);
+    const entry: PendingEntry = { ownerId: this.state.auth?.user.id ?? null, session: start, set: sets[0], sets, attempts: 0, lastAttemptAt: null, complete: { completed_at: new Date().toISOString(), summary: { total_reps: sets.reduce((n,set) => n + set.total_reps, 0), accepted_reps: accepted, rejected_reps: camera - accepted, duration_ms: sets.reduce((n,set) => n + set.duration_ms, 0), error_counts: errors, generic_error_counts: generic, total_sets: sets.length, camera_total_reps: camera, manual_completed_sets: sets.filter(set => set.assessment_mode === "manual" && set.completion_status !== "partial").length } } };
+    const added = this.queue.add(entry);
+    this.publish({ pendingCount: this.queue.entries().length, syncMessage: added ? "Ожидает синхронизации" : "Результаты остаются на экране. Очередь заполнена или данные не прошли проверку.", lastSavedClientId: null });
+    if (added) void this.retry(); return added;
+  }
   async retry(): Promise<void> {
     if (this.syncFlight) return this.syncFlight;
     if (
@@ -625,13 +671,7 @@ export class BackendStore {
           entry.session,
           this.controller.signal,
         );
-        await createSet(
-          this.client,
-          auth.accessToken,
-          session.id,
-          entry.set,
-          this.controller.signal,
-        );
+        for (const set of entry.sets ?? [entry.set]) await createSet(this.client, auth.accessToken, session.id, set, this.controller.signal);
         await completeSession(
           this.client,
           auth.accessToken,

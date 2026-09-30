@@ -8,6 +8,8 @@ import { ContextFlow } from "../features/personalization/ContextFlow";
 import { PlanExperience } from "../features/personalization/PlanExperience";
 import { CameraCoachShell } from "../features/personalization/CameraCoachShell";
 import { zeroLegacyErrors } from "../vision/exercises/generic/resultBuilder";
+import { browserStorage } from "../store/persistence";
+import { readVoiceCache, writeVoiceCache } from "../store/voiceCache";
 import { backendStore, type BackendStore } from "../store/backend";
 import { useBackend } from "./useBackend";
 import type { SessionCreate } from "../api/types";
@@ -23,6 +25,7 @@ import {
   useReducer,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { appReducer, type AppAction } from "./modes";
 import { mapVisionEvent } from "./visionEventMapper";
@@ -51,7 +54,13 @@ import type { AppState } from "./modes";
 import { CameraStage } from "../features/workout/CameraStage";
 import { CameraPermissionView } from "../shared/components/CameraPermissionView";
 import { CameraErrorView } from "../shared/components/CameraErrorView";
-import { WorkoutAudio } from "../audio/workoutAudio";
+import { AudioCoordinator } from "../audio/audioCoordinator";
+import { ReleaseClient, defaultVoice, type VoicePreferences } from "../api/release";
+import { VoiceSelection } from "../features/voice/VoiceSelection";
+import { CoachPanel } from "../features/coach/CoachPanel";
+import { SchedulePanel } from "../features/schedule/SchedulePanel";
+import { GuidedTour } from "../features/guided-tour/GuidedTour";
+import type { GuideEvent } from "../features/guided-tour/guideMachine";
 import type { VisionEvent } from "../types/vision";
 import type { TutorialState } from "../features/onboarding/tutorialMachine";
 
@@ -66,7 +75,7 @@ function CameraExperience({
   onBack,
 }: {
   fake: boolean;
-  audio: WorkoutAudio;
+  audio: AudioCoordinator;
   state: AppState;
   exercise: ActiveExercise | null;
   onSource: (source: WorkoutRuntime | null) => void;
@@ -81,6 +90,9 @@ function CameraExperience({
   const onVideo = useCallback((element: HTMLVideoElement | null) => {
     video.current = element;
   }, []);
+  useLayoutEffect(() => {
+    if (exercise?.spec) source.current?.configureMovement(exercise.item.exercise_key, exercise.spec, exercise.item.target_reps, exercise.language);
+  }, [exercise]);
   useLayoutEffect(() => source.current?.setMode(state.mode), [state.mode]);
   const start = () => {
     void audio.enable();
@@ -187,7 +199,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
       legacy,
     ),
   );
-  const [cameraEpoch, setCameraEpoch] = useState(0);
+
   const source = useRef<WorkoutRuntime | null>(null);
   const captureSource = useCallback((runtime: WorkoutRuntime | null) => {
     source.current = runtime;
@@ -198,10 +210,41 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
   const [voice, setVoice] = useState("Voice muted");
   const current = useRef(state);
   const [audio] = useState(() => {
-    const value = new WorkoutAudio();
+    const value = new AudioCoordinator();
     value.setMuted(true);
     return value;
   });
+  const [release] = useState(() => new ReleaseClient(backend));
+  const [voiceStorage] = useState(browserStorage);
+  const cachedVoice = readVoiceCache(voiceStorage, remote.auth?.user.id ?? null);
+  const [voicePreferences, setVoicePreferences] = useState<VoicePreferences>(cachedVoice?.preferences ?? defaultVoice);
+  const [voiceOpen, setVoiceOpen] = useState(!legacyFake && !cachedVoice);
+  const [guideEvent, setGuideEvent] = useState<GuideEvent | undefined>();
+  const [guideEnabled, setGuideEnabled] = useState(false);
+  const audioState = useSyncExternalStore(audio.subscribe, audio.getSnapshot);
+  const remoteOwner = remote.auth?.user.id ?? null;
+  const remoteConnecting = remote.status === "connecting";
+  useEffect(() => {
+    if (!remoteOwner || remoteConnecting) return;
+    const controller = new AbortController();
+    void release.preferences(controller.signal).then(preferences => {
+      if (controller.signal.aborted) return;
+      setVoicePreferences(preferences);
+      if (preferences.revision > 0) { writeVoiceCache(voiceStorage, remoteOwner, preferences, true); }
+      if (preferences.revision > 0) setVoiceOpen(false);
+      audio.configure((cue, signal) => release.speech({ cue_id: cue }, signal), preferences.language);
+      audio.setMuted(!preferences.audio_enabled);
+    }).catch(() => {});
+    return () => controller.abort();
+  }, [release, audio, remoteOwner, remoteConnecting, voiceStorage]);
+  useEffect(() => {
+    audio.setScope(`${state.mode}:${voicePreferences.revision}`);
+  }, [audio, state.mode, voicePreferences.revision]);
+  useEffect(() => {
+    const hidden = () => { if (document.hidden) audio.stop(); };
+    document.addEventListener("visibilitychange", hidden);
+    return () => document.removeEventListener("visibilitychange", hidden);
+  }, [audio]);
   const fake = fakeVisionEnabled(import.meta.env.DEV, window.location.search);
   useEffect(() => () => audio.close(), [audio]);
   const send = useCallback(
@@ -224,14 +267,11 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
       const next = appReducer(before, action);
       if (action.type === "NAVIGATE") {
         if (poseStage(next.mode)) {
-          source.current?.dispose();
-          source.current = null;
-          setCameraEpoch((value) => value + 1);
+          // CameraExperience switches the existing lease into pose mode.
         } else if (
-          ["PROFILE", "PLAN", "PROGRESS", "RESULTS"].includes(next.mode)
+          ["PROFILE", "PLAN", "PROGRESS", "RESULTS", "SCHEDULE"].includes(next.mode)
         ) {
-          source.current?.dispose();
-          source.current = null;
+          // Keep the same camera lease for hand navigation.
         }
         session.current = null;
         setGenericView(null);
@@ -261,10 +301,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           angle: meanMinKneeAngle(before.workout.reps),
         };
       }
-      if (next.mode === "RESULTS") {
-        source.current?.dispose();
-        source.current = null;
-      }
+
       if (
         action.type === "REPEAT" ||
         next.mode === "MENU" ||
@@ -295,6 +332,11 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
       if (event.type === "workout.generic_updated") setGenericView(event.view);
       const action = mapVisionEvent(event, current.current, tutorial);
       if (action) send(action);
+      if (event.type === "camera.ready") setGuideEvent("camera.ready");
+      if (event.type === "gesture.confirmed") setGuideEvent("gesture.success");
+      if (event.type === "calibration.completed") setGuideEvent("calibration.completed");
+      if (event.type === "workout.countdown") setGuideEvent("countdown.started");
+      if (event.type === "workout.countdown_done") setGuideEvent("workout.started");
       audio.event(event);
       return current.current;
     },
@@ -309,8 +351,6 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     activeRef.current = exercise;
     setActive(exercise);
     setGenericView(null);
-    source.current?.dispose();
-    source.current = null;
     session.current = null;
     send({ type: "BEGIN_EXERCISE", manual: !exercise.spec });
     if (!exercise.spec) {
@@ -352,6 +392,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     { mode: "PLAN", action: "OPEN_PLAN", label: "Your plan" },
     { mode: "PROGRESS", action: "OPEN_PROGRESS", label: "Progress" },
     { mode: "PROFILE", action: "OPEN_PROFILE", label: "Your context" },
+    { mode: "SCHEDULE", action: "OPEN_SCHEDULE", label: "Расписание" },
   ] as const;
   return (
     <GestureNavigationProvider state={state} onEvent={onEvent}>
@@ -397,10 +438,9 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           <BackendBadge status={remote.status} pending={remote.pendingCount} />
         </header>
         <div className={planning ? "planning-content" : "experience"}>
-          {(!planning || legacyFake) && !(active && !active.spec) && (
-            <div className="camera-column">
+          <div className="camera-column" hidden={planning && !legacyFake}>
+
               <CameraExperience
-                key={cameraEpoch}
                 fake={fake}
                 audio={audio}
                 state={state}
@@ -412,7 +452,6 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
                 onBack={() => send({ type: "OPEN_PLAN" })}
               />
             </div>
-          )}
           {active && !active.spec && inWorkout && (
             <div className="camera-column">
               <MovementPreview
@@ -421,7 +460,9 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
               />
             </div>
           )}
-          <main>
+          <main data-guide-target={state.mode === "PROFILE" ? "context" : state.mode === "PLAN" ? "plan" : state.mode === "CALIBRATION" ? "calibration" : state.mode === "COUNTDOWN" ? "countdown" : state.mode === "WORKOUT" ? "workout" : state.mode === "RESULTS" ? "results" : state.mode === "PROGRESS" ? "progress" : undefined}>
+            {state.mode === "SCHEDULE" && <SchedulePanel client={release} audio={audio} />}
+            <GuidedTour audio={audio} client={release} screen={state.mode} event={guideEvent} planReady={!!remote.plan} enabled={guideEnabled && !voiceOpen} onDone={() => setGuideEnabled(false)} />
             {state.mode === "TUTORIAL" && (
               <TutorialPage onDone={() => send({ type: "TUTORIAL_DONE" })} />
             )}
@@ -475,6 +516,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
                   backend={backend}
                   onStart={startExercise}
                   onContext={() => send({ type: "OPEN_PROFILE" })}
+                  onDetails={() => setGuideEvent("exercise.opened")}
                 />
               )}
             {state.mode === "PLAN" &&
@@ -580,16 +622,24 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
                 }}
               />
             )}
+            {planning && !voiceOpen && <CoachPanel key={state.mode + (remote.auth?.user.id ?? "")} client={release} audio={audio} screen={state.mode === "SCHEDULE" ? "schedule" : state.mode === "RESULTS" ? "results" : "planning"} onAction={(action) => {
+              if (action === "open_plan" || action === "open_exercise" || action === "open_camera") send({ type: "OPEN_PLAN" });
+              if (action === "open_schedule") send({ type: "OPEN_SCHEDULE" });
+              if (action === "open_progress") send({ type: "OPEN_PROGRESS" });
+            }} />}
           </main>
         </div>
         <footer className="privacy-notice">
           Видео обрабатывается локально. Кадры не отправляются, запись камеры не
           ведётся. Общая fitness feedback не заменяет тренера или врача.
         </footer>
+        <div className="audio-status"><span role="status">{audio.status()}</span><button onClick={() => { audio.unlock(); audio.setMuted(false); setVoice(audio.status()); }}>Включить звук</button><button onClick={() => audio.stop()}>Остановить звук</button><button onClick={() => setVoiceOpen(true)}>Голос тренера</button><button onClick={() => { setGuideEnabled(true); setGuideEvent("voice.selected"); }}>Обучение</button></div>
+        {audioState.subtitle && <p className="audio-subtitle" aria-live="polite">{audioState.subtitle}</p>}
+        {voiceOpen && <VoiceSelection client={release} audio={audio} initial={voicePreferences} onComplete={(preferences, persisted) => { writeVoiceCache(voiceStorage, remote.auth?.user.id ?? null, preferences, persisted); setVoicePreferences(preferences); audio.configure((cue, signal) => release.speech({ cue_id: cue }, signal), preferences.language); audio.setMuted(!preferences.audio_enabled); setVoiceOpen(false); setGuideEnabled(true); setGuideEvent("voice.selected"); setVoice(audio.status()); }} />}
         <label>
           <input
             type="checkbox"
-            checked={voice === "Voice muted"}
+            checked={audioState.status === "muted"}
             onChange={(event) => {
               audio.setMuted(event.target.checked);
               setVoice(audio.status());

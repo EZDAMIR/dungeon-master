@@ -1,0 +1,32 @@
+import { expect, it, vi } from 'vitest';
+import { ApiClient, ApiError } from '../../api/client';
+import { GuideMachine } from '../../features/guided-tour/guideMachine';
+import { localToInstant } from '../../features/schedule/timezone';
+import { PushToTalk } from '../../features/coach/pushToTalk';
+it('binary transport sends bearer only in header and includes cookie credentials', async () => {
+  const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(new Blob(['audio'], { type: 'audio/mpeg' }))), client = new ApiClient('http://test', 100, transport);
+  const audio = await client.blob('/voices/id/preview', { method: 'POST', token: 'private', body: { language: 'kk' } });
+  expect(audio.size).toBeGreaterThan(0); expect(transport.mock.calls[0][0]).toBe('http://test/voices/id/preview'); expect(transport.mock.calls[0][1]).toMatchObject({ credentials: 'include', headers: { Authorization: 'Bearer private' } });
+});
+it('audio provider JSON error remains an error', async () => {
+  const client = new ApiClient('http://test', 100, vi.fn().mockResolvedValue(new Response('{}', { status: 503 })));
+  await expect(client.blob('/speech')).rejects.toMatchObject({ status: 503 });
+});
+it('one rejected access token uses recovery then retries once', async () => {
+  const transport = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response('{}', { status: 401 })).mockResolvedValue(new Response('{"ok":true}')), client = new ApiClient('http://test', 100, transport), recover = vi.fn().mockResolvedValue('renewed'); client.setAuthRecovery(recover);
+  await expect(client.json('/private', { token: 'old' })).resolves.toEqual({ ok: true }); expect(recover).toHaveBeenCalledOnce(); expect(transport.mock.calls[1][1]?.headers).toMatchObject({ Authorization: 'Bearer renewed' });
+});
+it('guided demo waits for actual events and remembers out-of-order camera readiness', () => {
+  const guide = new GuideMachine(); guide.consume('camera.ready'); expect(guide.getSnapshot()?.event).toBe('voice.selected'); guide.consume('voice.selected'); expect(guide.getSnapshot()?.event).toBe('context.opened'); guide.consume('context.opened'); guide.consume('plan.ready'); guide.consume('exercise.opened'); expect(guide.getSnapshot()?.event).toBe('gesture.success'); guide.stop(); expect(guide.getSnapshot()).toBeNull();
+});
+it('timezone conversion preserves Almaty and rejects DST gap/fold', () => {
+  expect(localToInstant('2026-10-01T18:00', 'Asia/Almaty')).toBe('2026-10-01T13:00:00.000Z'); expect(() => localToInstant('2026-03-08T02:30', 'America/New_York')).toThrow('не существует'); expect(() => localToInstant('2026-11-01T01:30', 'America/New_York')).toThrow('неоднозначно');
+});
+it('push-to-talk cancellation closes a permission request resolving late', async () => {
+  const original = navigator.mediaDevices, stop = vi.fn(); let resolve!: (stream: MediaStream) => void;
+  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: () => new Promise(done => { resolve = done; }) } });
+  vi.stubGlobal('MediaRecorder', class { static isTypeSupported() { return true; } }); const recorder = new PushToTalk(vi.fn(), vi.fn()); const pending = recorder.start(); recorder.cancel(); resolve({ getTracks: () => [{ stop }] } as unknown as MediaStream); await pending; expect(stop).toHaveBeenCalledOnce(); Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: original }); vi.unstubAllGlobals();
+});
+it('normalizes unavailable refresh without identity creation', async () => {
+  const transport = vi.fn().mockResolvedValue(new Response('{}', { status: 401 })), client = new ApiClient('http://test', 100, transport); client.setAuthRecovery(async () => { throw new ApiError('http', 401); }); await expect(client.json('/private', { token: 'old' })).rejects.toMatchObject({ status: 401 }); expect(transport).toHaveBeenCalledOnce();
+});

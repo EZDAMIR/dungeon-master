@@ -12,6 +12,7 @@ const paths: Record<AppMode, string> = {
   PROFILE: "/context",
   PLAN: "/plan",
   PROGRESS: "/progress",
+  SCHEDULE: "/schedule",
   CAMERA_PERMISSION: "/camera/permission",
   TUTORIAL: "/tutorial",
   MENU: "/menu",

@@ -30,6 +30,8 @@ export class ApiClient {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
   private readonly transport: typeof fetch;
+  private recover: (() => Promise<string>) | null = null;
+  setAuthRecovery(recover: () => Promise<string>) { this.recover = recover; }
   constructor(
     baseUrl = import.meta.env.VITE_API_BASE_URL ||
       "http://localhost:8000/api/v1",
@@ -43,6 +45,7 @@ export class ApiClient {
   async request<T>(
     path: string,
     options: RequestOptions = {},
+    recovered = false,
   ): Promise<{ data: T | null; requestId: string | null }> {
     const controller = new AbortController();
     let timedOut = false;
@@ -58,6 +61,7 @@ export class ApiClient {
       const response = await this.transport(
         this.baseUrl.replace(/\/$/, "") + path,
         {
+          credentials: "include",
           method: options.method ?? "GET",
           signal: controller.signal,
           headers: {
@@ -78,6 +82,10 @@ export class ApiClient {
                 : JSON.stringify(options.body),
         },
       );
+      if (response.status === 401 && options.token && this.recover && !recovered) {
+        const token = await this.recover();
+        return this.request<T>(path, { ...options, token }, true);
+      }
       requestId = response.headers.get("X-Request-ID");
       const text = await response.text();
       let data: unknown = null;
@@ -117,6 +125,34 @@ export class ApiClient {
       clearTimeout(timer);
       options.signal?.removeEventListener("abort", abort);
     }
+  }
+  async blob(path: string, options: RequestOptions = {}, recovered = false): Promise<Blob> {
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (options.signal?.aborted) abort();
+    options.signal?.addEventListener("abort", abort, { once: true });
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; abort(); }, options.timeoutMs ?? this.timeoutMs);
+    try {
+      const response = await this.transport(this.baseUrl.replace(/\/$/, "") + path, {
+        method: options.method ?? "GET", credentials: "include", signal: controller.signal,
+        headers: { ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+          ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}) },
+        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      });
+      if (response.status === 401 && options.token && this.recover && !recovered) {
+        const token = await this.recover();
+        return this.blob(path, { ...options, token }, true);
+      }
+      if (!response.ok) throw new ApiError("http", response.status);
+      const data = await response.blob();
+      if (controller.signal.aborted) throw new ApiError("aborted");
+      if (!data.size || data.size > 10 * 1024 * 1024) throw new ApiError("protocol");
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(timedOut ? "timeout" : controller.signal.aborted ? "aborted" : "offline");
+    } finally { clearTimeout(timer); options.signal?.removeEventListener("abort", abort); }
   }
   async json<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { data, requestId } = await this.request<T>(path, options);
