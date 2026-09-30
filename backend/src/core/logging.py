@@ -2,6 +2,7 @@ import json
 import logging
 import logging.config
 import typing
+import urllib.parse
 
 from . import config
 
@@ -49,6 +50,21 @@ class HumanFormatter(logging.Formatter):
         super().__init__(fmt=self.FMT, datefmt='%H:%M:%S')
 
 
+class PrivateRequestFilter(logging.Filter):
+    """OAuth callback code/state must never enter the server access log."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if (
+            record.name == 'uvicorn.access'
+            and isinstance(record.args, tuple)
+            and len(record.args) == 5
+        ):
+            arguments = list(record.args)
+            arguments[2] = urllib.parse.urlsplit(str(arguments[2])).path
+            record.args = tuple(arguments)
+        return True
+
+
 def configure_logging() -> None:
     settings = config.get_settings()
     level = settings.LOG_LEVEL.upper()
@@ -58,6 +74,7 @@ def configure_logging() -> None:
 
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
+    handler.addFilter(PrivateRequestFilter())
 
     root = logging.getLogger()
     root.handlers.clear()
@@ -69,7 +86,6 @@ def configure_logging() -> None:
         logging.getLogger(name).propagate = False
         logging.getLogger(name).handlers = [handler]
 
-    if settings.DEBUG:
-        logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-    else:
-        logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+    # SQL parameter dumps may contain private source excerpts and provider credentials.
+    # Application DEBUG does not authorize printing durable user data.
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)

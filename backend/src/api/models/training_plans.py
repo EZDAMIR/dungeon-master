@@ -148,9 +148,18 @@ async def plan_create_active(
     user_id: uuid.UUID,
     data: dict,
     items: list[dict],
+    *,
+    job_guard: dict | None = None,
 ) -> dict:
     try:
         async with session.transaction():
+            if job_guard:
+                await models.generation_jobs.update(
+                    session,
+                    job_guard['job_id'],
+                    job_guard['lease_id'],
+                    {'stage': 'persisting'},
+                )
             # A normal guarded write serializes generation per user, including an empty history.
             await session.execute(
                 models.users.Users.update()
@@ -191,6 +200,19 @@ async def plan_create_active(
                     ],
                 ),
             )
+            if job_guard:
+                await models.generation_jobs.update(
+                    session,
+                    job_guard['job_id'],
+                    job_guard['lease_id'],
+                    {
+                        'status': 'fallback'
+                        if (data.get('ai_metadata') or {}).get('status') == 'fallback'
+                        else 'completed',
+                        'stage': 'completed',
+                        'result_plan_id': plan['id'],
+                    },
+                )
             return await plan_get(session, user_id, plan['id'])
     except sa.exc.IntegrityError as exc:
         if (

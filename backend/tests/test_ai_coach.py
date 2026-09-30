@@ -17,6 +17,15 @@ from src.api.controllers import demo_personas
 from src.api.controllers import documents
 
 
+@pytest.fixture(autouse=True)
+def explicit_legacy_fixture_mode(monkeypatch):
+    monkeypatch.setenv('COACH_EXECUTION_MODE', 'fixture')
+    monkeypatch.setenv('ENABLE_FIXTURE_MODE', 'true')
+    from src.core import config
+
+    config.clear_settings_cache()
+
+
 async def load(client, headers, key):
     response = await client.post(f'/api/v1/demo-personas/{key}/load', headers=headers)
     assert response.status_code == 200, response.text
@@ -232,7 +241,7 @@ def fixture_profile(key='maya'):
         'session_minutes': persona['minutes'],
         'confirmed_constraints': [],
     }
-    return demo_personas.synthetic_profile(context, base, [])
+    return demo_personas.deterministic_profile(context, base, [])
 
 
 @pytest.mark.parametrize(
@@ -352,7 +361,7 @@ async def test_mocked_ai_retrieval_regeneration_and_manual_fallback(
 
     async def synthesize(payload):
         captured.append(payload)
-        return demo_personas.synthetic_profile(
+        return demo_personas.deterministic_profile(
             payload['context'], payload['fitness_profile'], payload['confirmed_facts']
         )
 
@@ -447,7 +456,10 @@ async def test_sdk_structured_output_and_embedding_validation(monkeypatch):
     manager = MagicMock()
     manager.__aenter__ = AsyncMock(return_value=client)
     manager.__aexit__ = AsyncMock(return_value=False)
-    monkeypatch.setattr(openai.sdk, 'AsyncOpenAI', MagicMock(return_value=manager))
+    monkeypatch.setattr(openai, '_client', None)
+    monkeypatch.setattr(openai, '_client_key', None)
+    client.close = AsyncMock()
+    monkeypatch.setattr(openai.sdk, 'AsyncOpenAI', MagicMock(return_value=client))
     assert (await openai.synthesize_user_profile({'synthetic': True}))['summary'] == profile[
         'summary'
     ]

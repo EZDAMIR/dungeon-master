@@ -52,7 +52,7 @@ PERSONAS = {
 }
 
 
-def synthetic_profile(context: dict, profile: dict, facts: list[dict]) -> dict:
+def deterministic_profile(context: dict, profile: dict, facts: list[dict]) -> dict:
     key = context['additional_preferences'].get('persona_key')
     persona = PERSONAS.get(key)
     constraints = sorted(

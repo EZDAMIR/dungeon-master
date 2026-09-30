@@ -28,12 +28,12 @@ class TechniqueErrorCounts(pydantic.BaseModel):
 
 class WorkoutAggregateMetrics(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='forbid')
-    mean_rep_duration_ms: typing.Annotated[
-        float, pydantic.Field(ge=0, le=3_600_000, allow_inf_nan=False)
-    ]
-    mean_min_knee_angle: typing.Annotated[
-        float, pydantic.Field(ge=0, le=180, allow_inf_nan=False)
-    ]
+    mean_rep_duration_ms: (
+        typing.Annotated[float, pydantic.Field(ge=0, le=3_600_000, allow_inf_nan=False)] | None
+    )
+    mean_min_knee_angle: (
+        typing.Annotated[float, pydantic.Field(ge=0, le=180, allow_inf_nan=False)] | None
+    )
 
 
 class WorkoutSessionCreate(pydantic.BaseModel):
@@ -44,8 +44,20 @@ class WorkoutSessionCreate(pydantic.BaseModel):
     client_engine_version: EngineVersion
 
 
+class SetTargetSnapshot(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(extra='forbid')
+    target_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=1, le=100)] | None
+    duration_seconds: typing.Annotated[int, pydantic.Field(strict=True, ge=1, le=3600)] | None
+    rest_seconds: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=600)]
+    plan_sets: typing.Annotated[int, pydantic.Field(strict=True, ge=1, le=10)]
+
+
 class WorkoutSetBase(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='forbid')
+    assessment_mode: typing.Literal['camera', 'manual'] = 'camera'
+    completion_status: typing.Literal['completed', 'partial'] = 'completed'
+    spec_revision: uuid.UUID | None = None
+    target_snapshot: SetTargetSnapshot | None = None
     client_set_id: uuid.UUID
     exercise_key: typing.Annotated[
         str, pydantic.StringConstraints(strict=True, pattern=r'^[a-z][a-z0-9_]{0,79}$')
@@ -71,6 +83,14 @@ class WorkoutSetBase(pydantic.BaseModel):
     def accepted_within_total(self):
         if self.accepted_reps > self.total_reps:
             raise ValueError('accepted_reps must not exceed total_reps')
+        if self.assessment_mode == 'manual' and (
+            self.accepted_reps
+            or any(self.error_counts.model_dump().values())
+            or any(self.generic_error_counts.values())
+            or self.metrics.mean_rep_duration_ms is not None
+            or self.metrics.mean_min_knee_angle is not None
+        ):
+            raise ValueError('Manual sets cannot claim camera assessments')
         return self
 
 
@@ -79,6 +99,13 @@ class WorkoutSetCreate(WorkoutSetBase):
 
 
 class SessionSummary(pydantic.BaseModel):
+    total_sets: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=100)] | None = None
+    camera_total_reps: (
+        typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=50000)] | None
+    ) = None
+    manual_completed_sets: (
+        typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=100)] | None
+    ) = None
     model_config = pydantic.ConfigDict(extra='forbid')
     total_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=50_000)]
     accepted_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=50_000)]
@@ -99,7 +126,13 @@ class SessionSummary(pydantic.BaseModel):
     def consistent_reps(self):
         if (
             self.accepted_reps > self.total_reps
-            or self.rejected_reps != self.total_reps - self.accepted_reps
+            or self.rejected_reps
+            != (
+                self.camera_total_reps
+                if self.camera_total_reps is not None
+                else self.total_reps
+            )
+            - self.accepted_reps
         ):
             raise ValueError('Inconsistent repetition totals')
         return self

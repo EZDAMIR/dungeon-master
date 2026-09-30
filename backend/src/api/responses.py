@@ -96,6 +96,26 @@ class APIResponseDatabaseUnavailable(APIResponse):
         return 503
 
 
+class APIResponseServiceUnavailable(APIResponse):
+    """503 Configured provider is unavailable or setup is required."""
+
+    status: str
+
+    @classmethod
+    def status_code(cls) -> int:
+        return 503
+
+
+class APIResponseBudgetExceeded(APIResponse):
+    """429 Daily provider budget reached."""
+
+    status: str
+
+    @classmethod
+    def status_code(cls) -> int:
+        return 429
+
+
 ResponseClass = typing.TypeVar('ResponseClass', bound=type[APIResponse])
 
 

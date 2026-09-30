@@ -150,6 +150,8 @@ AIUserProfiles = sa.Table(
     sa.Column('profile', pg.JSONB, nullable=False),
     sa.Column('source_document_ids', pg.JSONB, nullable=False),
     sa.Column('model', sa.Text, nullable=False),
+    sa.Column('input_revision', sa.Text, nullable=True),
+    sa.Column('provenance', pg.JSONB, nullable=True),
     sa.Column(
         'status',
         pg.ENUM('completed', 'fallback', 'synthetic', name='ai_profiles_status_enum'),
@@ -189,6 +191,17 @@ AIExerciseSpecs = sa.Table(
         name='ck_ai_specs_name_length',
     ),
 )
+AIExerciseSpecRevisions = sa.Table(
+    'ai_exercise_spec_revisions',
+    postgres.metadata,
+    *identity_columns(),
+    sa.Column(
+        'exercise_key', sa.Text, sa.ForeignKey('exercises.key'), nullable=False, index=True
+    ),
+    sa.Column('movement_spec', pg.JSONB, nullable=True),
+)
+
+
 AIPlanRuns = sa.Table(
     'ai_plan_runs',
     postgres.metadata,
@@ -430,6 +443,22 @@ async def spec_get(session, user_id: uuid.UUID, exercise_key: str) -> dict:
     )
     if row is None:
         raise AISourceNotFound
+    return {**row, 'spec_revision': row['id']}
+
+
+@postgres.session
+async def spec_revision_get(
+    session, user_id: uuid.UUID, exercise_key: str, revision: uuid.UUID
+) -> dict:
+    row = await session.fetch_one(
+        AIExerciseSpecRevisions.select().where(
+            AIExerciseSpecRevisions.c.user_id == user_id,
+            AIExerciseSpecRevisions.c.exercise_key == exercise_key,
+            AIExerciseSpecRevisions.c.id == revision,
+        )
+    )
+    if row is None:
+        raise AISourceNotFound
     return row
 
 
@@ -461,12 +490,21 @@ async def spec_save(session, user_id: uuid.UUID, exercise: dict, spec: dict) -> 
         )
         if owner is None:
             raise AISourceNotFound
-        statement = pg.insert(AIExerciseSpecs).values(user_id=user_id, **spec)
+        revision_id = uuid.uuid4()
+        statement = pg.insert(AIExerciseSpecs).values(id=revision_id, user_id=user_id, **spec)
         await session.execute(
             statement.on_conflict_do_update(
                 constraint='uq_ai_exercise_specs_key',
-                set_={**spec, 'updated_at': sa.func.now()},
+                set_={**spec, 'id': revision_id, 'updated_at': sa.func.now()},
                 where=AIExerciseSpecs.c.user_id == user_id,
+            )
+        )
+        await session.execute(
+            AIExerciseSpecRevisions.insert().values(
+                id=revision_id,
+                user_id=user_id,
+                exercise_key=exercise['key'],
+                movement_spec=spec['movement_spec'],
             )
         )
         return await spec_get(session, user_id, exercise['key'])
@@ -480,6 +518,8 @@ async def plan_persist(
     items: list[dict],
     run: dict,
     profile_id: uuid.UUID,
+    *,
+    job_guard: dict | None = None,
 ) -> dict:
     items = [dict(item) for item in items]
     async with session.transaction():
@@ -504,7 +544,9 @@ async def plan_persist(
                 raise AISourceNotFound
             item['exercise_id'] = str(exercise['id'])
         await session.execute(AIPlanRuns.insert().values(user_id=user_id, **run))
-        return await models.training_plans.plan_create_active(session, user_id, plan, items)
+        return await models.training_plans.plan_create_active(
+            session, user_id, plan, items, job_guard=job_guard
+        )
 
 
 @postgres.session
@@ -516,6 +558,14 @@ async def run_create(session, user_id: uuid.UUID, data: dict) -> dict:
 
 @postgres.session
 async def invalidate_personalization(session, user_id: uuid.UUID) -> None:
+    await session.execute(
+        models.coach.CoachProposals.update()
+        .where(
+            models.coach.CoachProposals.c.user_id == user_id,
+            models.coach.CoachProposals.c.status == 'pending',
+        )
+        .values(expires_at=sa.func.now())
+    )
     await session.execute(AIUserProfiles.delete().where(AIUserProfiles.c.user_id == user_id))
     await session.execute(
         models.training_plans.TrainingPlans.update()

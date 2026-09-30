@@ -14,7 +14,10 @@ router = fastapi.APIRouter(prefix='/training-plans')
 @router.post(
     '/generate',
     summary='Generate active deterministic or Sprint 4A personalized plan',
-    dependencies=[permission.PermsRequired([permission.Perm.PLAN_GENERATE])],
+    dependencies=[
+        permission.PermsRequired([permission.Perm.PLAN_GENERATE]),
+        fastapi.Depends(controllers.speech.limit_ip),
+    ],
     response_model=schemas.training_plans.TrainingPlanGet,
     response_description='New active plan with nested items',
     responses=responses.gen_responses(
@@ -23,6 +26,7 @@ router = fastapi.APIRouter(prefix='/training-plans')
             responses.APIResponseForbidden,
             controllers.profiles.ProfileRequiredResponse,
             controllers.training_plans.PlanConflictResponse,
+            responses.APIResponseBudgetExceeded,
         ],
     ),
 )

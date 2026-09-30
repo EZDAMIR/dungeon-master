@@ -13,11 +13,17 @@ Add controllers as they are created::
 """
 
 from . import ai_coach  # noqa: F401
+from . import calendar  # noqa: F401
+from . import coach  # noqa: F401
 from . import demo_personas  # noqa: F401
 from . import documents  # noqa: F401
 from . import exercises  # noqa: F401
+from . import generation_jobs  # noqa: F401
+from . import guest_sessions  # noqa: F401
 from . import profiles  # noqa: F401
 from . import progress  # noqa: F401
+from . import schedule  # noqa: F401
+from . import speech  # noqa: F401
 from . import training_plans  # noqa: F401
 from . import users  # noqa: F401
 from . import workout_sessions  # noqa: F401

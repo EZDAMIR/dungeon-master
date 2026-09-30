@@ -109,3 +109,9 @@ __all__ = [
     'WorkoutSetCreate',
     'WorkoutSetGet',
 ]
+
+from . import calendar  # noqa: F401
+from . import coach  # noqa: F401
+from . import generation_jobs  # noqa: F401
+from . import schedule  # noqa: F401
+from . import speech  # noqa: F401
