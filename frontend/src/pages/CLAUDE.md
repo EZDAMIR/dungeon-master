@@ -5,7 +5,7 @@ Read ancestor guides and the repository architecture documents before edits.
 
 ## Purpose
 
-Compose tutorial, menu, calibration, countdown, workout and results views from application snapshots.
+Compose tutorial, menu, calibration, countdown, workout, results and Sprint 3 profile/plan/progress views from application snapshots.
 
 ## Code rules
 

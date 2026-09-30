@@ -11,7 +11,7 @@ Own interaction UI, semantic state and browser runtime integration for the local
 
 - gesture-navigation owns target registration, gesture HUD/state and cursor presentation; onboarding owns tutorial progression.
 - workout owns camera/model lifecycle, overlays and fake pose replay; pure gesture/pose/exercise analysis stays in vision.
-- Profile, results and calendar folders are reserved; implement them only within an authorized sprint.
+- Profile owns gesture preference steps; results owns aggregate sync projection. Calendar remains reserved for a later authorized sprint.
 - Keep conventional accessible controls alongside gesture controls. Use semantic events rather than DOM .click().
 - Keep current flat feature modules; add ui/model/lib subdivisions only when they clarify real implemented code.
 

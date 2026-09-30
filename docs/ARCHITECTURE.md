@@ -14,20 +14,14 @@ flowchart LR
   User[User in front of webcam]
   Browser[React browser application]
   Vision[Local hand and pose runtime]
-  API[FastAPI API]
+  API[FastAPI guest and domain API]
   DB[(PostgreSQL)]
-  AI[Plan-generation provider]
-  Calendar[Google Calendar]
-  Voice[Voice provider]
 
   User --> Browser
   Browser --> Vision
   Vision --> Browser
-  Browser -->|profiles, plans, session summaries| API
+  Browser -->|profile, deterministic plan, aggregates, progress| API
   API --> DB
-  API -->|optional structured request| AI
-  API -->|optional OAuth and events| Calendar
-  API -->|optional cached clip generation| Voice
 ```
 
 Raw camera frames stay between the browser and the local visual runtime.
@@ -70,10 +64,18 @@ BOOT
   -> WORKOUT
   -> PAUSED
   -> RESULTS
+
+MENU <-> PROFILE
+MENU <-> PLAN
+MENU <-> PROGRESS
 ```
 
 The top-level mode machine determines which recognizer and commands are active.
 This prevents exercise movement from accidentally triggering menu controls.
+PROFILE/PLAN/PROGRESS use the existing hand recognizer and gesture target registry;
+pose runs only in CALIBRATION/COUNTDOWN/WORKOUT/PAUSED. Fist Back and pinch selection
+pass through the existing semantic event mapper, with no duplicated inference
+loops or new camera permission requests.
 
 ### Layers
 
@@ -114,7 +116,7 @@ HTTP endpoint
   -> PostgreSQL
 ```
 
-External provider flow:
+Deferred Sprint 4 provider flow (not implemented):
 
 ```text
 endpoint
@@ -132,13 +134,14 @@ Network I/O never occurs inside an open database transaction.
 - `users`: guest and future registered identities.
 - `profiles`: goal, experience, schedule, equipment and locale.
 - `exercises`: allowlisted catalog and analysis metadata.
-- `training_plans`: generated or deterministic plans and plan items.
+- `training_plans`: deterministic plans and nested plan items.
 - `workout_sessions`: session and set summaries.
 - `progress`: aggregate read queries.
-- `integrations`: OAuth connections and calendar links.
-- `voice_assets`: optional cache metadata.
 
-## 6. AI plan generation
+Integration/calendar and voice-asset domains are deferred; no such runtime
+capabilities or tables are added in Sprint 3.
+
+## 6. Deferred Sprint 4 AI plan generation
 
 ```mermaid
 flowchart TD
@@ -165,15 +168,13 @@ The model never receives freedom to invent exercises outside the catalog.
 
 ## 7. Session-summary contract
 
-The browser may send:
+The browser sends only schema-controlled aggregates:
 
-- exercise key;
-- timestamps and total duration;
-- total and accepted repetitions;
-- aggregate phase durations;
-- error-code counts;
-- aggregate visibility or angle values;
-- visual-engine version.
+- client session/set UUIDs and an optional owned plan ID;
+- aware timestamps, total duration and engine version;
+- total, accepted and rejected repetitions;
+- depth_insufficient, too_fast and incomplete_extension counts;
+- finite mean repetition duration and mean minimum knee angle.
 
 The browser does not send:
 
@@ -214,3 +215,44 @@ See:
 - `decisions/0001-local-visual-inference.md`
 - `decisions/0002-preserve-backend-layering.md`
 - `decisions/0003-fallback-first-demo.md`
+
+
+## 11. Sprint 3 persistence and failure flow
+
+Backend bootstrap runs alongside the explicit camera flow, outside the vision
+and gesture inference loops. One typed singleton store uses cancellable requests
+with bounded timeouts. A saved token is checked against the persisted guest;
+missing/401 creates one guest. Profile 404 creates the default full profile.
+Catalog eligibility precedes deterministic generation; current plan is reused if
+available and still eligible. Explicit profile changes/regeneration archive the
+old plan atomically. Only confirmed constraints influence canonical eligibility.
+
+At workout start, App captures a local UUID/start timestamp and optional selected
+plan ID. The local vision result remains the immediate UI truth. App first
+transitions to RESULTS, then an effect projects aggregate data into the pending
+queue and starts background session → set → complete synchronization. No request
+is awaited by the workout completion event. API failure cannot remove completed
+rep data, hide Results or block camera/calibration.
+
+The model layer owns all transaction boundaries. Plan archive/create/items,
+profile/constraint replacement and each idempotent session operation are atomic.
+Conditional parent UPDATEs guard concurrent set/completion operations; a partial
+unique index enforces one active plan per user. No explicit locks, generic
+repositories, ORM rewrite or controller-managed transactions are introduced.
+
+Queue storage is bounded to 20 aggregate entries; successful sync removes entries.
+Retry triggers are startup, browser online, bootstrap and manual action, with no
+polling loop. Each entry retains client IDs and guest ownership metadata (never a
+user_id API field). Owned entries are never transferred to another guest after
+401 recovery. Default guest JWT lifetime is 60 minutes; without a refresh
+credential, expiry creates a new guest, leaving old data attached to its identity.
+
+Local draft/profile and cached Progress are marked honestly. Storage failure uses
+memory with a visible persistence limitation. Queue capacity exhaustion leaves
+the immediate result visible and reports that it could not be queued. Progress
+aggregates only persisted, owned completed sessions and never invents offline data.
+
+WorkoutFeedbackBanner is presentation-only: short corrections, dense contrast,
+large responsive text, stable height, live region and held visibility for transient
+errors. It does not own technique thresholds. Local speech remains supplementary.
+Live distance/camera verification is pending, as recorded in the manual checklist.

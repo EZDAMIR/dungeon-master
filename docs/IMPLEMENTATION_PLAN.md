@@ -97,34 +97,37 @@ Real camera acceptance and person/device threshold tuning: **not performed**.
 Use `SPRINT_2_MANUAL_CHECKLIST.md` before claiming reliable real-world recognition.
 Implementation does not establish clinical accuracy or injury assessment.
 
-## Sprint 3 — Core backend domains
+## Sprint 3 — Core Backend Domains, Persistence and Progress
 
-Goal: persist profile, catalog, plans and sessions using the existing architecture.
+Goal: add durable guest/profile/catalog/plan/session/progress capabilities while
+camera and immediate local results remain independent of the backend.
 
-Domain order:
+Implemented in separate commits:
 
-1. Users or guest identity.
-2. Profiles and confirmed constraints.
-3. Exercises.
-4. Deterministic training plans.
-5. Workout sessions and progress.
+1. Camera-distance feedback banner with persistent high-contrast corrections.
+2. Guest users, null-email JWTs, seven permissions and persisted `/auth/me`.
+3. Full-replacement profile and explicitly confirmed constraint transaction.
+4. Allowlisted squat seed and canonical controller-level eligibility helper.
+5. `deterministic-v1` weekly plans, atomic archive/create/items and unique active index.
+6. Typed aggregate sessions, client UUID idempotency and guarded immutable completion.
+7. Completed-only progress totals and recent history, filtered by current user.
+8. Typed frontend client, singleton bootstrap, gesture Profile/Plan/Progress,
+   background sync, bounded pending queue and honest offline/cached states.
+9. Domain/API/database/security tests, fresh migration chain and metadata drift checks.
+10. Setup, contract, privacy, failure and manual-acceptance documentation.
 
-For each domain:
+Automated acceptance (2026-09-30): backend check and 161 tests pass with 99.19%
+coverage against a disposable local DB; frontend lint/type checking and 116 tests
+pass with coverage gates retained. Both root/subdirectory builds and asset delivery
+are verified. Existing gesture/pose tests remain. No external provider dependency,
+raw vision persistence, architecture rewrite or Sprint 4 implementation was added.
 
-- table metadata;
-- generated migration;
-- schemas;
-- model functions;
-- controller;
-- endpoint;
-- router registration;
-- layer tests.
-
-Acceptance:
-
-- Existing and new backend tests pass at the configured coverage threshold.
-- The frontend can work in guest/local mode and optionally sync.
-- Session sync contains aggregates only.
+Manual acceptance is **not performed**: live camera, distance readability,
+new-screen gestures, real browser persistence/reconnection and multi-user workflow
+remain checklist work. See `SPRINT_3_MANUAL_CHECKLIST.md`; do not mark the sprint's
+full Definition of Done complete before those checks. Guest expiry creates a new
+identity without a refresh credential, and a full 20-entry pending queue cannot
+persist a 21st result. These limits are documented rather than hidden.
 
 ## Sprint 4 — Optional integrations
 

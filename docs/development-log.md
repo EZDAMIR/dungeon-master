@@ -141,3 +141,92 @@ Focused tests were added before implementing pure calibration primitives, then e
 Manual camera verification: **not performed**. Browser/device: not tested; testers: 0. Real counting, corrections, recovery, pause/resume, GPU compatibility and inference FPS remain unverified with live hardware. `SPRINT_2_MANUAL_CHECKLIST.md` contains all 35 requested steps, an observation table and two-person/device/lighting guidance. No photographs, videos, personal movement traces or raw landmarks were recorded. A real-camera acceptance pass and observations-based tuning remain the next verification work; Sprint 3 implementation has not started.
 
 Privacy: one video-only stream, no microphone, camera recording, retained still images, raw-pose persistence, video/landmark upload, remote vision, GPT or backend calls in the loop. Calibration and results are session-local. Speech/tone failures leave visual feedback complete. The UI states local processing and the general fitness scope, with no diagnosis or injury-safety claims.
+
+
+## Sprint 3 — Core Backend Domains, Persistence and Progress (2026-09-30)
+
+Starting basis: `ddb8640db47e8b52b71ce0b98adbf5a803f4144f`, verified descendant
+of `9971f8e31924a68937053ecb8415934782035658`. Existing branch is
+`sprint/core-backend-domains`; the old remote main was not used as a base.
+Working tree began clean; AGENT_PROMPT.md has no changes and was excluded from
+all sprint commits.
+
+### Delivered behavior
+
+The separate carry-over commit adds WorkoutFeedbackBanner: top-centred, width
+min(92vw, 960px), clamp-sized text, dense contrast, stable height, separate states,
+aria-live, reduced motion and held transient corrections. Short Russian corrections
+remain visual even when speech is muted. Actual distance readability is pending.
+
+Backend now owns persisted guest users, null-email JWTs/permissions, full profile
+replacement and confirmed constraint transaction, strict allowlisted squat catalog,
+reused eligibility, deterministic weekly plans and atomic archive/create/items,
+idempotent aggregate session/set/completion and completed-only progress/history.
+Eight SQLAlchemy Core tables and five generated native-enum migrations preserve
+existing layering. No providers, password auth or additional analyzed exercises.
+
+Frontend typed client and singleton store run bootstrap beside the camera flow.
+Profile/Plan/Progress reuse existing gesture targets and semantic events. Default
+profile is created on 404; existing eligible active plan is reused. The separate
+local demo action is not presented as a personal plan. Session IDs are captured
+locally, Results opens before requests, then an aggregate-only queue syncs start,
+set and completion and refreshes progress. Failure preserves result/queue;
+startup/online/bootstrap/manual retry is bounded. Cache labels and status explain
+degraded operation. No network call is added to an inference loop.
+
+### Commit sequence before documentation
+
+- `4bd3103` fix(ui): make workout corrections readable at camera distance
+- `9b0116c` feat(auth): add persisted guest identity and JWT bootstrap
+- `18ac598` feat(profile): add fitness profile and confirmed constraints
+- `50c9d54` feat(catalog): add allowlisted exercise catalog and eligibility rules
+- `75e36a1` feat(plans): add deterministic active training plans
+- `ab3a1be` feat(sessions): persist idempotent aggregate workout results
+- `a8395a3` feat(progress): add user progress summary
+- `d803015` feat(frontend): integrate guest profile plans sync and progress
+- `607ea20` test: cover Sprint 3 domains isolation and offline sync
+
+### Automated verification
+
+| Command/check | Result |
+|---|---|
+| Backend `make install` | Passed with approved network execution; no dependency changes |
+| Backend `make check` | Ruff passed; 84 files formatted |
+| Backend `make test` with confirmed TEST_DATABASE_URL | 161 passed; 99.19% coverage; original 90% gate retained |
+| Fresh local `make migrate` | Complete chain to e2dc2dbe10a5; eight tables, exactly one supported squat seed |
+| Fresh DB `.venv/bin/alembic check` | No new upgrade operations; no metadata drift |
+| `npm ci` | Passed; 198 packages; three existing moderate audit advisories, no lockfile/dependency changes |
+| `npm run lint` | Passed; zero warnings/errors |
+| `npm run type-check` | Passed with unchanged strict TypeScript |
+| `npm run test` | 116 passed in 20 files; existing gesture/pose tests retained |
+| `npm run test:coverage` | 116 passed; statements/lines 98.11%, branches 89.96%, functions 93.14%; unchanged gates |
+| `npm run build` | Passed; pinned model/WASM assets prepared |
+| `npm run build -- --base=/dungeon-master/` | Passed |
+| Matching preview at 127.0.0.1:4176/dungeon-master/ | Index, both model SHA-256 and all six installed WASM bytes verified; fake controls absent |
+| `npm run check:instructions` / `npm run test:instructions` | 43 authored folders verified; two instruction-check tests passed |
+| `python3 scripts/verify_architecture.py` | Passed; structural checker only |
+| `git diff --check` | Passed |
+
+Backend fixtures create/drop only a new UUID-named database on an owned temporary
+PostgreSQL 17.7 server under /private/tmp:55433. A separately fresh local test DB
+checks migration/seed/drift. No production data or existing DB was touched.
+Frontend HTTP/storage tests need neither real DB nor camera; full-App cases show
+immediate Results during a blocked POST and during failure of all API operations.
+Security tests cover missing permissions, token expiry, cross-user access,
+extra/raw-field rejection, sanitized errors and immutable/idempotent completion.
+
+### Manual boundary and limitations
+
+**Manual verification: not performed.** Real camera recognition, new-page gesture
+operation, 2–4 metre readability, actual browser reload/reconnection and separate
+browser-profile isolation require `SPRINT_3_MANUAL_CHECKLIST.md` (35 steps plus
+feedback/boundary checks). Only automated synthetic/mocked/API/database checks
+are claimed; no personal recordings or health observations were collected.
+
+Queue capacity is 20 unsynced entries; a 21st result remains visible but cannot be
+persisted until space exists. Blocked/quota-full browser storage falls back to
+memory with a visible reload-persistence limitation. Guest JWT expiry defaults to
+60 minutes and there is no refresh credential: controlled 401 recovery creates a
+new guest. Earlier history/pending entries stay with their former identity and
+are never reassigned. No AI, Calendar, ElevenLabs or medical-document flow exists.
+Live acceptance is still required before claiming full Sprint 3 Definition of Done.

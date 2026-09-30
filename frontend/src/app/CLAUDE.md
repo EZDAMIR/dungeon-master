@@ -14,6 +14,8 @@ Own App.tsx, the mode reducer and mapping of VisionEvent into application action
 - Keep camera startup inside the explicit start/retry action, and close owned resources on teardown.
 - FakeSource and fakeVisionEnabled are development-only; fake events use the real semantic mapper.
 - Keep state updates semantic; per-frame landmarks and cursor coordinates remain outside app state.
+- Bootstrap backend independently of camera startup. Capture local session IDs at workout start and enqueue aggregate sync after RESULTS, never in the inference callback.
+- PROFILE/PLAN/PROGRESS reuse hand navigation and semantic target callbacks; Back returns to MENU without camera reacquisition.
 
 ## Dependencies
 

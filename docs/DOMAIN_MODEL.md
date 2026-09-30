@@ -1,178 +1,106 @@
-# Domain Model
+# Domain Model — Sprint 3
 
-This document describes the target data model. Implement only the tables required
-by the current sprint.
+The following eight PostgreSQL tables are implemented. SQLAlchemy Core metadata
+is the source of truth; controllers return primitive model data through Pydantic
+response schemas. UUID primary keys and timezone-aware timestamps are used.
 
-## 1. MVP entities
+## Identity, profile and confirmed constraints
 
-### `users`
+| Table | Persisted fields | Database invariants |
+|---|---|---|
+| `users` | UUID id, nullable email/display_name, is_guest, created_at, updated_at | PK; nullable unique email; display name ≤100; no password hash |
+| `profiles` | user_id, goal, experience_level, days_per_week, session_minutes, equipment JSONB, locale, timezone, timestamps | user_id PK/FK users CASCADE; days 1–7; minutes 5–120 |
+| `health_constraints` | UUID id, user_id, code, source, status, nullable note, created_at, confirmed_at | FK users CASCADE; bounded note; API replacement rejects duplicate codes |
 
-Purpose: stable identity for guest or future registered users.
+Native named enums: `profiles_goal_enum` (`general_fitness`, `strength_foundation`,
+`mobility`), `profiles_experience_enum` (`beginner`, `intermediate`, `advanced`),
+`health_constraints_code_enum` (`no_high_impact`, `avoid_deep_knee_flexion`, `avoid_overhead`),
+`health_constraints_source_enum` (`self_reported`, `document_extracted`), `health_constraints_status_enum`
+(`pending_confirmation`, `confirmed`, `rejected`). Schema/metadata parity is tested.
 
-Suggested fields:
+Equipment is a controlled, nonempty, duplicate-free array of `none`, `chair`,
+`resistance_band`, `dumbbells`; `none` cannot coexist with other codes. Locale is
+bounded and validated; timezone must exist in `zoneinfo`. Full PUT replaces the
+profile and its constraints atomically. API writes only self-reported confirmed
+codes; notes/document upload are not exposed. Pending/rejected constraints do not
+influence eligibility. `document_extracted` is an enum value reserved for future
+compatibility, not an implemented extraction flow.
 
-- `id`: UUID primary key.
-- `email`: nullable, unique when present.
-- `display_name`: nullable.
-- `is_guest`: boolean.
-- `created_at`, `updated_at`.
+## Catalog and deterministic plans
 
-### `profiles`
+| Table | Persisted fields | Database invariants |
+|---|---|---|
+| `exercises` | UUID id, key/name, difficulty, equipment_codes JSONB, impact_level, camera_angle, contraindication_tags JSONB, analysis_profile JSONB, is_active, timestamps | unique key; bounded strings; named native enums |
+| `training_plans` | UUID id, user_id, status/source, starts_on, rationale, generator_version, timestamps | FK users CASCADE; partial unique index on user_id WHERE status=active |
+| `training_plan_items` | UUID id, plan_id, exercise_id, day_index, position, sets, target_reps, rest_seconds, nullable tempo_hint/scheduled_at, created_at | plan FK CASCADE; exercise FK; unique plan/day/position; day 0–6, position ≥0, sets 1–10, reps 1–100, rest 0–600 |
 
-Purpose: non-clinical fitness preferences used for plan selection.
+Additional native enums: `exercises_difficulty_enum` (`beginner`, `intermediate`, `advanced`), `exercises_impact_enum` (`low`, `medium`, `high`),
+`exercises_camera_angle_enum` (`side`, `front`, `none`), `training_plans_status_enum`
+(`draft`, `active`, `completed`, `archived`), `training_plans_source_enum`
+(`deterministic`, `ai_assisted`). Sprint 3 creates only deterministic active plans.
 
-Suggested fields:
+The migration seeds only `bodyweight_squat`: beginner, `['none']`, low impact,
+side angle and `['avoid_deep_knee_flexion']`. Its strict analysis profile is
+version 1, engine key `bodyweight_squat_side_v1`, engine version `squat-v1`,
+target 5, supported client `web`. Unknown/invalid catalog JSON is excluded.
 
-- `user_id`: primary key and foreign key to `users`.
-- `goal`: general fitness, strength foundation, mobility, or another controlled
-  enum.
-- `experience_level`: beginner, intermediate, advanced.
-- `days_per_week`.
-- `session_minutes`.
-- `equipment`: JSON array of controlled equipment codes.
-- `locale`.
-- `timezone`.
-- `updated_at`.
+One controller-level pure eligibility helper requires an active, supported
+exercise, available equipment and no intersection with confirmed restrictions.
+Both catalog listing and plan generation reuse it. New plan items reference only
+eligible IDs. Historical items/results retain their identity if the catalog later
+changes. Generation archives the previous active plan and creates all new items
+in one model transaction, serializing competing writes through the user's normal
+UPDATE and the partial unique index, without explicit locks.
 
-### `health_constraints`
+Weekly day indices:
 
-Purpose: user-confirmed exercise restrictions, not diagnoses.
+| days_per_week | day_index values |
+|---|---|
+| 1 | 0 |
+| 2 | 0, 3 |
+| 3 | 0, 2, 4 |
+| 4 | 0, 1, 3, 5 |
+| 5 | 0, 1, 2, 4, 5 |
+| 6 | 0, 1, 2, 3, 4, 5 |
+| 7 | 0, 1, 2, 3, 4, 5, 6 |
 
-Suggested fields:
+Week starts on Monday in the profile timezone. Each training day contains squat
+1 × 5, 60 seconds rest, `controlled` tempo. Version is `deterministic-v1`.
+Rationale uses goal, experience, days and equipment without clinical claims.
+No eligible supported exercise produces HTTP 409 `no_eligible_exercises`.
 
-- `id`: UUID.
-- `user_id`.
-- `code`: controlled restriction code.
-- `source`: `self_reported` or future `document_extracted`.
-- `status`: `pending_confirmation`, `confirmed`, `rejected`.
-- `note`: optional short user text.
-- `created_at`, `confirmed_at`.
+## Aggregate sessions and progress
 
-Only `confirmed` rows may influence plan eligibility.
+| Table | Persisted fields | Database invariants |
+|---|---|---|
+| `workout_sessions` | UUID id, client_session_id, user_id, nullable plan_id, status, started_at/completed_at, client_engine_version, summary JSONB, timestamps | FK users CASCADE; owned optional plan; unique user/client_session_id |
+| `workout_set_results` | UUID id, client_set_id, session_id, exercise_id, set_index, total_reps, accepted_reps, duration_ms, error_counts/metrics JSONB, timestamps | session FK CASCADE; exercise FK; unique session/set_index and session/client_set_id; index ≥1, counts 0–500, accepted ≤total, duration 0–3,600,000 ms |
 
-### `exercises`
+Native `workout_sessions_status_enum`: `started`, `completed`, `abandoned`. Completed sessions
+require completed_at through the guarded completion operation. Summary is null
+while started; final summary must match persisted sets. Controllers do not
+read/merge/write or manage transactions. Model operations guard ownership/status
+and serialize set/completion writes with conditional parent UPDATEs.
 
-Purpose: allowlisted exercise catalog.
+Identical session/set/completion retries return existing data; conflicting repeats
+return 409. Completed sessions reject new sets and modified completion, while
+identical previously saved set retries remain possible, including deactivated
+historical exercises. Only aggregate data is accepted, never arbitrary JSON.
 
-Suggested fields:
+Error keys: `depth_insufficient`, `too_fast`, `incomplete_extension`, each
+nonnegative and bounded. A rep may contribute multiple errors. Metrics are finite
+`mean_rep_duration_ms` in 0–3,600,000 and `mean_min_knee_angle` in 0–180.
+Rejected repetitions equal total minus accepted. Extra fields at all request
+levels are forbidden; no landmarks, frames, video, image or screenshot fields.
 
-- `id`: UUID.
-- `key`: stable unique string such as `bodyweight_squat`.
-- `name`.
-- `difficulty`.
-- `equipment_codes`: JSON array.
-- `impact_level`.
-- `camera_angle`: for example `side`.
-- `contraindication_tags`: JSON array of controlled constraint codes.
-- `analysis_profile`: versioned JSON configuration.
-- `is_active`.
-- timestamps.
+`models/progress.py` owns aggregate queries, with no separate progress table.
+Only current-user completed sessions contribute. Acceptance is accepted/total,
+zero when empty. Recent entries are newest first, with deterministic error ties
+ordered depth, tempo, extension; no errors means null. Raw metrics are not exposed
+in progress history.
 
-The catalog is the security and safety boundary for AI plan generation.
+## Deferred work
 
-### `training_plans`
-
-Suggested fields:
-
-- `id`: UUID.
-- `user_id`.
-- `status`: draft, active, completed, archived.
-- `source`: deterministic, AI-assisted.
-- `starts_on`.
-- `rationale`: short non-medical explanation.
-- `generator_version`.
-- timestamps.
-
-### `training_plan_items`
-
-Suggested fields:
-
-- `id`: UUID.
-- `plan_id`.
-- `exercise_id`.
-- `day_index`.
-- `position`.
-- `sets`.
-- `target_reps`.
-- `rest_seconds`.
-- `tempo_hint`.
-- optional `scheduled_at`.
-
-### `workout_sessions`
-
-Suggested fields:
-
-- `id`: UUID.
-- `user_id`.
-- `plan_id`: nullable.
-- `status`: started, completed, abandoned.
-- `started_at`, `completed_at`.
-- `client_engine_version`.
-- `summary`: bounded JSON object containing aggregates only.
-
-### `workout_set_results`
-
-Suggested fields:
-
-- `id`: UUID.
-- `session_id`.
-- `exercise_id`.
-- `set_index`.
-- `total_reps`.
-- `accepted_reps`.
-- `duration_ms`.
-- `error_counts`: bounded JSON map by controlled error code.
-- `metrics`: bounded JSON of aggregate values.
-- timestamps.
-
-## 2. Integration entities
-
-Implement only after the core demo.
-
-### `oauth_connections`
-
-- `id`, `user_id`.
-- `provider`.
-- encrypted access and refresh token material.
-- expiration time.
-- granted scopes.
-- timestamps.
-
-Use a dedicated encryption key and never return token material through the API.
-
-### `calendar_event_links`
-
-- `id`, `user_id`.
-- `plan_item_id`.
-- `provider`.
-- external calendar and event identifiers.
-- sync status and last error code.
-- timestamps.
-
-### `voice_assets`
-
-- stable feedback code and locale;
-- provider and voice version;
-- storage path or public asset key;
-- checksum and duration;
-- generation timestamp.
-
-Common real-time feedback should normally ship as cached assets.
-
-## 3. Deferred entity
-
-`health_documents` is intentionally deferred. The hackathon MVP should use
-explicit user-confirmed constraint codes. A later document flow needs consent,
-strict file limits, short retention, extraction review, deletion, auditability and
-a clear statement that extracted text is not a diagnosis.
-
-## 4. Invariants
-
-- Plan items reference only active catalog exercises.
-- AI-generated plans reference only IDs provided in the eligible set.
-- A user may have at most one active plan unless the product explicitly changes.
-- A completed session has `completed_at`.
-- `accepted_reps <= total_reps`.
-- `error_counts` keys come from a controlled set.
-- Provider tokens never appear in logs or normal API responses.
-- Raw images and landmark streams are not part of this model.
+AI-assisted generation, OAuth/calendar links, voice assets, account registration
+and health-document processing are not implemented. Enum compatibility does not
+imply these capabilities exist. No providers or integration tables are added.

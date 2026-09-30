@@ -108,3 +108,61 @@ Shared-source integration tests replay MENU → selection/confirmation → CALIB
 Production checks must include both normal and `/dungeon-master/` builds, preview HTTP responses/checksums for both models and installed WASM, absence of fake controls from the production bundle, and a clean clone with `npm ci` and automatic asset preparation. Check that cached valid assets need no download and a downloaded checksum mismatch fails without installing a file. Backend regression uses existing `make check` / `make test`; product backend code is unchanged.
 
 Real-camera verification is **not performed** here. [Sprint 2 manual acceptance](SPRINT_2_MANUAL_CHECKLIST.md) remains mandatory before accepting real counting reliability or tuning defaults. Mocked model performance does not establish inference speed.
+
+
+## Sprint 3 domain and integration verification
+
+Backend `make test` retains the 90% coverage gate. Tests cover schema bounds and
+native enum parity, guest token/null email/expiry, full profile replacement,
+confirmed-only eligibility, seed uniqueness/idempotency, exact day schedules,
+atomic plan rollback/one active plan, primitive model results, session ownership,
+conflicting/identical retries, guarded completion and progress totals/sorting.
+A route matrix verifies all seven permissions, missing/invalid/expired JWTs,
+superuser bypass and documented response/security metadata. Extra fields are
+rejected at outer/set/summary/metrics/error levels; tests submit landmarks, frames,
+video, image and screenshot and assert sanitized validation errors do not echo
+submitted values. Logging/SQL parameter privacy and architectural AST boundaries
+are checked. No external providers are called.
+
+Database setup: install PostgreSQL client tools (`createdb`, `dropdb` on PATH),
+configure TEST_DATABASE_URL in backend `.env` or process environment to a distinct
+local database name ending `_test`, and grant its user CREATE DATABASE rights.
+Allowed test hosts are localhost, 127.0.0.1 or the local Compose `postgres` service;
+production APP_ENV and matching application/test URLs are rejected. The session
+fixture creates its own UUID-named database, applies **all** Alembic revisions,
+runs `alembic check`, and drops that database in teardown. It never truncates or
+migrates the configured database. Missing/unconfirmed configuration fails tests
+instead of silently skipping database coverage. Domain tests share the `domains`
+xdist group; current suite runs sequentially against this disposable database.
+Never point tests or migration verification at production.
+
+An additional explicitly fresh local DB verifies complete migration application,
+squat seed and metadata drift. Every newly generated migration has `downgrade():
+pass`; metadata is declared before each migration and no raw SQL, triggers,
+procedures or explicit locks are introduced.
+
+Frontend tests mock fetch/storage rather than camera or real DB. They cover:
+
+- Single bootstrap across StrictMode, restored/missing/invalid token, controlled
+  401 recovery, default profile only on 404 and plan reuse on reload.
+- Full profile save/local draft reconnection and no-eligible messaging.
+- Three-step session sync, failures after start/set, safe retry with stable IDs,
+  queue reload/capacity/removal, raw-data-free storage and guest identity isolation.
+- External abort, timeout, malformed/empty responses and typed request IDs.
+- Profile controls, plan schedules, empty/cached Progress, CSS bars and semantic
+  navigation/Back without restarting pose or camera permission.
+- Immediate Results while a POST is unresolved, and a full local workout despite
+  all API calls failing. Backend state never clears the workout result.
+- Banner live region/style classes and retention after a short semantic error.
+
+Current results: 161 backend tests, 99.19% coverage; 116 frontend tests, statements/
+lines 98.11%, branches 89.96%, functions 93.14%. Coverage configuration and strict
+TypeScript were not weakened. Root and /dungeon-master/ production builds, matching
+preview, both model checksums and all six installed WASM byte comparisons are
+required. Architecture/folder-guidance verification supplements domain tests;
+its scaffold checks alone do not prove runtime correctness.
+
+Manual boundary: [Sprint 3 checklist](SPRINT_3_MANUAL_CHECKLIST.md) remains **not
+performed**. Automated synthetic/mocked scenarios do not prove camera accuracy,
+distance readability, real gesture UI operation or live reconnection. Record only
+aggregate observations, never tokens, camera recordings or personal health notes.

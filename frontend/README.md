@@ -1,10 +1,10 @@
-# Dungeon Master frontend — Sprint 2
+# Dungeon Master frontend — Sprint 3
 
-Sprint 2 implements the local five-cycle fitness scenario:
+The Sprint 2 local five-cycle scenario remains available in Sprint 3:
 
 `CAMERA_PERMISSION → TUTORIAL → MENU → CALIBRATION → COUNTDOWN → WORKOUT ↔ PAUSED → RESULTS`.
 
-The only implemented exercise profile is `bodyweight_squat_side_v1`. During squats the app analyzes a complete cycle and its depth, tempo and return to standing. It gives specific visual and local audio corrections for insufficient depth, too-fast motion and incomplete extension. Counting stops on missing body landmarks or a poor side view; partial repetitions are discarded. Five total cycles finish the demo even when some are rejected. Results stay in session memory; there is no backend persistence.
+The only implemented exercise profile is `bodyweight_squat_side_v1`. During squats the app analyzes a complete cycle and its depth, tempo and return to standing. It gives specific visual and local audio corrections for insufficient depth, too-fast motion and incomplete extension. Counting stops on missing body landmarks or a poor side view; partial repetitions are discarded. Five total cycles finish the demo even when some are rejected. Results appear immediately; Sprint 3 synchronizes bounded aggregate summaries in the background.
 
 ## Requirements and start
 
@@ -62,7 +62,7 @@ future boundaries without implementing later sprints.
 
 Cursor ROI is 0.15–0.85 on each axis with smoothing alpha 0.25. Pinch uses tip distance / palm width, enter ratio 0.32, exit 0.45 and three consecutive samples to trigger. Fist/Thumb Up require classification confidence ≥0.65 and a 600 ms hold, followed by a 200 ms neutral release and a 700 ms cooldown. Cursor movement remains active during cooldown. These are starting values in `src/vision/gestures/gestureConfig.ts`; hardware/person-specific tuning still needs real camera verification.
 
-One shared camera runtime owns the MediaStream/video and serializes model switching: hand in TUTORIAL/MENU/RESULTS, pose in CALIBRATION/COUNTDOWN/WORKOUT/PAUSED. The old recognizer closes and late initialization completes before the next starts; permissions are not requested again. Inference is scheduled by one animation loop, at most once every 55 ms, only on new playable video frames. Hidden tabs stop scheduling and reset candidates. Return to the tab starts one loop. Cursor and hand overlay use refs/canvas rather than App state for each frame. The video is mirrored only in CSS; cursor and hand/pose landmark overlays each map original X to `1 - x` once. Canvas handles aspect-ratio letterboxing, resize and device pixel ratio.
+One shared camera runtime owns the MediaStream/video and serializes model switching: hand in TUTORIAL/MENU/RESULTS/PROFILE/PLAN/PROGRESS, pose in CALIBRATION/COUNTDOWN/WORKOUT/PAUSED. The old recognizer closes and late initialization completes before the next starts; permissions are not requested again. Inference is scheduled by one animation loop, at most once every 55 ms, only on new playable video frames. Hidden tabs stop scheduling and reset candidates. Return to the tab starts one loop. Cursor and hand overlay use refs/canvas rather than App state for each frame. The video is mirrored only in CSS; cursor and hand/pose landmark overlays each map original X to `1 - x` once. Canvas handles aspect-ratio letterboxing, resize and device pixel ratio.
 
 The HUD shows camera/hand status, recognized category and confidence, candidate/progress, focus, last confirmed command and recovery instructions. Development also shows measured inference FPS/time. Local Web Audio tones accompany semantic commands after activation; missing audio does not interrupt control.
 
@@ -122,3 +122,73 @@ Video and landmarks are processed locally in the browser. No frames/images/conti
 | Command does not repeat | Release both held command gestures for ≥200 ms; wait for cooldown |
 
 Real camera verification was **not performed** in the agent environment. Use [the Sprint 2 manual checklist](../docs/SPRINT_2_MANUAL_CHECKLIST.md) before accepting real counting reliability, GPU/browser compatibility, inference latency or threshold tuning. The Sprint 1 gesture checklist remains relevant. The app provides general fitness feedback, not clinical measurement, injury assessment or a replacement for a trainer/doctor.
+
+
+## Sprint 3 backend integration
+
+Copy `.env.example` to `.env` if overriding `VITE_API_BASE_URL`; its documented
+default is `http://localhost:8000/api/v1`. No frontend secret is required.
+Run the backend following [root setup](../README.md), including environment CORS
+configuration for the frontend origin. The client uses Bearer auth, a 7-second
+AbortController timeout, composed external cancellation and normalized typed
+errors. Response request IDs are available for debugging without logging tokens
+or profile data.
+
+A singleton `BackendStore` attaches once across React StrictMode mounts. Startup
+restores `dungeon-master.auth.v1` through `/auth/me`, creates a guest only if
+missing/401, creates a default profile only on 404 and retrieves an active plan
+before generating. Default fields: general_fitness, beginner, 3 days/week,
+20 minutes, equipment none, browser language/timezone (ru-RU / Asia/Almaty fallback),
+no confirmed constraints. A valid existing plan is reused on reload.
+
+Menu offers separate saved-plan and local demonstration actions. PROFILE uses
+six gesture-accessible steps for goal, experience, days, duration, equipment and
+explicit constraints, plus Save/Back. Save is a full PUT; offline saves remain
+local drafts and synchronize after reconnection. PLAN shows weekly items,
+«Базовый план» source and rationale, and can regenerate explicitly. No eligible
+exercise means a clear profile/constraints message, not a medical recommendation.
+PROGRESS shows saved totals, percentage, CSS bars and recent five sessions; cached
+values are labelled and empty history is not fabricated. Pinch activates stable
+GestureTargets; held Fist returns to MENU through the existing semantic pipeline.
+These modes reuse the hand recognizer and never launch pose or request camera
+permission again. Semantic HTML buttons provide fallback control.
+
+Workout startup creates client_session_id and started_at locally; planned start
+captures plan_id, while demo start uses null. Results renders before synchronization.
+`features/results/sessionAggregate.ts` reduces completed repetition metrics once;
+network/storage work happens after the RESULTS transition, outside inference.
+Sync calls session start, one set and completion, then refreshes Progress.
+A dense backend badge and Results retry action explain online/local/pending/saved
+states without covering gesture HUD or workout feedback.
+
+`dungeon-master.pending-sessions.v1` stores only UUIDs, timestamps, aggregate set
+and summary data and attempt/identity metadata. Maximum **20** unsynced entries;
+completed/synced entries are removed. A full queue refuses another entry and keeps
+its result visible. Startup, browser online, successful bootstrap and manual retry
+are bounded triggers; no polling or frame-loop requests. Each retry repeats the
+same three steps safely through backend idempotency. Failure preserves the local
+result and queue. Client ownership metadata is never sent as user_id.
+
+Tokens expire after the server-configured lifetime (default 60 minutes). There
+is no refresh credential: controlled 401 recovery creates a new guest once,
+with no infinite auth loop. Previous-guest queued results/history remain attached
+to that guest and cannot be uploaded as the new guest. Clearing storage loses the
+stored identity. Blocked/quota-limited localStorage uses memory and displays that
+reload persistence is unavailable. These are guest-demo limitations, not full
+account/authentication security.
+
+## Sprint 3 feedback and acceptance
+
+Workout corrections use a top-centred dense high-contrast banner, fixed minimum
+height, `clamp(1.5rem, 3.5vw, 3.5rem)` text and separate positive/hint/warning/error
+styles. Brief corrections remain visible for 3.5 seconds, tracking errors for
+2.5 seconds. Skeleton/debug layers stay below it. aria-live and reduced-motion
+support are present; speech may be muted without losing visual feedback.
+
+Mocked HTTP tests cover guest/profile/plan bootstrap, expiry recovery, full save,
+three-step retry after partial failure, reload queue persistence, capacity,
+identity isolation, cached progress and offline immediate Results. Existing
+synthetic gesture/pose/camera lifecycle tests continue unchanged in purpose.
+See [Sprint 3 manual acceptance](../docs/SPRINT_3_MANUAL_CHECKLIST.md). Real camera,
+gesture operation of new screens and readability at 2–4 metres are **not performed**
+here. Run the checklist before accepting those hardware/UX criteria.

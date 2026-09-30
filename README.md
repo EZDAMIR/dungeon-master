@@ -1,75 +1,143 @@
 # Dungeon Master
 
-Dungeon Master is a browser-based fitness assistant controlled through a webcam. It
-uses local hand and pose recognition to navigate the interface, count
-repetitions, identify selected movement errors, and provide concrete visual and
-audio feedback.
+Dungeon Master is a browser fitness application controlled through a webcam. Local
+hand and pose recognition navigate the UI, count five squat cycles and show
+technique corrections. Sprint 3 adds guest identity, saved preferences,
+deterministic plans and aggregate progress without putting the backend on the
+workout's critical path.
 
-> Repository name: `dungeon-master`  
-> Working product name: `Dungeon Master`
+## Current capabilities
 
-## Core demo
+- One supported exercise: **Bodyweight Squat**, side view, `squat-v1`.
+- Explicit camera permission, gesture tutorial, calibration, countdown,
+  workout, pause/resume and immediate results.
+- Persisted guest JWT, full-replacement fitness profile and explicitly confirmed
+  constraint codes. Restrictions are user preferences, not medical diagnoses.
+- Allowlisted server catalog and `deterministic-v1` weekly plan: one set of five
+  repetitions on each selected training day.
+- Gesture-accessible Profile, Plan and Progress screens with semantic buttons.
+- Background aggregate-only session synchronization and completed-session history.
+- Dense, high-contrast workout banner; browser speech is additional feedback.
 
-1. Grant camera permission.
-2. Complete the gesture tutorial.
-3. Select a squat workout using only gestures.
-4. Calibrate a side-view camera position.
-5. Perform repetitions.
-6. Receive specific correction for selected errors.
-7. Review the workout result.
+No AI plan generation, Calendar integration, ElevenLabs, document processing or
+additional analyzed exercises are implemented.
 
-## Architecture
+## Architecture and privacy
 
-- `frontend/`: React, TypeScript, browser camera, MediaPipe, local visual logic.
-- `backend/`: existing FastAPI scaffold; product domains/persistence are planned
-  for Sprint 3.
-- `docs/`: architecture, visual pipeline, API contract and implementation plan.
+`frontend/` owns camera access, MediaPipe, gesture recognition, pose analysis,
+exercise rules and immediate results. `backend/` owns guest identity, durable
+profile/catalog/plan/session data and progress queries using the existing
+FastAPI → schemas → controllers → SQLAlchemy Core models architecture.
 
-Raw camera frames and landmarks are processed locally; no frames are uploaded or recorded.
+Video, images and raw landmarks remain local and are neither recorded nor sent
+to the API. Only identifiers, timestamps, aggregate repetitions, three controlled
+error counts, mean repetition duration and mean minimum knee angle are synced.
+There is no microphone, analytics provider or external inference service.
 
-## Local development
+## Backend setup
 
-### Backend
+Requirements: Python 3.12+, Docker Compose and PostgreSQL client tools
+(`createdb` / `dropdb` on PATH). First create the local environment:
 
 ```bash
 cd backend
+python3 -m venv .venv
 cp .env.example .env
-docker compose up -d db
-make install
-make migrate
-make run
 ```
 
-Confirm the exact available Make targets in `backend/Makefile`.
+Set a random `SECRET_KEY` of at least 32 characters in `.env`; do not commit it.
+Review `DATABASE_URL`, separate local `TEST_DATABASE_URL` and `CORS_ORIGINS`.
+Then use the existing commands:
 
-### Frontend
+```bash
+make install
+make up
+make migrate
+make test
+```
 
-Sprint 2 extends gesture navigation into side-view pose calibration, countdown,
-five total squat cycles, pause/resume and local results. Use Node.js 22.12+ and a webcam on localhost or HTTPS.
+`make up` starts PostgreSQL and the backend. The API runs on port 8000, with
+OpenAPI at `/docs`. `make dev` is available for a host development server; stop
+its Docker backend counterpart first if they would share a port.
+
+Tests require a confirmed local `*_test` URL and CREATE DATABASE permission.
+They create a separate UUID-named database, apply the complete Alembic chain,
+check metadata drift and drop only that disposable database. They do not erase
+or migrate the configured application database. Production configuration and
+unsafe/nonlocal test URLs are rejected. See [test strategy](docs/TEST_STRATEGY.md).
+
+## Frontend setup
+
+Use Node.js 22.12+ and a webcam on localhost or HTTPS:
 
 ```bash
 cd frontend
 npm ci
+cp .env.example .env
 npm run dev
 ```
 
-The first dev/build command automatically prepares the official model and pinned
-MediaPipe WASM; the build host needs Internet access for the initial download.
-Click «Включить камеру», grant permission, then learn pointer/pinch/fist/Thumb Up
-controls. Frames remain local and are not uploaded or recorded.
+`VITE_API_BASE_URL` defaults to `http://localhost:8000/api/v1`. The first dev/build
+prepares pinned official models and installed MediaPipe WASM automatically; the
+build host needs Internet access on the first preparation. Visitors receive
+these assets from the deployed frontend.
 
-Checks: `npm run lint`, `npm run type-check`, `npm run test`,
-`npm run test:coverage`, `npm run build`. Development fake mode is available at
-`?fakeVision=1` and is hidden in production. See [frontend instructions](frontend/README.md)
-for assets and troubleshooting. Real-camera acceptance is **not performed**; use
-[the Sprint 2 checklist](docs/SPRINT_2_MANUAL_CHECKLIST.md).
+Click «Включить камеру», then use pointer/pinch, Fist for Back and Thumb Up to
+confirm. Profile setup needs no typing. Menu distinguishes the saved plan from
+«Демонстрационный присед», which remains available when the backend is offline
+or the profile has no eligible exercise.
 
+## Persistence and offline behavior
 
-## Sprint 2 demo behavior
+Startup restores the stored token through `/auth/me`, creates a guest only when
+missing/401, creates the default profile only on 404, and retrieves the existing
+active plan before generating one. Guest tokens expire after the configured
+60 minutes by default. There is no refresh/recovery credential in this sprint:
+a 401 creates a new guest. Earlier history remains attached to its original
+identity; pending entries belonging to that guest are never reassigned. Clearing
+localStorage also starts a new identity.
 
-Во время приседаний приложение анализирует полный цикл движения и отдельные метрики повторения. Если пользователь не достигает заданной глубины, двигается слишком быстро или не возвращается в исходное положение, приложение показывает конкретную визуальную и локальную звуковую подсказку. При потере тела из кадра или неподходящем ракурсе подсчёт приостанавливается, незавершённый цикл отменяется.
+Camera permission, tutorial, calibration, workout feedback and Results work
+without a backend. Results appear before requests complete. Up to **20** aggregate
+sessions persist under `dungeon-master.pending-sessions.v1`; retry runs at startup,
+browser `online`, guest bootstrap or explicit user action, never per frame or
+on a repeating timer. Identical retries use the same UUIDs and are idempotent.
+Successfully synced entries are removed. If all 20 entries remain pending, the
+next result stays visible but cannot be added until capacity is available.
 
-The demo finishes after five total cycles, including repetitions rejected by the three implemented rules. Results report accepted/rejected counts, per-error breakdown and mean repetition duration. The single exercise profile is `bodyweight_squat_side_v1`; there is no backend persistence, multiple-exercise support, remote vision or GPT personalization. Side-view readiness and thresholds are heuristics; real-camera tuning is pending.
+Profile edits can remain a local draft and sync after reconnection. Progress
+shows only saved data, with cached data clearly marked. If browser storage is
+blocked or full, the app falls back to memory and reports that reload persistence
+is unavailable. Guest JWTs are stored in localStorage; this is guest demo auth,
+not a claim of production account security.
+
+## Environment
+
+| Variable | Location | Purpose |
+|---|---|---|
+| `VITE_API_BASE_URL` | Frontend `.env` | API prefix; no secrets |
+| `CORS_ORIGINS` | Backend `.env` | Allowed frontend origins, comma separated |
+| `DATABASE_URL` | Backend `.env` | Development PostgreSQL |
+| `TEST_DATABASE_URL` | Backend `.env` or process env | Separate local test configuration |
+| `SECRET_KEY` | Backend `.env` | JWT signing secret, at least 32 characters |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Backend `.env` | Guest token lifetime, default 60 |
+
+Never commit `.env`, JWTs, database dumps, recordings or personal health data.
+
+## Verification
+
+Backend: `make check`, `make test`, `make migrate`, `.venv/bin/alembic check`.
+Frontend: `npm run lint`, `npm run type-check`, `npm run test`,
+`npm run test:coverage`, `npm run build` and
+`npm run build -- --base=/dungeon-master/`. Preview must use the matching base:
+`npm run preview -- --base=/dungeon-master/`.
+Root: `python3 scripts/verify_architecture.py`.
+
+See [frontend instructions](frontend/README.md), [API contract](docs/API_CONTRACT.md)
+and [Sprint 3 manual checklist](docs/SPRINT_3_MANUAL_CHECKLIST.md).
+Automated tests use synthetic motion and mocked HTTP. Live camera acceptance and
+feedback readability at 2–4 metres are **not performed** in this environment.
+The [Sprint 2 camera checklist](docs/SPRINT_2_MANUAL_CHECKLIST.md) remains relevant.
 
 ## Pre-existing scaffold disclosure
 
@@ -89,10 +157,6 @@ Relevant first project-specific commit:
 <COMMIT SHA AND TIMESTAMP>
 ```
 
-Do not claim work was created during the event unless the commit history supports
-that claim.
-
-## Safety notice
-
-Dungeon Master provides general fitness feedback. It does not diagnose conditions,
-provide treatment, or replace a medical professional or qualified trainer.
+Do not claim work was created during the event unless commit history supports it.
+Dungeon Master provides general fitness feedback, not diagnosis, treatment,
+rehabilitation or a replacement for a qualified trainer or medical professional.

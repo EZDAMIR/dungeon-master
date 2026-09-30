@@ -183,3 +183,28 @@ architectural style.
 Browser-local processing provides lower latency, keeps the demo operational during
 backend failure, satisfies the browser-control requirement, and avoids transferring
 sensitive frames.
+
+
+## Sprint 3 implemented additions
+
+The existing flat backend layers now each contain users, profiles, exercises,
+training_plans, workout_sessions and progress domain modules. HTTP modules are
+`v1/endpoints/auth.py`, `profile.py`, `exercises.py`, `training_plans.py`,
+`workout_sessions.py`, `progress.py`; all are registered in the existing router.
+Five generated migrations under `backend/src/migrations/postgres/versions/`
+create eight tables and seed only the supported squat. Flat `backend/tests/`
+files cover each domain plus the permission/privacy/layer boundary matrix.
+
+Frontend additions use existing folders rather than a new state framework:
+
+- `src/api/`: client, types and auth/profile/exercises/plans/sessions/progress helpers.
+- `src/store/`: singleton backend store, safe versioned storage/queue and React subscription.
+- `src/features/profile/`: gesture preference controls and day label presentation.
+- `src/features/results/`: aggregate synchronization projection.
+- `src/features/workout/WorkoutFeedbackBanner.tsx`: readable held visual feedback.
+- `src/pages/`: ProfilePage, PlanPage, ProgressPage and existing menu/results integration.
+- `src/shared/components/BackendBadge.tsx`: unobtrusive persistence status.
+- `src/app/__tests__/`: HTTP/storage and new-screen/full-App integration tests.
+
+No repository/service/ORM layer, external provider dependency, chart library,
+React Query/Redux, queue service or additional vision exercise is added.

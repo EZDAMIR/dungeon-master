@@ -5,7 +5,7 @@ Read ancestor guides and the repository architecture documents before edits.
 
 ## Purpose
 
-Reserve typed HTTP access for optional durable data; Sprint 3 API implementation has not started.
+Own Sprint 3 typed HTTP access for guest identity, profiles, eligible catalog, deterministic plans, aggregate sessions and progress.
 
 ## Code rules
 
@@ -21,4 +21,4 @@ API code may use transport helpers and contract types; it must not depend on Rea
 ## Verification
 
 Commands run from `frontend/` unless specified otherwise.
-When implemented, mock HTTP success, timeout, cancellation and offline behavior; run type checking and the frontend suite.
+Mock HTTP success, timeout, cancellation, empty/malformed responses and offline behavior; run type checking and the frontend suite.

@@ -1,15 +1,15 @@
-# Low-frequency state reservation
+# Low-frequency backend state
 
 Scope: `frontend/src/store/`. Extends [parent instructions](../CLAUDE.md).
 Read ancestor guides and the repository architecture documents before edits.
 
 ## Purpose
 
-Reserve durable UI/session state; current app reducer and gesture feature store are sufficient.
+Own the Sprint 3 singleton backend bootstrap, profile/plan/progress snapshots and bounded aggregate sync queue; preserve the app reducer and gesture feature store.
 
 ## Code rules
 
-- This is a placeholder; add a global store only for state with actual cross-feature consumers.
+- Use the existing external-store subscription and single-flight bootstrap/sync; do not add a state library.
 - Keep profile, selected plan and compact session summaries here when authorized; never store frames, per-frame landmarks or continuous cursor positions.
 - Keep feature-local state local and preserve guest operation when optional persistence fails.
 - Do not add a state library merely to fill this directory.
@@ -21,4 +21,4 @@ Store code may use contract types and storage helpers; no imports from pages or 
 ## Verification
 
 Commands run from `frontend/` unless specified otherwise.
-When implemented, test reset, serialization, optional-sync failure and preservation of completed local results.
+Test guest recovery/ownership, serialization, 20-entry capacity, bounded retry, storage failure and preservation of completed local results.

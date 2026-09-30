@@ -1,11 +1,11 @@
-# Profile feature reservation
+# Profile interactions
 
 Scope: `frontend/src/features/profile/`. Extends [parent instructions](../CLAUDE.md).
 Read ancestor guides and the repository architecture documents before edits.
 
 ## Purpose
 
-Reserve user-confirmed profile interactions for Sprint 3; no profile UI is implemented yet.
+Own Sprint 3 gesture-accessible preference steps and explicit confirmation of controlled constraint codes.
 
 ## Code rules
 
@@ -15,9 +15,9 @@ Reserve user-confirmed profile interactions for Sprint 3; no profile UI is imple
 
 ## Dependencies
 
-Use typed API/store contracts when implemented; do not couple profile UI to per-frame vision data.
+Use typed API/store contracts; do not couple profile UI to per-frame vision data.
 
 ## Verification
 
 Commands run from `frontend/` unless specified otherwise.
-When implemented, mock API failure and validate user confirmation, local operation and cancellation.
+Mock API failure and validate full replacement, explicit user confirmation, local drafts and semantic gesture callbacks.
