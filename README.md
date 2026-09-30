@@ -15,6 +15,13 @@ production preview use `npm run build:cloud` and `npm run preview:cloud`.
 See [local app setup](frontend/README.md) and [API deployment](deploy/README.md).
 The backend setup below is optional for full local development.
 
+# Local Development
+
+> **Note:** For normal local testing, you only need to run the frontend with `npm run dev:cloud`.  
+> The backend, database, OpenAI, and ElevenLabs integrations are already hosted on the project server and do not need to be configured locally. Full local backend setup is optional.
+
+## Requirements
+
 
 #  Dungeon Master
 
