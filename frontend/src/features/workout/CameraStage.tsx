@@ -1,3 +1,4 @@
+import { useTranslation } from '../../shared/uiLanguage'
 import { useEffect, useRef } from "react";
 import { useGestureStore } from "../gesture-navigation/gestureNavigation";
 import { PoseOverlay } from "./PoseOverlay";
@@ -34,6 +35,8 @@ export function CameraStage({
   sourceRef: React.RefObject<{ dispose(): void } | null>;
   guide?: boolean;
 }) {
+  const { translateUi } = useTranslation()
+
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const store = useGestureStore();
@@ -112,7 +115,7 @@ export function CameraStage({
         ref={video}
         muted
         playsInline
-        aria-label="Зеркальное изображение камеры"
+        aria-label={translateUi("Зеркальное изображение камеры")}
       />
       <canvas ref={canvas} aria-hidden="true" />
       <PoseOverlay video={video} />

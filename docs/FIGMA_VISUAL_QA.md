@@ -62,3 +62,68 @@ review, without claiming live-camera or deployment-host validation.
 
 The frontend host must provide index.html fallback for direct application URLs;
 Vite dev/preview fallback was tested. Actual deployment remains outside Sprint 4A.
+
+## Sprint 4B landing review — 2026-09-30
+
+Reviewed source welcome screenshots `3:111` and `3:154` against the implemented
+desktop/mobile screenshots. Browser checks cover 1440×960, 834×1112 and 390×844
+on both the root development app and a cloud production build served under
+`/dungeon-master/`. Production screenshots:
+[desktop](screenshots/sprint4b-landing/landing-1440.png),
+[tablet](screenshots/sprint4b-landing/landing-834.png),
+[phone](screenshots/sprint4b-landing/landing-390.png).
+
+All local illustrations load and preserve their native aspect ratios. Fresh
+visits show no modal or camera permission request; Build my plan opens the hand
+intro before permission. Mouse exits, logo/name navigation and browser Back pass
+at each size, with no horizontal overflow or page errors. Automated App tests
+also cover pinch home navigation and retaining the same started video/source.
+
+The desktop paper/graphite composition, citron primary buttons, source display
+font and mobile squat illustration follow the source. Tablet is an inferred
+responsive counterpart. Mobile copy and footer differences are recorded in the
+frame map; this review does not claim every existing page is pixel-perfect.
+Shared onboarding/loading colors and button radii now use the same tokens.
+Live webcam tracking, speech playback and the deployed host remain unverified.
+
+## Sprint 4B interaction and responsiveness follow-up — 2026-09-30
+
+The owner's motion request extends the welcome composition with a gesture
+playground, shared interaction feedback and presentation transitions. These are
+code-native additions using existing design tokens; no source Figma motion timeline
+or new Figma tablet frame is claimed. Tablet welcome now stacks at 701–1000px.
+Pause-animation buttons were removed everywhere as requested. Only system
+reduced-motion preferences control motion; obsolete saved pause values are ignored.
+
+Chrome root-development and prefixed-production checks pass at 320, 360, 390, 700,
+701, 834, 844 (landscape), 1024 and 1440px. They verify actual click animations,
+stable control rectangles, keyboard previews, overlay bounds and navigation through
+the existing planning sections with mocked offline APIs. No horizontal overflow
+or page errors. Reduced-motion changes immediately remove loops and cancel active
+Web Animation feedback. A first-visit preview does not request camera permission.
+
+Static production evidence:
+[desktop](screenshots/sprint4b-motion/motion-1440.png),
+[tablet](screenshots/sprint4b-motion/motion-834.png),
+[phone](screenshots/sprint4b-motion/motion-390.png),
+[narrow phone](screenshots/sprint4b-motion/motion-320.png).
+Screenshot capture temporarily fast-forwards animations for consistent stills;
+the running motion checks are separate. Real-camera rendering performance and
+Safari/Firefox motion behavior remain unverified.
+
+
+### Sprint 4B form and header polish — 2026-09-30
+
+The date, time, text and select controls reuse the established paper/white, ink,
+muted, radius and citron tokens. This is a usability refinement of the current
+product surfaces; it does not claim a new Figma screen or a custom date picker.
+Status and development page labels have separate surfaces with measured spacing.
+Chrome checks at 320/390/834/1024/1440px find no header collisions or overflow.
+Native keyboard editing and focus, time rows, compact checkboxes and Context/coach
+text fields work. Schedule examples use injected fixtures with offline transport.
+
+Reviewed stills: [desktop](screenshots/sprint4b-forms/forms-1440.png),
+[tablet](screenshots/sprint4b-forms/forms-834.png),
+[phone](screenshots/sprint4b-forms/forms-390.png),
+[narrow phone](screenshots/sprint4b-forms/forms-320.png). Still capture fast-forwards
+animations. Safari/Firefox and actual OS picker popovers remain manual.

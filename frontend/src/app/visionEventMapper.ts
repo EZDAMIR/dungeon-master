@@ -9,7 +9,7 @@ export function mapVisionEvent(
   if (event.type === "camera.ready" && state.mode === "CAMERA_PERMISSION")
     return { type: "CAMERA_READY" };
   if (event.type === "camera.error" || event.type === "camera.denied")
-    return state.selectedWorkoutId === "personalized"
+    return state.mode === "LANDING" || state.selectedWorkoutId === "personalized"
       ? null
       : { type: "CAMERA_RETRY" };
   if (event.type === "calibration.completed" && state.mode === "CALIBRATION")

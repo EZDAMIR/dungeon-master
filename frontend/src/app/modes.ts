@@ -12,6 +12,7 @@ import type {
 import type { VisionEvent } from "../types/vision";
 export type { WorkoutResult } from "../vision/exercises/squat/types";
 export type AppMode =
+  | "LANDING"
   | "CAMERA_PERMISSION"
   | "TUTORIAL"
   | "MENU"
@@ -93,6 +94,7 @@ const TRANSITIONS: Record<
   AppMode,
   Partial<Record<AppAction["type"], AppMode>>
 > = {
+  LANDING: { OPEN_PROFILE: "PROFILE", OPEN_PLAN: "PLAN", OPEN_PROGRESS: "PROGRESS", OPEN_SCHEDULE: "SCHEDULE" },
   REST: {},
   NEXT_SET: {},
   CAMERA_PERMISSION: { CAMERA_READY: "TUTORIAL" },

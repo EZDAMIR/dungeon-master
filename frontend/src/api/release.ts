@@ -1,6 +1,13 @@
 import { ApiError } from "./client";
 import type { BackendStore } from '../store/backend';
 export type Language = 'ru' | 'kk' | 'en';
+export function speechCueRequest(cue: string, exerciseKey?: string, specRevision?: string | null) {
+  const exerciseCue = cue === 'calibration' || /^(error|phase|coach):/.test(cue);
+  return {
+    cue_id: cue.startsWith('coach:') ? cue.slice('coach:'.length) : cue,
+    ...(exerciseCue && exerciseKey && specRevision ? { exercise_key: exerciseKey, spec_revision: specRevision } : {}),
+  };
+}
 export type VoicePreferences = { voice_id: string | null; language: Language; style: 'calm' | 'supportive' | 'energetic' | 'strict'; audio_enabled: boolean; revision: number };
 export const defaultVoice: VoicePreferences = { voice_id: null, language: 'ru', style: 'supportive', audio_enabled: false, revision: 0 };
 export type Voice = { voice_id: string; name: string; description: string | null; labels: Record<string, string> };
@@ -19,9 +26,10 @@ export class ReleaseClient {
   async capabilities(signal?: AbortSignal) { const value = await this.backend.request<Capabilities>("/capabilities", undefined, "GET", signal); if (!value?.elevenlabs || typeof value.elevenlabs.configured !== "boolean") throw new ApiError("protocol"); return value; }
   preferences(signal?: AbortSignal) { return this.backend.request<VoicePreferences>('/coach/preferences', undefined, 'GET', signal); }
   savePreferences(value: Omit<VoicePreferences, 'revision'>, signal?: AbortSignal) { return this.backend.request<VoicePreferences>('/coach/preferences', value, 'PUT', signal); }
-  async voices(language: Language, signal?: AbortSignal) { const value = await this.backend.request<VoiceList>(`/voices?language=${language}&page_size=6`, undefined, 'GET', signal); if (!Array.isArray(value?.voices) || value.voices.some(voice => typeof voice.voice_id !== 'string' || typeof voice.name !== 'string')) throw new ApiError('protocol'); return value; }
+  async voices(language: Language, signal?: AbortSignal, nextPageToken?: string) { const value = await this.backend.request<VoiceList>(`/voices?language=${language}&page_size=100${nextPageToken ? `&next_page_token=${encodeURIComponent(nextPageToken)}` : ''}`, undefined, 'GET', signal); if (!Array.isArray(value?.voices) || value.voices.some(voice => typeof voice.voice_id !== 'string' || typeof voice.name !== 'string' || !voice.labels || typeof voice.labels !== 'object')) throw new ApiError('protocol'); return value; }
   preview(voice: string, language: Language, style: VoicePreferences['style'], signal: AbortSignal) { return this.backend.requestBlob(`/voices/${encodeURIComponent(voice)}/preview`, { language, style }, 'POST', signal); }
   speech(body: { cue_id: string; exercise_key?: string; spec_revision?: string } | { message_id: string }, signal: AbortSignal) { return this.backend.requestBlob('/speech', body, 'POST', signal); }
-  turn(text: string, conversation_id: string | null, screen: string, signal?: AbortSignal, operation_id: string = crypto.randomUUID()) { return this.backend.request<CoachTurn>('/coach/turns', { operation_id, text, conversation_id, screen, exercise_key: null }, 'POST', signal); }
+  // Allow the default 62-second backend tool/retry deadline and response delivery.
+  turn(text: string, conversation_id: string | null, screen: string, signal?: AbortSignal, operation_id: string = crypto.randomUUID()) { return this.backend.request<CoachTurn>('/coach/turns', { operation_id, text, conversation_id, screen, exercise_key: null }, 'POST', signal, 75000); }
   decide(id: string, decision: 'confirm' | 'reject', operation_id: string, signal?: AbortSignal) { return this.backend.request<Proposal>(`/coach/proposals/${encodeURIComponent(id)}/${decision}`, { operation_id }, 'POST', signal); }
 }

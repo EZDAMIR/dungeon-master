@@ -139,6 +139,13 @@ select:focus-visible {
 .app-shell header code {
   font: var(--dm-label);
 }
+.back-actions {
+  flex-wrap: wrap;
+}
+.back-actions .gesture-target {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .backend-badge {
   font: var(--dm-small);
 }
@@ -209,37 +216,6 @@ select:focus-visible {
   gap: 16px;
   flex-wrap: wrap;
   margin-top: 32px;
-}
-.dm-field {
-  display: grid;
-  gap: 8px;
-  padding: 16px 24px;
-  border: 1px solid var(--dm-line);
-  border-radius: var(--dm-radius-16);
-  margin-bottom: 16px;
-  background: var(--dm-white);
-}
-.dm-field span {
-  font: var(--dm-small);
-  color: var(--dm-muted);
-}
-.dm-field textarea {
-  resize: vertical;
-  min-height: 104px;
-  width: 100%;
-  background: transparent;
-  border: 0;
-  font: var(--dm-body);
-}
-.dm-field select {
-  padding: 8px;
-  border: 0;
-  background: transparent;
-  width: 100%;
-}
-.dm-field input {
-  min-width: 0;
-  width: 100%;
 }
 .source-chips {
   display: flex;
@@ -925,13 +901,10 @@ button.source-chip {
 .coach-panel { margin-top: 32px; }
 .coach-transcript { overflow-wrap: anywhere; }
 .coach-transcript article { padding-block: 16px; border-bottom: 1px solid #c9c6bd; }
-.coach-panel textarea { display: block; width: 100%; min-height: 96px; font: inherit; padding: 12px; }
 .proposal-card dl { display: flex; gap: 16px; flex-wrap: wrap; }
 .proposal-card dd { margin: 0; overflow-wrap: anywhere; }
-.schedule-panel input, .schedule-panel select, .voice-screen select { font: inherit; padding: 12px; max-width: 100%; }
+.voice-screen select { font: inherit; padding: 12px; max-width: 100%; }
 .schedule-panel form, .schedule-panel details { margin-block: 24px; }
-.schedule-panel form label { display: block; margin-block: 12px; }
-.availability-row { display: flex; gap: 16px; flex-wrap: wrap; margin-block: 12px; }
 .guided-tour { padding: 20px; margin: 16px 0; border: 2px solid #727d14; background: #f4f1e8; color: #252623; }
 [data-guide-highlight="true"] { outline: 3px solid #aab835; outline-offset: 6px; }
 .audio-subtitle { padding: 16px; font-size: 22px; overflow-wrap: anywhere; }
@@ -941,14 +914,24 @@ button.source-chip {
 .app-shell header, .planning-content, .experience main, .schedule-panel, .coach-panel { min-width: 0; }
 .schedule-panel h2, .voice-screen h2 { overflow-wrap: anywhere; }
 @media(max-width: 834px) { .app-shell header { flex-wrap: wrap; } .planning-nav { order: 3; width: 100%; } .backend-badge { margin-left: auto; } }
-@media(max-width: 600px) { .app-shell { padding: 20px; } .schedule-panel h2, .voice-screen h2 { font-size: 40px; line-height: 1.1; } .availability-row input { width: 100%; } .schedule-panel input { width: 100%; margin-top: 8px; } .planning-nav a { flex: 1 1 40%; font-size: 14px; } .schedule-panel .dm-actions button { flex: 1 1 100%; } .audio-status button { flex: 1 1 45%; } }
+@media(max-width: 600px) { .app-shell { padding: 20px; } .schedule-panel h2, .voice-screen h2 { font-size: 40px; line-height: 1.1; } .planning-nav a { flex: 1 1 40%; font-size: 14px; } .schedule-panel .dm-actions button { flex: 1 1 100%; } .audio-status button { flex: 1 1 45%; } }
 .session-set-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-block: 24px; }
 .session-results h1 { font: var(--dm-heading); overflow-wrap: anywhere; }
 @media(max-width: 600px) { .session-results h1 { font-size: 40px; line-height: 1.1; } }
 
 .voice-screen .dm-actions {display:flex;flex-wrap:wrap;gap:12px;}
 .voice-screen .dm-actions .gesture-target {flex:1 1 180px;width:auto;min-width:min(100%,180px);white-space:normal;overflow-wrap:anywhere;line-height:1.3;}
-.voice-screen [aria-label="Язык"] .gesture-target {flex-basis:120px;min-width:120px;}
+
+/* Gesture-first onboarding and contextual help remain ordinary page content. */
+.planning-nav a.focused{outline:3px solid var(--dm-muted);outline-offset:4px;background:var(--dm-success)}
+.audio-status{border:1px solid var(--dm-line);border-radius:20px;padding:16px;margin-top:24px;background:var(--dm-white)}
+.audio-status .gesture-target{width:auto;min-height:52px;flex:1 1 150px;margin:0;padding:12px 16px;font-size:14px;line-height:1.3}
+.audio-status>span{flex:1 0 100%;font-size:13px;color:var(--dm-muted)}
+.guided-tour{display:grid;grid-template-columns:minmax(160px,230px) minmax(0,1fr);gap:24px;padding:24px;margin:20px 0 32px;border:1px solid var(--dm-line);border-radius:24px;background:var(--dm-paper);color:var(--dm-ink)}
+.guided-tour .guide-copy{min-width:0}.guided-tour h3{font-size:24px;line-height:1.2;margin:6px 0 12px}.guided-tour p{font-size:15px;line-height:1.6;margin:0 0 12px}.guided-tour .dm-label{font-size:11px;letter-spacing:.08em}.guide-examples{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}.guide-examples .gesture-target{min-height:44px;width:auto;margin:0;padding:8px 12px;font-size:12px;border-radius:999px}.guide-examples .selected{background:var(--dm-ink);color:#fff}.guided-tour .guide-gesture-hint{font-size:13px;color:var(--dm-muted)}.guided-tour .dm-actions{margin-top:12px;gap:8px}.guided-tour .dm-actions .gesture-target{min-height:48px;width:auto;margin:0;padding:12px 16px;font-size:13px;line-height:1.3}.guided-tour [data-gesture-target="guide-next"]{background:var(--dm-citron)}[data-guide-highlight="true"]{outline:2px solid var(--dm-muted);outline-offset:6px}
+.voice-content{max-width:1120px;margin:auto}.voice-screen h2{font-size:clamp(32px,4vw,56px);line-height:1.1;letter-spacing:-.035em;margin:12px 0 20px}.voice-language-tabs{display:flex;gap:12px;margin:24px 0}.voice-language-tabs .gesture-target{flex:1;width:auto;margin:0;min-height:56px;border-radius:14px}.voice-screen .selected{border-color:var(--dm-muted);background:var(--dm-success)}.voice-style-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;border-block:1px solid var(--dm-line);padding-block:16px;margin:24px 0}.voice-style-row>span{font-size:13px}.voice-style-row .dm-actions{margin:0}.voice-style-row .gesture-target{min-width:0!important;flex:0 1 auto!important;padding:10px 16px;font-size:13px;min-height:44px}.voice-language-group>h3{display:flex;align-items:center;gap:12px;font-size:24px;margin:28px 0 12px}.voice-language-group>h3 span{display:grid;place-items:center;background:var(--dm-success);border-radius:50%;min-width:28px;height:28px;font-size:12px}.voice-group-hint{font-size:13px;color:var(--dm-muted)}.voice-card-heading{display:flex;justify-content:space-between;gap:16px}.voice-card-heading h4{font-size:20px;margin:0}.voice-grid .dm-panel{border-radius:20px;padding:24px}.voice-grid .dm-panel>p{font-size:14px;line-height:1.6}.voice-grid .gesture-target{font-size:14px;min-height:48px;line-height:1.4}.voice-footer{margin-top:28px;border-top:1px solid var(--dm-line);padding-top:24px}.voice-footer .voice-primary{background:var(--dm-citron)}.voice-error{padding:16px;background:var(--dm-warning);border-radius:16px}.voice-screen .voice-error .gesture-target{width:auto}.voice-top-skip{float:right;width:auto!important;margin:0!important;min-height:44px!important;padding:10px 16px!important;font-size:13px!important}
+@media(max-width:700px){.guided-tour{grid-template-columns:minmax(0,1fr);padding:18px;gap:18px}.guided-tour .gesture-example{height:160px}.guided-tour .dm-actions{display:grid;grid-template-columns:minmax(0,1fr)}.guided-tour .dm-actions .gesture-target{width:100%}.voice-language-tabs{gap:8px}.voice-language-tabs .gesture-target{padding:12px 8px;font-size:14px;min-width:0}.voice-style-row{gap:8px}.voice-content .dm-actions .gesture-target{min-width:0}.voice-top-skip{float:none;display:block;margin-bottom:20px!important}.audio-status .gesture-target{flex:1 1 40%}}
+.voice-screen [aria-label="Язык"] .gesture-target {flex-basis:0;min-width:0;}
 .planning-content > .camera-column {max-width:420px;margin-bottom:24px;}
 .stable-camera-preview {width:100%;min-width:0;}
 @media(max-width:600px){.voice-screen .dm-actions .gesture-target{flex-basis:100%;min-width:0;}.session-results .dm-actions{display:flex;flex-wrap:wrap;}.session-results .dm-actions .gesture-target{flex-basis:100%;min-width:0;}}
@@ -962,3 +945,8 @@ button.source-chip {
 
 .workout-shell main {display:flex;flex-direction:column;}.workout-shell main>.coach-shell{order:0;}.workout-shell main>.guided-tour{order:1;}
 @media(max-width:834px){.workout-active .experience{display:flex;flex-direction:column;}.workout-active .experience>main{order:-1;}.coach-shell .dm-actions button{flex:1 1 160px;white-space:normal;overflow-wrap:anywhere;}}
+
+.ready-programs { margin-bottom: 32px; }
+.ready-programs > h2 { font-size: clamp(28px, 4vw, 48px); }
+.ready-programs .persona-card h3 { font: var(--dm-title); margin-block: 0 12px; }
+.ready-programs .persona-card .gesture-target { min-height: 52px; }

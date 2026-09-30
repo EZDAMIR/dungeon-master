@@ -41,6 +41,7 @@ Tasks:
 - Gesture tutorial.
 - Focus feedback, progress ring and command audio.
 - Hand-lost recovery feedback.
+- Continuous two-finger natural scrolling, with cursor clutch and contained panel/modal scrolling.
 - Pure fixture tests.
 
 Acceptance:

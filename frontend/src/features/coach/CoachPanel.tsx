@@ -1,3 +1,4 @@
+import { useTranslation } from '../../shared/uiLanguage'
 import { useEffect, useRef, useState } from 'react';
 import { ReleaseClient, type CoachTurn, type Language } from '../../api/release';
 import type { AudioCoordinator } from '../../audio/audioCoordinator';
@@ -6,6 +7,8 @@ import { PushToTalk, type RecordingStatus } from './pushToTalk';
 import { ProposalCard } from './ProposalCard';
 const allowed = new Set(['open_plan', 'open_schedule', 'open_progress', 'open_exercise', 'open_camera']);
 export function CoachPanel({ client, audio, screen, onAction, language = "ru" }: { client: ReleaseClient; audio: AudioCoordinator; screen: 'planning' | 'schedule' | 'results'; language?: Language; onAction: (action: string, exerciseKey?: string) => void }) {
+  const { translateUi } = useTranslation()
+
   const [text, setText] = useState(''), [turns, setTurns] = useState<CoachTurn[]>([]), [busy, setBusy] = useState(false), [error, setError] = useState(''), [recording, setRecording] = useState<RecordingStatus>('idle');
   const t = (key: Parameters<typeof productText>[1]) => productText(language, key);
   const pendingOperation = useRef<{ text: string; id: string } | null>(null);
@@ -33,15 +36,15 @@ export function CoachPanel({ client, audio, screen, onAction, language = "ru" }:
     } catch { if (!controller.signal.aborted) setError('Тренер недоступен. Тренировка и локальное расписание сохраняются.'); }
     finally { flight.current = false; if (!controller.signal.aborted) setBusy(false); }
   }
-  return <aside className="coach-panel dm-panel" data-guide-target="coach"><h3>{t("coach")}</h3><p>{t("coachDescription")}</p>
-    <div className="coach-transcript" aria-live="polite">{turns.map(turn => <article key={turn.message_id}><p className="dm-label">{turn.provenance.cached && turn.provenance.execution_mode==='live' ? 'cached live' : turn.provenance.execution_mode === 'fixture' ? (turn.provenance.cached?'cached fixture':'fixture') : turn.provenance.execution_mode === 'live' && !turn.error_category ? `${turn.provenance.model_used ?? 'GPT-5.4'} / live` : 'deterministic fallback'}</p><p>{turn.display_text}</p>
-      <div className="source-chips">{turn.source_references.map((source, index) => <span key={index} className="source-chip">{source.label || source.type}</span>)}</div>
+  return <aside className="coach-panel dm-panel" data-guide-target="coach"><h3>{translateUi(t("coach"))}</h3><p>{translateUi(t("coachDescription"))}</p>
+    <div className="coach-transcript" aria-live="polite">{turns.map(turn => <article key={turn.message_id}><p className="dm-label">{translateUi(turn.provenance.cached && turn.provenance.execution_mode==='live' ? 'cached live' : turn.provenance.execution_mode === 'fixture' ? (turn.provenance.cached?'cached fixture':'fixture') : turn.provenance.execution_mode === 'live' && !turn.error_category ? `${turn.provenance.model_used ?? 'GPT-5.4'} / live` : 'deterministic fallback')}</p><p>{translateUi(turn.display_text)}</p>
+      <div className="source-chips">{turn.source_references.map((source, index) => <span key={index} className="source-chip">{translateUi(source.label || source.type)}</span>)}</div>
       {turn.proposals.map(proposal => <ProposalCard key={proposal.id} proposal={proposal} client={client} language={language} />)}
-      <div className="dm-actions">{turn.ui_actions.filter(action => allowed.has(action)).map((action, index) => <button key={index} onClick={() => onAction(action)}>{{open_plan:"Открыть план",open_schedule:"Открыть расписание",open_progress:"Открыть прогресс",open_exercise:"Открыть упражнения",open_camera:"Подготовить камеру"}[action]??action}</button>)}</div>
+      <div className="dm-actions">{turn.ui_actions.filter(action => allowed.has(action)).map((action, index) => <button key={index} onClick={() => onAction(action)}>{translateUi({open_plan:"Открыть план",open_schedule:"Открыть расписание",open_progress:"Открыть прогресс",open_exercise:"Открыть упражнения",open_camera:"Подготовить камеру"}[action]??action)}</button>)}</div>
     </article>)}</div>
-    <form onSubmit={event => { event.preventDefault(); void send(text); }}><label>{t("message")}<textarea value={text} maxLength={2000} onChange={event => setText(event.target.value)} /></label><button disabled={busy || !text.trim()}>{t("send")}</button></form>
-    <div className="dm-actions">{['Объясни мой план', 'Предложи занятие на этой неделе', 'Как улучшить технику?'].map(chip => <button key={chip} disabled={busy} onClick={() => { void send(chip); }}>{chip}</button>)}</div>
-    <div className="dm-actions"><button disabled={recording === 'processing'} onClick={() => { audio.stop(); if (recording === 'recording') mic.current?.stop(); else void mic.current?.start(); }}>{recording === 'recording' ? t("stopRecording") : t("record")}</button><button onClick={() => { transcription.current?.abort(); mic.current?.cancel(); }}>{t("cancelRecording")}</button></div>
-    <p role="status">{recording === 'denied' ? 'Микрофон недоступен. Используйте текст.' : recording === 'unsupported' ? 'Запись не поддерживается. Используйте текст.' : recording === 'recording' ? 'Идёт запись · звук тренера остановлен' : recording === 'processing' ? 'Распознаём речь…' : ''}</p>{error && <p role="alert">{error}</p>}
+    <form onSubmit={event => { event.preventDefault(); void send(text); }}><label className="dm-field"><span>{translateUi(t("message"))}</span><textarea value={text} maxLength={2000} onChange={event => setText(event.target.value)} /></label><button className="dm-primary" disabled={busy || !text.trim()}>{translateUi(t("send"))}</button></form>
+    <div className="dm-actions">{['Объясни мой план', 'Предложи занятие на этой неделе', 'Как улучшить технику?'].map(chip => <button key={chip} disabled={busy} onClick={() => { void send(translateUi(chip)); }}>{translateUi(chip)}</button>)}</div>
+    <div className="dm-actions"><button disabled={recording === 'processing'} onClick={() => { audio.stop(); if (recording === 'recording') mic.current?.stop(); else void mic.current?.start(); }}>{translateUi(recording === 'recording' ? t("stopRecording") : t("record"))}</button><button onClick={() => { transcription.current?.abort(); mic.current?.cancel(); }}>{translateUi(t("cancelRecording"))}</button></div>
+    <p role="status">{translateUi(recording === 'denied' ? 'Микрофон недоступен. Используйте текст.' : recording === 'unsupported' ? 'Запись не поддерживается. Используйте текст.' : recording === 'recording' ? 'Идёт запись · звук тренера остановлен' : recording === 'processing' ? 'Распознаём речь…' : '')}</p>{error && <p role="alert">{translateUi(error)}</p>}
   </aside>;
 }

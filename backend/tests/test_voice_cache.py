@@ -19,6 +19,7 @@ from src.ai import elevenlabs
 from src.ai import voice_batch
 from src.api.controllers import speech
 from src.api.controllers import voice_cache
+from src.api.schemas.speech import PreviewCreate
 from src.cli import warm_voice_cache
 from src.core import config
 from src.core import voice_assets
@@ -87,6 +88,33 @@ async def test_concurrent_static_requests_generate_once(disk, monkeypatch):
     )
     assert provider.await_count == 1
     assert sum(value['cache'] == 'miss' for value in results) == 1
+
+
+@pytest.mark.parametrize('language', ['ru', 'kk', 'en'])
+async def test_new_preview_replaces_old_audio_and_uses_the_same_catalog_key(
+    disk, monkeypatch, language
+):
+    text = speech.PREVIEW[speech.LANG_INDEX[language]]
+    old_audio = b'ID3' + b'old' * 32
+    old_key = voice_assets.key(
+        text, 'voice-one', 'eleven_v4', language, 'supportive', 'preview-v1'
+    )
+    assert await voice_assets.put(old_key, old_audio)
+    provider = AsyncMock(return_value=MP3)
+    monkeypatch.setattr(elevenlabs, 'synthesize', provider)
+    monkeypatch.setattr(speech, 'budget', AsyncMock())
+    body = PreviewCreate(language=language, style='supportive')
+    first = await speech.preview(SimpleNamespace(id=uuid.uuid4()), 'voice-one', body)
+    assert first.body == MP3
+    assert first.headers['X-Audio-Cache'] == 'miss'
+    provider.assert_awaited_once_with('voice-one', text, language, 'supportive')
+    assert voice_cache.catalog(language)[-1] == ('preview', text, speech.PREVIEW_VERSION)
+    assert elevenlabs.delivery_text(text, 'supportive', 'eleven_v4').startswith('[warmly] ')
+    assert '…' in text and '?' in text and text.endswith('!')
+    speech._cache.clear()
+    second = await speech.preview(SimpleNamespace(id=uuid.uuid4()), 'voice-one', body)
+    assert second.body == MP3 and second.headers['X-Audio-Cache'] == 'hit'
+    assert provider.await_count == 1
 
 
 async def test_content_keys_atomic_writes_corruption_and_capacity(disk):

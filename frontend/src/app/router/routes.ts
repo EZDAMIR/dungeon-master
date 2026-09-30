@@ -9,6 +9,7 @@ export type ContextStep = "intake" | "documents" | "review";
 export type AppRoute = { mode: AppMode; contextStep: ContextStep };
 
 const paths: Record<AppMode, string> = {
+  LANDING: "/",
   PROFILE: "/context",
   PLAN: "/plan",
   PROGRESS: "/progress",
@@ -32,7 +33,7 @@ function basePrefix(base: string): string {
 export function readRoute(
   pathname: string,
   base: string,
-  defaultMode: AppMode = "PROFILE",
+  defaultMode: AppMode = "LANDING",
 ): AppRoute {
   const prefix = basePrefix(base);
   if (prefix && pathname !== prefix && !pathname.startsWith(prefix + "/"))
@@ -71,7 +72,7 @@ export function initialRouteState(
   const route = readRoute(
     pathname,
     base,
-    legacyFake ? "CAMERA_PERMISSION" : "PROFILE",
+    legacyFake ? "CAMERA_PERMISSION" : "LANDING",
   );
   return appReducer(INITIAL_STATE, { type: "NAVIGATE", mode: route.mode });
 }

@@ -33,6 +33,27 @@ backend development use `npm run dev` and `.env.example` as before.
 `localhost` means the device running the app; opening a laptop's plain HTTP LAN
 address on a phone does not grant camera access.
 
+If an existing `npm run dev` instance returns 404 for voices or capabilities,
+check its API proxy: without cloud configuration it targets `127.0.0.1:8000`.
+Use `npm run dev:cloud`, or add the public settings below to ignored
+`frontend/.env.local` so ordinary dev and preview commands use the VPS too:
+
+```dotenv
+VITE_API_BASE_URL=/api/v1
+VITE_API_PROXY_TARGET=https://api.dungeon-master.helpmake-id.live
+```
+
+Vite reloads when this environment file changes. Refresh the page or select
+**Retry** in the voice dialog after reconnecting. For a local backend, remove
+the proxy target from `.env.local` or set it to your local backend address.
+
+If the voice dialog reports an expired guest session, **Retry** attempts to
+reconnect the same guest. When its recovery credential is unavailable, use
+**Начать новую гостевую сессию** to create a new guest explicitly. Previous
+progress and queued results remain attached to the previous guest; they are
+not transferred to the new session. A fresh browser profile does not test this
+saved-session recovery case.
+
 Voice selection and cached coaching playback use the existing Sprint 4B
 ElevenLabs integration. Choose a returned account voice and preview it through
 the authenticated API. Browser speech remains the fallback when the provider is
@@ -255,3 +276,17 @@ for unknown **application** paths (while serving `/api` and real assets normally
 For a `/dungeon-master/` build, `/dungeon-master/plan` must fall back to
 `/dungeon-master/index.html`. Static hosts without such fallback will return 404
 on refreshed deep links; deployment remains outside Sprint 4A.
+
+## Interface languages
+
+The language button in the header offers **Русский**, **Қазақша**, and **English**.
+The same control is available inside hand onboarding and voice settings. Russian
+is the default; the choice is stored locally and survives navigation and reloads.
+Mouse, keyboard, and the existing pinch controls share the language actions.
+Switching does not restart the camera or reset an active workout.
+
+Site language and coaching voice language are separate preferences. Application
+copy, accessibility labels, feedback, dates, and available multilingual movement
+cues follow the site language. User input, document excerpts, provider voice names,
+and generated content without a multilingual version retain their original text.
+Translations are bundled locally; switching needs no network or translation API.

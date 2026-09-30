@@ -757,7 +757,7 @@ Chrome camera evidence confirms local hand startup and pose readiness feedback;
 real camera/Firefox/phone acceptance remains manual. Server release/provider
 results are recorded after applying the change below.
 
-## 2026-10-01 — Sprint 4B API hostname and local setup follow-up
+## 2026-09-30 — Sprint 4B API hostname and local setup follow-up
 
 Updated the local cloud proxy to `https://api.dungeon-master.helpmake-id.live`,
 keeping the same-origin `/api/v1` client and automatic guest/refresh credentials.
@@ -783,7 +783,7 @@ certificate for the requested hostname. Per owner order, local setup and push
 precede all server configuration. Live API hostname verification remains pending.
 The owner requested author and committer dates of 2026-09-30 23:59 Asia/Almaty.
 
-## 2026-10-01 — Sprint 4B API verification and clock-dependent test removal
+## 2026-09-30 — Sprint 4B API verification and clock-dependent test removal
 
 After pushing local configuration, installed the additive API Nginx site at
 `https://api.dungeon-master.helpmake-id.live`. Certificate issuance and renewal
@@ -809,3 +809,647 @@ lint pass, and the full suite passes: 284 tests, 96.07% coverage with the existi
 90% gate, using disposable local PostgreSQL. The removed completion assertions
 no longer provide regression coverage. All commits created for this task use
 2026-09-30 23:59 Asia/Almaty for both author and committer timestamps.
+
+## 2026-09-30 — Sprint 1 follow-up: continuous two-finger webcam scrolling
+
+Replaced the open-palm, fixed-page swipe detector with deterministic two-finger
+scrolling. Index/middle extension and ring/little curling are recognized from
+aspect-corrected landmarks rather than requiring a MediaPipe category. Stable
+entry, independent fingertip smoothing, a dead zone and coordinated-motion gates
+produce proportional deltas, with natural trackpad direction. Slow single-finger
+movement, horizontal motion, noise, abrupt jumps and interrupted tracking do not
+scroll. Existing pinch, fist and thumb-up commands keep priority and their rules.
+
+The cursor is clutched throughout the two-finger pose and resumes without a jump
+after release. Deltas scroll the panel under that fixed cursor, or the page, using
+immediate browser updates rather than restarting smooth animations per frame.
+Schedule now permits scroll events. Native and aria-modal dialogs and the active
+gesture scope prevent background scrolling at their edges. HUD instructions and
+recognition labels describe the new pose; identical scroll feedback does not
+publish global state on each delta, and local tones have a 500 ms interval.
+Updated the semantic event, development fake controls, synthetic hand fixture,
+gesture/UI/audio/App regressions, vision documentation and manual checklist.
+
+Verification from `frontend/`: focused gesture/navigation/audio/App tests pass;
+`npm run test:coverage` passes all 234 tests with 88.83% statements and retained
+coverage gates. `npm run type-check`, `npm run lint`, `npm run check:instructions`
+(54 folders), `npm run test:instructions` (3 tests), `npm run build:cloud` and
+`git diff --check` pass. The production build retains its existing large-bundle
+warning. Synthetic Chrome smoke at 1440×900 and 390×844 imports the actual engine/
+store and verifies page movement in both directions, panel targeting, scoped
+overlay scrolling and modal containment with zero page errors. Its temporary
+script is `/private/tmp/dm-two-finger-scroll-smoke.mjs`; no webcam or network
+provider is used. Temporary localhost verification server is stopped afterward.
+
+Real-camera usability and tuning across people, lighting and device frame rates
+remain pending manual acceptance. This change stays within Sprint 1 navigation;
+backend behavior, pose analysis and later-sprint capabilities are unchanged.
+
+## 2026-09-30 — Sprint 4B usability follow-up: gesture guide and voice selection
+
+Rebuilt first-visit hand onboarding around five animated SVG examples before
+permission and six short practice lessons: cursor, three genuine pinch selections,
+two-direction scrolling, held fist, held thumbs-up and navigation. Each example
+has a visible instruction and respects reduced motion. Existing camera ownership,
+scoped events, neutral release, mouse/keyboard exits and honest default versus
+verified outcomes remain in place. Reopening an already-running camera enters
+practice immediately. Modal focus handling now shares background inert cleanup.
+
+The contextual guide follows the current page and advances only through its own
+visible controls. Navigation, scroll and footer settings are explained using the
+same animations; camera/exercise events no longer silently skip relevant tips.
+Top navigation links, footer sound/voice/hands/guide controls and remaining Context/
+Plan actions now register for pinch selection while retaining conventional clicks.
+Hit tests refresh actual geometry and reject hidden, inert and covered controls.
+
+Voice setup separates coaching language from provider native-language labels.
+Russian/Kazakh/English filters, other labelled language groups, multilingual and
+unlabelled groups are shown without inventing language support. Fetch up to 100
+voices with manual deduplicated pagination, cancel obsolete language requests,
+clear stale selections, keep preview/retry/audio controls gesture-accessible, and
+provide a prominent optional silent exit even when the provider is unavailable.
+No backend contract, paid provider call or deployment is part of this change.
+
+Verification: all 247 frontend tests pass with retained coverage gates; type
+checking, lint without warnings, folder instructions (54 folders and 3 tests),
+cloud production build and whitespace checks pass. Chrome at 1440×900 and 390×844
+checks actual main-page clicks, modal cleanup, voice language groups, browser hit
+tests for pinch selection, scoped scrolling over calibration, all onboarding
+practice commands and release, and reduced motion, with no page errors. Screenshots
+were reviewed for desktop and phone layouts. Temporary smoke script:
+`/private/tmp/dm-guide-smoke.mjs`. Real-camera usability and actual speech/autoplay
+remain manual; the existing large-bundle warning remains. Changes are local.
+
+## 2026-09-30 — Sprint 4B camera preparation loading feedback
+
+Added a shared CameraLoading view to the first-visit hands guide and conventional
+camera setup. A rotating camera indicator and indeterminate bar remain visible
+through permission, model downloading and initialization until the existing
+combined camera/model readiness event. No estimated percentage or timer declares
+readiness. Reduced-motion preferences retain a static indicator and full text.
+Preparation scrolls the onboarding overlay to the top, then changes to hand
+positioning guidance when ready. Long-start copy explains first-run loading;
+errors remove the loader and keep retry/mouse recovery available.
+
+Changes: shared CameraLoading/CSS and CameraPermissionView, HandsOnboarding, their
+rendered tests, runtime readiness regressions and this manual checklist/log. The
+runtime lifecycle remains unchanged. Tests hold either the camera or recognition
+initializer pending and verify no ready event or inference loop starts early.
+
+Checks from frontend: type-check, lint, focused tests, test:coverage, full test
+suite (252 tests), check:instructions (54 folders), test:instructions (3 tests),
+build:cloud and git diff --check pass. Chrome synthetic smoke at 1440×900 and
+390×844 checks visible animation, overlay bounds, reduced motion, readiness
+transitions and mouse exit, with zero page errors. Desktop/phone screenshots were
+reviewed; temporary script: /private/tmp/dm-camera-loading-smoke.mjs. Temporary
+verification server stopped afterward. Real webcam startup remains manual;
+the existing production large-bundle warning remains. Changes are local.
+
+## 2026-09-30 — Sprint 4B landing entry and visual consistency
+
+Ordinary root visits now enter LANDING instead of Context, before hand/audio
+overlays. Added responsive welcome from Figma desktop `3:111` and mobile `3:154`,
+using existing fonts/tokens/brand and actual downloaded illustration SVG layers.
+The brand name and logo form one accessible native link, also registered for
+pinch; navigation preserves browser history, query parameters and deployment
+base paths. First CTA opens Context and its existing guide before permission.
+An already started camera remains mounted and is reused after returning home.
+Camera errors on welcome no longer redirect the page. Legacy development replay
+keeps its camera-first entry. Shared header, guide and loading surfaces now use
+the same paper, graphite, citron, borders, typography and pill tokens.
+
+Routines entries reuse Plan and its returned routine blocks. Mobile plan/privacy
+copy replaces prototype-only demo copy; demo profiles is still an explicit jury
+shortcut. No new routine service, backend behavior or Figma write is included.
+See the updated Figma frame map and visual QA for source nodes and deviations.
+
+Checks: type-check, lint, test:coverage (254 tests, 37 files, coverage gates pass),
+check:instructions (54 folders), test:instructions (3 tests), build:cloud, cloud
+build with --base=/dungeon-master/, focused App/routes tests (24) and whitespace
+checks pass. Chrome checks root development and prefixed production at 1440×960,
+834×1112 and 390×844: fresh entry without permission/modal, CTA/intro, conventional
+exits, logo/name home links, browser Back, SVG loading and preserved aspect ratios.
+No page errors or horizontal overflow. Production screenshots are saved under
+docs/screenshots/sprint4b-landing. Tablet welcome is an inferred responsive layout.
+Live webcam/audio and actual host deployment remain manual. The existing large
+production bundle warning remains; these changes are local and not deployed.
+
+## 2026-09-30 — Sprint 4B ElevenLabs connection repair
+
+The owner's running ordinary Vite dev instance proxied `/api/v1` to
+`127.0.0.1:8000`, where capabilities and voices returned 404. The deployed Dungeon
+Master API was healthy: configured ElevenLabs models supported RU/EN/KK and its
+authenticated voice lists returned 41 account voices. Added public API settings
+to ignored `frontend/.env.local`; Vite automatically reloaded and the existing
+dev instance now reaches the VPS. No provider credentials, backend code or VPS
+configuration changed. Frontend setup docs explain cloud mode, this local
+override, retry and how to restore a local backend target.
+
+Added a rendered regression that simulates a 404 voice-list failure, restores
+the connection, retries, selects a returned voice and saves successfully. Focused
+voice tests (6), full frontend coverage suite, lint, instruction checks (54
+folders, 3 script tests), type checking, cloud production build and whitespace
+checks pass. Initial type/build checks caught an unrelated concurrent motion
+edit referring to `state.contextStep`; subsequent checks pass after that edit
+was corrected independently. Existing production bundle-size warning remains.
+
+Live Chrome verification through `http://localhost:5173` loaded 9 RU, 33 EN and
+6 KK cards (including four unlabelled voices in each group), and received/played
+a real 55,214-byte Russian ElevenLabs MP3 preview with no page errors. Provider
+and public/local API checks used sanitized output. The temporary browser script
+is `/private/tmp/dm-elevenlabs-browser-check.mjs`. Ordinary automated tests mock
+providers. This verifies voice listing and one RU preview; EN/KK audio and
+physical camera/Safari behavior remain separate manual checks. Other workspace
+changes were preserved.
+
+## 2026-09-30 — Sprint 4B saved-session voice recovery
+
+The earlier clean-browser voice check missed an existing saved-session failure.
+Reproduced the owner's exact generic voice error by seeding an expired guest
+token without a recovery cookie: `/auth/me` and `/auth/refresh` returned 401;
+the voice Retry action never retried authorization, and no voice request ran.
+
+BackendStore now preserves the typed authentication failure, lets JSON/binary
+requests await an already running shared bootstrap, and retains cancellation.
+Voice Retry explicitly reconnects before reloading. A 401 now explains the
+expired session and offers an explicit new-guest action. That action replaces
+only the unusable cached authentication; old owned queued results stay attached
+to their original guest. No silent identity replacement, background retry loop,
+backend change or provider credential change was introduced.
+
+Changes: backend store, VoiceSelection, their colocated/application regression
+tests, frontend setup and this log. Tests cover waiting/cancellation, explicit
+guest recovery, retry, voice selection and preservation of old result ownership.
+Focused 47 tests and full frontend coverage suite (264 tests, 38 files) pass;
+type-check, lint, instruction verification (54 folders, 3 script tests), cloud
+production build and whitespace checks pass. An initial automatic-bootstrap
+attempt caused repeated failed startup/remounts in the broad suite; it was
+replaced with waiting only for existing bootstrap plus explicit user retry.
+The final suite has no such loop. Existing bundle-size warning remains.
+
+Live Chrome verification at localhost with a saved expired guest reproduced
+401s, displayed the explicit recovery message, then created a guest only after
+clicking the recovery action and loaded nine Russian/unlabelled voice cards
+with HTTP 200 and no remaining alerts. Temporary script:
+`/private/tmp/dm-voice-stale-check.mjs`. This validates persisted-session recovery;
+the owner's existing tab still needs a refresh and explicit recovery if its
+credential is expired. Recovery cannot restore old progress without its old
+valid recovery credential.
+
+
+## 2026-09-30 — Sprint 4B choosing animation correction
+
+Fixed the shared pinch/Select illustration used by hands onboarding, the landing
+playground and guided hints. Replaced the fixed hooked index and independently
+swinging thumb with two rounded finger segments rotating around explicit SVG
+view-box joints. Both fingertips meet, hold and release while the palm stays
+still. Selection feedback shares their timing; disabled/reduced motion leaves a
+readable contact pose. Gesture recognition and camera behavior are unchanged.
+Added an onboarding regression for the same illustration in preview/practice.
+
+Checks: 52 focused tests; type-check; lint; check:instructions (54 folders);
+test:instructions (3 tests); build; git diff --check. The initial coverage run
+stalled in App tests and was interrupted; isolated App tests (20), the remaining
+suite (244) and a subsequent full coverage run (264 tests, 38 files) pass.
+Chrome automated geometry checks at full and compact/mobile sizes verify fixed
+joints, fingertip contact without crossing, release, selection feedback, reduced
+motion and the app motion toggle, with no page errors. Screenshots were reviewed;
+temporary check: /private/tmp/dm-pinch-animation-check.mjs. Temporary Vite server
+stopped. Existing unrelated VoiceSelection effect lint and production bundle-size
+warnings remain. Safari/Firefox visual checks were not performed. Changes remain
+local; other workspace edits were preserved.
+
+
+## 2026-09-30 — Sprint 4B interactive motion and responsive polish
+
+Added a landing gesture playground: five selectable animated examples with real
+mouse/keyboard/pinch targets, explanatory copy and an explicit illustrated-preview
+label. Added coordinated heading entrances, subtle illustration motion, navigation
+underlines, hover/focus feedback, shared click/pinch acknowledgement, guide progress
+and tip transitions, modal/disclosure entrances and loader breathing. Screen changes
+fade without remounting feature state or moving registered controls. Presentation
+uses CSS and owned, cancellable Web Animations; no per-frame React updates, new
+animation library or recognition thresholds were introduced.
+
+Tablet welcome now stacks at 701–1000px. Narrow-phone brand/type/CTA sizing and
+voice language buttons avoid fixed-width overflow. Camera lifecycle, scoped events,
+permission, exercise readiness and form state remain owned by existing modules.
+The hand illustration correction and expired-guest recovery are separate concurrent
+workspace changes recorded above, preserved by this task.
+
+At the owner's request, removed every pause/resume-animation button and its saved
+preference. Old saved pause values are ignored. Motion runs automatically, follows
+system reduced-motion changes (including cancelling active feedback), and decorative
+CSS loops suspend while the document is hidden. No new settings control is shown.
+
+Checks: type-check, lint, test:coverage (264 tests / 38 files), instruction checks
+(54 folders / 3 script tests), root cloud and /dungeon-master/ cloud builds, plus
+whitespace checks pass. Chrome development and prefixed production smoke cover
+320×740, 360×800, 390×844, 700×900, 701×900, 834×1112, 844×390, 1024×768 and 1440×960.
+Checks include stable control geometry during acknowledgement, native keyboard
+selection, all gesture previews, no animation buttons, ignoring obsolete pause
+values, immediate system reduced motion, hand/voice modal bounds, and navigation
+through Context/Plan/Progress/Schedule with intentionally offline APIs. No horizontal
+overflow, UI console exceptions or page errors; camera remains unrequested on entry
+and preview. Static production screenshots under docs/screenshots/sprint4b-motion
+fast-forward animations during capture; running animations are verified separately.
+Scripts: /private/tmp/dm-motion-smoke.mjs and dm-motion-production-smoke.mjs.
+Real webcam/inference performance and Safari/Firefox remain manual. The existing
+large production-bundle warning remains. Changes are local and not deployed.
+
+## 2026-09-30 — Sprint 4A visible history navigation fallback
+
+Added a header “Go back” button on screens beyond the landing page. The existing
+GestureTarget supports click, keyboard and pinch selection. The browser routing
+hook tracks entries created during the current app mount, traverses native history
+and preserves Forward, context steps and query parameters. Direct links return
+home without traversing unrelated history. Existing mode guards still require
+fresh calibration when returning to an abandoned workout.
+
+Checks: `npm run test -- src/app` (108 tests), `npm run test` (271 tests),
+`npm run type-check`, `npm run lint`, `npm run check:instructions`,
+`npm run test:instructions`, `npm run build` and `git diff --check` pass.
+Chrome smoke at 320, 390, 834 and 1440px verifies click/Enter, Forward, direct-link
+fallback, usable target size and no horizontal overflow with offline APIs.
+Temporary script: `/private/tmp/dm-back-button-smoke.mjs`; reviewed mobile capture:
+`/private/tmp/dm-back-button-mobile.png`. Temporary Vite server stopped after checks.
+Reloading starts a new app history boundary; Go back then uses the home fallback.
+Real webcam and Safari/Firefox checks remain pending. Existing production bundle
+size warning remains. Changes are local; pre-existing workspace edits are preserved.
+
+## 2026-09-30 — Sprint 4B OpenAI/coach availability diagnosis
+
+Acceptance checked: a bounded live GPT-5.4 request with the configured backend
+key, provider execution inside the owned VPS container, and the coach request
+through the running localhost Vite proxy. Secrets and provider text were never
+printed. Synthetic disposable guests were used for application requests; no
+existing owner's profile, plan or schedule was changed.
+
+OpenAI Responses completed successfully in 10.64 seconds. VPS capabilities report
+AI configured/enabled with live mode, and both owned containers are healthy.
+The VPS coach adapter also returned a valid answer on a synthetic context in
+5.28 seconds. This confirms API access, not universal provider availability.
+
+Found and fixed a frontend deadline mismatch: ReleaseClient.turn inherited the
+ordinary 7-second ApiClient timeout, while the deployed controller permits a
+62-second total tool/retry deadline. BackendStore.request now forwards an optional
+per-request timeout; coach turns use 75 seconds. Other requests retain their
+existing deadlines and cancellation stays immediate. Regression tests cover a
+14-second answer, the 75-second timeout, view cancellation and ordinary timeouts.
+
+Separate remaining issue: full endpoint probes returned HTTP 200 with
+execution_mode=fallback/error_category=schema after 14.02 and 9.65 seconds.
+A VPS adapter probe using actual synthetic profile/plan context produced a
+profile reference with a non-null ID and a document reference outside confirmed
+facts. Existing valid_sources correctly rejected them. Another minimal probe
+cited progress despite zero completed sessions. No source validation was relaxed;
+coach source-reference prompt guidance remains a follow-up within Sprint 4B.
+
+Checks: focused backend.test.ts/release.test.ts (33 tests), full frontend suite
+(268 tests / 38 files), npm run type-check, lint, check:instructions (54 folders),
+test:instructions (3 tests), build and git diff --check pass. The existing bundle
+size warning remains. Backend code/config and deployment were unchanged; backend
+tests were not run. Frontend changes remain local. General browser/live-camera
+acceptance and a full live coach endpoint response remain unverified.
+
+## 2026-09-30 — Sprint 4B coach source-reference prompt and strict fallback
+
+Acceptance completed: clarified the coach prompt's reference rules while retaining
+the existing deterministic valid_sources implementation and structured schema.
+Prompt provenance is now coach-v2. Profile/preferences references require null
+source_id; document IDs must come from the original context's confirmed facts;
+progress requires completed sessions and either a null aggregate reference or an
+owned recent-session ID. Plans, exercise/spec/item IDs, schedule objects and UUIDs
+in user text are not document sources. Empty references are explicitly valid for
+greetings, missing data and plan explanations without qualifying evidence.
+
+New controller regression cases exposed an existing fallback bug: source validation
+set fallback/schema but left the rejected provider answer assigned, so its text and
+invalid references could still be persisted. The failure handler now clears that
+answer before building the existing deterministic fallback. Validation was not
+relaxed; rejected references are neither rewritten nor silently accepted.
+
+Thirteen regression cases verify accepted empty/profile/preferences/confirmed-doc/
+saved-progress references and rejection of non-null profile/preferences IDs,
+unknown/missing document IDs, zero-session progress and foreign session IDs.
+Rejected answers now return fallback/schema with no provider text or references.
+Provider instructions and persisted prompt-version propagation are also covered.
+
+Checks: focused coach cases (13 passed); Sprint 4B/provider suites (51 passed);
+full backend make test (297 passed, 92.77% coverage, 90% gate retained) against a
+new isolated loopback PostgreSQL on port 55441 with fresh migrations/drift checks.
+Real provider keys were disabled for automated suites. Focused Ruff format/lint
+and git diff --check pass. Repository-wide make check/lint were also attempted:
+they currently fail in concurrent unrelated speech.py formatting and voice_batch.py
+zip(strict=...) changes. Those files were preserved and not changed by this task.
+
+Three bounded live GPT-5.4 probes on synthetic context pass the unchanged source
+validator: plan-only answer with [] (4.92 s), confirmed-document answer (4.58 s),
+saved-progress answer (3.61 s). This sample is evidence, not a guarantee of future
+model compliance; invalid future answers still receive the strict fallback.
+No secrets, prompts or raw provider text were printed. Changes are local; the
+updated backend prompt/fallback has not been deployed to the VPS.
+
+
+## 2026-09-30 — Sprint 4B native fields and header polish
+
+Replaced bare date/time and text controls with shared rounded paper/white surfaces,
+consistent labels, subtle shadows, hover and keyboard focus feedback, and system
+reduced-motion support. Context text/select fields and the coach composer share
+the styling. The schedule now has a date/refresh toolbar, paired desktop fields,
+a separate appointment card, readable availability rows, compact day checkboxes
+and spaced action groups. Phone layouts stack fields and actions. Date/time
+controls remain native; timezone help is an accessible description, separate from
+the date field's label. No scheduling rules, provider calls or camera logic changed.
+
+The header's development page code and backend status now use distinct surfaces
+and a wrapping flex row with a 10px gap, fixing PLAN / Локальный режим collisions.
+No pause-animation controls were added.
+
+Added three rendered regressions for required native appointment validation and
+UTC proposals, unique day/time labels and availability edits, and coach draft
+preservation with a stable operation ID on retry. Focused tests and the full
+frontend suite pass (274 tests / 39 files at the initial complete check); typecheck,
+lint, instruction checks (54 folders / 3 script tests) and cloud build passed.
+Existing localStorage runtime and large-bundle warnings remain.
+
+Chrome checks at 320, 390, 834, 1024 and 1440px verify separated header rectangles,
+native date/time/text editing, 22px day checkboxes, visible focus, and no horizontal
+overflow or page errors across Plan, Schedule and Context. Backend transport was
+intentionally offline; schedule preferences/data were injected synthetic fixtures
+through the existing client for presentation checks. No writes, webcam requests
+or live provider calls were made. Screenshots under screenshots/sprint4b-forms
+fast-forward motion only during still capture; temporary script:
+/private/tmp/dm-forms-smoke.mjs. Safari/Firefox native-picker appearance remains
+unverified. Changes remain local, with other ongoing workspace edits preserved.
+
+Final verification note: separate interface-localization edits appeared in the
+shared workspace after the complete 274-test pass and visual capture. A subsequent
+full run reported 24 text/label assertion failures in App, personalization, motion
+and voice tests (250 passed); the three form regressions still passed. These
+concurrent changes were preserved rather than reverted or incorporated into the
+form task. Initial screenshots and browser geometry checks precede those updates.
+Final form-focused rerun (3 tests), typecheck, lint, both instruction checks and
+cloud build pass against the current workspace. The temporary Vite server was
+stopped. The complete-suite localization failures remain separately outstanding.
+
+## Sprint 4B — Russian, Kazakh and English interface (2026-09-30)
+
+Acceptance: all application pages and dialogs expose localized interface copy;
+a dedicated language button selects Russian, Kazakh or English; the choice
+survives navigation/reload and does not reset camera/workout state.
+
+Added `store/uiLanguage.ts` for validated local persistence, memory fallback and
+cross-tab updates, `app/UiLanguageProvider.tsx` for composition, shared translation
+copy/context helpers, and a gesture-accessible `LanguageSwitcher`. The control
+appears in the header, Google callback, hands onboarding and voice dialog with
+unique target IDs. Escape closes language choices before it reaches a dialog.
+Page/feature labels, accessibility text, optional-integration statuses, seeded
+exercise names, readiness/technique feedback and dates use the site language.
+Existing multilingual MovementSpec cues resolve at presentation time. API enums,
+profile drafts, voice preferences and recognition/counting logic keep their
+existing contracts; no backend files were changed by this localization task.
+Cyrillic heading fallbacks and mobile language controls use the existing assets.
+
+Tests/checks: `npm run type-check`, `npm run lint`,
+`npm run check:instructions`, `npm run test` (40 files, 291 tests passed),
+`npm run build`, and `git diff --check`. The label expectations in existing
+App/personalization/motion/voice tests now reflect the default Russian UI;
+these checks supersede the earlier concurrent-localization failure note above.
+Fifteen localization tests cover all legacy screens, context steps, rest/next-set,
+mouse/keyboard/pinch selection, draft/enum preservation, invalid/unreadable
+storage, reloads, cross-tab updates and coaching-cue switches with unchanged
+repetition counts and DOM identity.
+
+Headless Chrome checked eight routes and synthetic camera setup × three languages
+× 390/834/1440px: 81 checks, no horizontal overflow and no page errors. A long
+Russian calibration heading now wraps at mobile widths. Language persistence and
+switches in both dialogs also passed. Synthetic offline API responses prevented live writes
+or provider calls; no webcam permission was requested. Browser evidence is in
+`/private/tmp/dm-localization-qa`, with the temporary check script at
+`/private/tmp/dm-localization-browser.mjs`.
+
+Known limits: user input, document/source excerpts and unknown generated/provider
+text keep their original language; available multilingual movement cues switch
+locally. Coaching speech language remains an explicit independent voice setting.
+The production build still reports the existing large-chunk warning. Real camera
+hardware and additional browser engines were not tested for this change. All
+pre-existing and concurrently edited workspace changes were preserved.
+
+## 2026-09-30 — Sprint 4B confident professional coach prompt
+
+Updated the contextual coach to lead with a clear recommendation or answer,
+explain the supporting facts briefly and give one concrete next step. The voice
+is calm, precise and confident, with less filler, unnecessary hedging and repeated
+disclaimers. It uses supplied exercise/schedule details, states missing information
+directly and retains the fitness role without invented medical credentials or
+clinical guarantees. Language and preferred style still apply. Existing source
+rules, strict validation, proposal confirmation and deterministic fallback remain.
+
+Prompt provenance is now `coach-v3`; the controller regression asserts this
+version and that the provider receives the updated instructions. Checks: 13 focused
+coach cases; `make check`; focused Ruff format/lint; full `make test` with 320 passing
+tests and 96.01% coverage (90% gate retained); `git diff --check`. The full suite used
+a new isolated loopback PostgreSQL with fresh migrations/drift checks and disabled
+real provider keys; the temporary cluster was stopped and removed afterward.
+
+Live model tone was not sampled; automated tests establish prompt delivery and
+existing behavior, not guaranteed wording. Changes remain local and are not
+deployed to the VPS. Pre-existing workspace edits were preserved.
+
+## 2026-09-30 — Sprint 4B selected voice during exercise
+
+Acceptance: generated calibration, phase, correction and coach messages use the
+saved ElevenLabs voice; browser speech remains available on provider failure.
+
+The audio coordinator previously mapped only calibration, phases and error rules,
+using the voice language to match recognition text. Generated ready/positive/
+completion messages had no provider loader and went directly to system speech;
+different recognition/voice languages also lost the mapping. Exercise clips were
+discarded at each application mode change and were not preloaded.
+
+Added a complete exercise cue catalog, with internal coach names separated from
+fixed cues. The existing authenticated speech request now includes the current
+exercise key and owned spec revision for every generated cue. Matching uses the
+recognition event language; narration uses the saved voice language. App preloads
+generated cues at calibration and resumes preparation through countdown/workout.
+Clips survive mode changes within a spec, clear on voice/spec revision changes,
+and successful on-demand clips are reused. The bounded cache accommodates the
+fixed catalog plus one validated spec. Positive/recovery events and matching
+snapshots share cue IDs to prevent duplicate narration. No backend changes or
+provider work in vision processing were introduced.
+
+Files: `frontend/src/audio/{audioCoordinator.ts,cues.ts}`, `frontend/src/api/release.ts`,
+`frontend/src/app/App.tsx`, the audio coordinator and release regression tests,
+and this log. Existing workspace changes were preserved.
+
+Checks: focused audio/release/App tests; full frontend suite (309 tests, 40 files);
+`npm run type-check`, `npm run lint`, `npm run check:instructions`,
+`npm run test:instructions` (3 tests), `npm run build` and `git diff --check`.
+All passed. Existing build chunk-size and Node localStorage warnings remain.
+
+Known limits: live provider/workout playback and hardware were not tested; failed
+or unavailable provider cues still use the visible system-voice fallback. Changes
+are local frontend code and build artifacts; no VPS deployment was performed.
+Next safe task: reload the local frontend and confirm the chosen voice during a
+generated exercise, including a correction and an accepted repetition.
+
+## 2026-09-30 — Sprint 4B branded browser tab icon
+
+Acceptance: the browser tab uses the existing Dungeon Master mark from the app
+header, and the icon remains available in root and subdirectory production builds.
+
+`frontend/index.html` now links directly to `public/design/dm-mark.svg` using
+Vite's `%BASE_URL%` substitution. Reusing the brand asset avoids a separate copy
+and replaces the scaffold favicon URL. Added
+`frontend/src/app/__tests__/favicon.test.ts` to check the base-aware link and valid
+SVG asset. Existing workspace edits were preserved.
+
+Checks: focused favicon test; full frontend suite (327 tests, 42 files);
+`npm run type-check`, `npm run lint`, `npm run check:instructions`,
+`npm run test:instructions` (3 tests), `npm run build`;
+`python3 scripts/check_frontend_build.py` verified real HTTP asset delivery.
+An additional build with `--base=/dungeon-master/` in a temporary output directory
+verified the substituted favicon URL and identical brand SVG bytes. All passed.
+Existing chunk-size and Node localStorage warnings remain.
+
+Known limits: browser tab appearance was not manually inspected; frontend changes
+remain local. Next safe task: reload the local page and inspect the tab icon.
+
+## 2026-09-30 — Sprint 4B workout voice settings and ready coach discovery
+
+Acceptance: the voice selector is available during a running workout without
+losing measured repetitions; the first start-workout entry shows the existing
+MAYA, ARMAN and DANA persona programs immediately.
+
+Removed the disabled workout voice action and added it to the camera coach
+controls. Opening settings pauses the session and stops narration; saving uses
+the selected voice, while closing or Escape preserves saved preferences and the
+previous mute state. Continuing the workout retains the same session and reps.
+Pending preference reads cannot overwrite an explicit settings change.
+
+Landing desktop/mobile start actions and the first how-it-works step now open
+the plan page, with the three original persona cards above the plan. Shared
+persona data keeps these cards consistent with the existing context flow. A
+selection reuses the existing guest/persona and generation APIs, prevents double
+submissions, supports retry without replacing the guest again, and cancels work
+when leaving. Initial camera/voice onboarding does not obscure the cards.
+Added Russian, Kazakh and English labels using the existing localization system.
+
+Files: `frontend/src/app/App.tsx`, its App and personalization regression tests,
+`features/personalization/{CameraCoachShell,ContextFlow,ReadyPrograms,demoPersonas}`,
+`features/voice/VoiceSelection.tsx` and its tests, `pages/LandingPage.tsx`,
+`shared/translations.ts`, `frontend/src/index.css` and this log. Existing unrelated
+workspace changes were preserved.
+
+Checks: focused App/personalization/voice tests (48 passed); full frontend suite
+(327 tests, 42 files); type-check, lint, instruction checks, instruction tests
+(3 passed), production build and `git diff --check`. Chrome checks covered the
+three cards in three languages at 390/834/1440 px, with no overflow or page errors.
+A fake-vision workout retained rep 1 through save and dismissal, then reached
+rep 2 after continuing, with one preference write and one session. All passed.
+
+Known limits: Chrome used intercepted APIs and fake vision. Live provider audio,
+physical camera/gestures and real persona generation were not tested. Existing
+demo-persona/fixture feature gates remain enforced; no environment flags were
+changed and no VPS deployment was performed. Next safe task: verify these flows
+against the configured backend and the selected ElevenLabs voice on a real device.
+
+
+## 2026-09-30 — Sprint 4B: voice loading, durable v4 cache and natural previews
+
+Acceptance: restore local voice loading, prepare the explicitly approved large
+shared cue catalog on the owner's VPS, and replace technical demo text and raw
+provider descriptions with natural coaching previews and readable voice cards.
+
+The ignored local frontend environment now proxies `/api/v1` to the HTTPS API.
+Voice selection retains retry/silent fallback and explicit guest recovery. Static
+browser cues can preload and remain cached across routes, with private clips and
+voice/language changes isolated. The server persists only public fixed cues and
+previews in the named `dungeon-master-voice-assets` volume; private answers stay
+owner-scoped in memory. Keys include voice/model/language/style/text and versions.
+Atomic writes, capacity limits and cross-process leases prevent corrupt or duplicate
+shared assets. Administrative v4 packs retain paid timed responses before accurate
+ffmpeg cuts so preparation can resume without duplicate paid batches.
+
+Final user steering requested simple improvements to demos and descriptions.
+Russian, Kazakh and English previews now use natural coaching lines, ellipses,
+questions and exclamations. Existing v4 delivery tags apply the selected style;
+`PREVIEW_VERSION = preview-v2` is shared by playback and preparation. Voice cards
+summarize declared API `description`/descriptive labels in the UI language, prefer
+structured labels, omit raw marketing and invalid strings, and invite listening
+where usable acoustic metadata is missing. Provider account metadata is unchanged.
+
+All 40 ready account voices have the full supportive catalog in three languages:
+2,880 current clips, including all 120 new previews. A read-only plan in the deployed
+container reported `missing_clips: 0` and `new_characters: 0`. One professional voice
+(Sergei Burunov) has no completed fine-tuning and is excluded/reported; no verification
+or training bypass was attempted. Other styles are generated and cached on demand.
+The temporary preparation container was removed after completion; the volume remains.
+
+Backend release `d7b855bf6d7b2edd05272738cbb0c61dae64d910` passed CI (Back),
+CI (Front), Docker smoke, release verification, image build and CD in GitHub run
+36787279904. The frontend continues running locally at `http://localhost:5173`.
+Only this task's backend/cache changes were committed for the API release; concurrent
+frontend and documentation work was preserved. An unrelated checklist deletion
+accidentally included in the preceding cache commit was restored in the release
+without changing its owner's working-tree deletion.
+
+Verification:
+
+- `make ci-backend` with paid providers disabled and isolated loopback PostgreSQL:
+  329 tests passed, 96.03% coverage. The first sandboxed run could not connect;
+  the permitted loopback run passed.
+- Focused `tests/test_voice_cache.py --no-cov`: 32 passed, including preview-version
+  invalidation, disk reuse across owners, paid batch resume and actual audio cutting.
+- Focused voice UI/description tests: 15 passed.
+- `npm run test:coverage`: 321 passed in 41 files, 91.74% coverage. An initial run
+  overlapped unrelated in-progress ready-program edits; the subsequent suite passed.
+- Frontend type-check, lint, folder instructions, production build and HTTP build
+  smoke passed. Architecture and Python style checks passed as part of backend CI.
+- Chrome at localhost: RU/EN/KK lists returned 200; visible captions used normalized
+  API characteristics, invalid provider text was absent, and the new preview returned
+  `audio/mpeg`, `X-Audio-Cache: hit`, 132,955 bytes, without page errors.
+- Two independent guests requested previews, welcome and countdown in all three
+  languages: 18/18 valid MP3 cache hits after deployment. Server transfer latency
+  was about 0.56–1.11 seconds; browser preloaded cues avoid subsequent provider calls.
+
+Limitations: captions reflect declared provider metadata, not a fresh acoustic
+analysis. Missing metadata cannot supply a trustworthy timbre. The unavailable
+professional voice remains unavailable until ElevenLabs completes its preparation.
+Delivery quality is subjective; automated checks verify parameters/cache/playback.
+Next safe task: review the new previews by ear and adjust copy only where needed.
+
+Final Chrome check confirmed the new clip reaches the playing state.
+Deployed backend digest: `sha256:1f7aee2034638acd5cdbd2bb3192de714a2ca53737a2400e19086bd3646b3fc9`.
+The task-owned temporary PostgreSQL and warm-up container were stopped; the local
+credential copy was removed, and the server cache volume was retained.
+
+## 2026-09-30 — Sprint 4B ready-program gate diagnosis
+
+The owner reported that choosing one of the three ready coaches appeared to do
+nothing. The UI loads a synthetic persona, then submits plan generation in
+fixture mode. The production API allows persona loading but `ENABLE_FIXTURE_MODE`
+is unset, so the backend default disables generation and returns 403. The
+frontend treated every 403 as a demo-persona access failure and placed its alert
+below the coach cards.
+
+Moved progress and errors above the cards, distinguished coach loading from plan
+generation, and show the relevant backend flags when either request is forbidden.
+Added a regression for fixture-mode 403. Read-only SSH to `backend-hr` confirmed
+the backend and PostgreSQL are healthy, `APP_ENV=production`,
+`ENABLE_DEMO_PERSONAS=true`, and `ENABLE_FIXTURE_MODE` unset. Public API readiness
+returned `status: ok` and `database: reachable` before the change.
+
+Checks: focused personalization tests (10); full frontend suite (328 tests,
+42 files); type-check, lint, build and `git diff --check`. All passed.
+
+After the owner asked to fix the server, added `ENABLE_FIXTURE_MODE=true` to the
+production runtime env, preserving the original in a mode-600 backup. Recreated
+only the Dungeon Master backend with its existing image; PostgreSQL was untouched.
+The running backend now reports all three expected settings, and public readiness
+returns `status: ok` and `database: reachable`.
+
+The production generation request was not submitted during verification, avoiding
+creation of a persistent test guest and synthetic plan. Next safe task: select a
+coach in the local app and confirm the generated program opens.

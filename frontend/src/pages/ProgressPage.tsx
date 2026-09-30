@@ -1,3 +1,4 @@
+import { useTranslation, languageLocales } from '../shared/uiLanguage'
 import type { ErrorCode, Progress } from "../api/types";
 import { GestureTarget } from "../features/gesture-navigation/GestureTarget";
 const labels: Record<ErrorCode, string> = {
@@ -18,56 +19,58 @@ export function ProgressPage({
   onRetry: () => void;
   onBack: () => void;
 }) {
+  const { language, translateUi } = useTranslation()
+
   return (
     <section className="backend-page" data-figma-node="3:143">
-      <p className="dm-label">YOUR PROGRESS / SMALL STEPS ADD UP</p>
-      <h2>Progress you can feel.</h2>
-      <p>Прогресс · Только сохранённые тренировки</p>
+      <p className="dm-label">{translateUi("YOUR PROGRESS / SMALL STEPS ADD UP")}</p>
+      <h2>{translateUi("Progress you can feel.")}</h2>
+      <p>{translateUi("Прогресс · Только сохранённые тренировки")}</p>
       {cached && (
-        <p role="status">Сохранённая копия · Данные могут быть устаревшими</p>
+        <p role="status">{translateUi("Сохранённая копия · Данные могут быть устаревшими")}</p>
       )}
       {!progress || !progress.completed_sessions ? (
-        <p>После первой сохранённой тренировки здесь появится прогресс</p>
+        <p>{translateUi("После первой сохранённой тренировки здесь появится прогресс")}</p>
       ) : (
         <>
           <dl className="progress-totals">
             <div>
-              <dt>Тренировок</dt>
+              <dt>{translateUi("Тренировок")}</dt>
               <dd>{progress.completed_sessions}</dd>
             </div>
             <div>
-              <dt>Все повторения</dt>
+              <dt>{translateUi("Все повторения")}</dt>
               <dd>{progress.total_reps}</dd>
             </div>
             <div>
-              <dt>Оценены камерой</dt>
+              <dt>{translateUi("Оценены камерой")}</dt>
               <dd>{progress.camera_total_reps ?? progress.total_reps}</dd>
             </div>
             <div>
-              <dt>Подходов вручную</dt>
+              <dt>{translateUi("Подходов вручную")}</dt>
               <dd>{progress.manual_completed_sets ?? 0}</dd>
             </div>
             <div>
-              <dt>Корректные</dt>
+              <dt>{translateUi("Корректные")}</dt>
               <dd>{progress.accepted_reps}</dd>
             </div>
             <div>
-              <dt>Доля корректных</dt>
+              <dt>{translateUi("Доля корректных")}</dt>
               <dd>{Math.round(progress.acceptance_rate * 100)}%</dd>
             </div>
           </dl>
           <div className="dm-panel">
-            <h3>Контроль движения</h3>
+            <h3>{translateUi("Контроль движения")}</h3>
             {(Object.entries(labels) as [ErrorCode, string][]).map(
               ([code, label]) => (
                 <div key={code}>
                   <span>
-                    {label}: {progress.error_counts[code]}
+                    {translateUi(label)}: {progress.error_counts[code]}
                   </span>
                   <div
                     className="error-bar"
                     role="meter"
-                    aria-label={label}
+                    aria-label={translateUi(label)}
                     aria-valuemin={0}
                     aria-valuemax={Math.max(1, progress.total_reps)}
                     aria-valuenow={progress.error_counts[code]}
@@ -82,33 +85,28 @@ export function ProgressPage({
               ),
             )}
           </div>
-          <h3>Последние тренировки</h3>
+          <h3>{translateUi("Последние тренировки")}</h3>
           <ul>
             {progress.recent_sessions.map((session) => (
               <li key={session.id}>
-                {new Date(session.completed_at).toLocaleDateString()} ·{" "}
-                {session.exercise_key === "bodyweight_squat"
+                {translateUi(new Date(session.completed_at).toLocaleDateString(languageLocales[language]))} ·{translateUi(" ")}
+                {translateUi(session.exercise_key === "bodyweight_squat"
                   ? "Bodyweight Squat"
                   : session.exercise_key
                       .replace(/_[a-f0-9]{12}(?:_[a-f0-9]{12})?$/, "")
-                      .replace(/_/g, " ")}{" "}
-                · {session.accepted_reps}/{session.total_reps} корректных ·{" "}
-                {(session.duration_ms / 1000).toFixed(0)} с
-                {session.dominant_error &&
-                  ` · ${labels[session.dominant_error as ErrorCode] ?? (session.dominant_error === "range_too_small" ? "Увеличьте амплитуду движения" : "Контроль движения")}`}
+                      .replace(/_/g, " "))}{translateUi(" ")}
+                · {session.accepted_reps}/{session.total_reps}{translateUi(" корректных ·")}{translateUi(" ")}
+                {translateUi((session.duration_ms / 1000).toFixed(0))}{translateUi(" с")}{translateUi(session.dominant_error &&
+                  ` · ${translateUi(labels[session.dominant_error as ErrorCode] ?? (session.dominant_error === "range_too_small" ? "Увеличьте амплитуду движения" : "Контроль движения"))}`)}
               </li>
             ))}
           </ul>
         </>
       )}
-      {!!pending && <p>Ожидают синхронизации: {pending}</p>}
+      {!!pending && <p>{translateUi("Ожидают синхронизации: ")}{pending}</p>}
       <div className="settings-grid">
-        <GestureTarget id="progress-retry" onSelect={onRetry}>
-          Повторить синхронизацию
-        </GestureTarget>
-        <GestureTarget id="progress-back" onSelect={onBack}>
-          Назад в меню
-        </GestureTarget>
+        <GestureTarget id="progress-retry" onSelect={onRetry}>{translateUi("Повторить синхронизацию")}</GestureTarget>
+        <GestureTarget id="progress-back" onSelect={onBack}>{translateUi("Назад в меню")}</GestureTarget>
       </div>
     </section>
   );

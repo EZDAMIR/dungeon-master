@@ -1,0 +1,59 @@
+/* Presentation motion: registered controls keep their position and hit area. */
+:root {
+  --dm-motion-fast: 160ms;
+  --dm-motion-medium: 320ms;
+  --dm-motion-enter: 560ms;
+  --dm-motion-ease: cubic-bezier(.2, .7, .2, 1);
+}
+button, [data-gesture-target], input, select, textarea, summary {
+  transition: background-color var(--dm-motion-fast) ease, border-color var(--dm-motion-fast) ease, color var(--dm-motion-fast) ease, box-shadow var(--dm-motion-fast) ease, opacity var(--dm-motion-fast) ease;
+}
+button:not(:disabled):active { filter: brightness(.96); }
+[data-gesture-target].focused { box-shadow: 0 0 0 4px var(--dm-success); }
+.planning-nav a { position: relative; }
+.planning-nav a::after { content: ''; position: absolute; height: 2px; bottom: 8px; left: 24px; right: 24px; background: var(--dm-ink); transform: scaleX(0); transform-origin: left; transition: transform var(--dm-motion-medium) var(--dm-motion-ease); border-radius: 999px; pointer-events: none; }
+.planning-nav a:hover::after, .planning-nav a.focused::after, .planning-nav a[aria-current]::after { transform: scaleX(1); }
+.brand img { transition: transform var(--dm-motion-medium) var(--dm-motion-ease); }
+.brand:hover img, .brand.focused img { transform: rotate(-8deg); }
+.workout-shell .brand { color: var(--dm-white); }
+.workout-shell .brand:hover { color: var(--dm-inverseMuted); }
+.workout-shell .brand:focus-visible, .workout-shell .brand.focused { outline-color: var(--dm-citron); }
+.dm-panel, .exercise-row, .persona-card, .routine-card, .fact-card { transition: background-color var(--dm-motion-medium) ease, box-shadow var(--dm-motion-medium) ease; }
+.dm-panel:has(button:hover), .dm-panel:has(.focused), .persona-card:hover, .routine-card:hover { box-shadow: inset 0 0 0 1px var(--dm-muted); }
+.hands-footer { flex-wrap: wrap; }
+.hands-footer > span { flex: 1 1 220px; }
+.guide-progress { height: 3px; border-radius: 999px; background: var(--dm-line); overflow: hidden; margin: 0 0 16px; }
+.guide-progress span { display: block; height: 100%; background: var(--dm-muted); border-radius: inherit; transition: width var(--dm-motion-medium) var(--dm-motion-ease); }
+.hands-steps > span { transition: background-color var(--dm-motion-medium) ease, border-color var(--dm-motion-medium) ease, color var(--dm-motion-medium) ease; }
+.voice-screen { background: var(--dm-paper); color: var(--dm-ink); }
+.voice-grid article.selected { outline-color: var(--dm-muted); }
+.landing-explore { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; font: var(--dm-small); color: var(--dm-ink); text-decoration: none; border-bottom: 1px solid var(--dm-line); }
+.landing-explore:focus-visible { outline: 3px solid var(--dm-ink); outline-offset: 4px; }
+.landing-explore > span { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  .landing-narrative > .dm-label { animation: dm-fade-in var(--dm-motion-enter) ease backwards; }
+  .landing-narrative h1 span { display: inline-block; animation: dm-rise-in 700ms var(--dm-motion-ease) backwards; }
+  .landing-narrative h1 span:last-child { animation-delay: 100ms; }
+  .landing-description, .landing-actions, .landing-how { animation: dm-fade-in 700ms ease 180ms backwards; }
+  .landing-how li { animation: dm-rise-in var(--dm-motion-enter) var(--dm-motion-ease) backwards; }
+  .landing-how li:nth-child(2) { animation-delay: 100ms; }.landing-how li:nth-child(3) { animation-delay: 200ms; }
+  .landing-stage, .landing-mobile-preview { animation: dm-fade-in 800ms ease backwards; }
+  .landing-art img { animation: dm-float 8s ease-in-out infinite; }
+  .landing-stage-top > span { animation: dm-breathe 5s ease-in-out infinite; }
+  .landing-explore > span { animation: dm-nudge 2.4s ease-in-out infinite; }
+  .gesture-example, .playground-explanation, .guide-step-copy, .hands-lesson h1 { animation: dm-fade-in var(--dm-motion-medium) ease backwards; }
+  .hands-content, .voice-content, .dm-sheet[open] { animation: dm-fade-in var(--dm-motion-medium) ease backwards; }
+  .dm-sheet::backdrop { animation: dm-fade-in var(--dm-motion-medium) ease backwards; }
+  details[open] > :not(summary) { animation: dm-fade-in var(--dm-motion-medium) ease backwards; }
+  .hands-steps .visited, .hands-feedback { animation: dm-fade-in var(--dm-motion-medium) ease backwards; }
+  .camera-loading-icon svg { animation: dm-breathe 2.8s ease-in-out infinite; }
+}
+@media (hover: hover) { .exercise-row:hover { background: var(--dm-success); } }
+@keyframes dm-fade-in { from { opacity: .65; } to { opacity: 1; } }
+@keyframes dm-rise-in { from { opacity: .65; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dm-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes dm-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+@keyframes dm-nudge { 0%, 65%, 100% { transform: translateY(0); } 35% { transform: translateY(4px); } }
+:root[data-motion-suspended="true"] *, :root[data-motion-suspended="true"] *::before, :root[data-motion-suspended="true"] *::after { animation-play-state: paused !important; }
+:root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

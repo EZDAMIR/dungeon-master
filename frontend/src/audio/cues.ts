@@ -1,3 +1,5 @@
+import type { Messages, MovementSpec } from '../vision/exercises/generic/types';
+
 // Exact public cue text contract published by A1; keep subtitles aligned with server speech.
 export const cueTexts = {
   "welcome": {
@@ -119,4 +121,14 @@ export const cueTexts = {
 export function cueText(cue: string, language: string = "ru", fallback = "") {
   const value = cueTexts[cue as keyof typeof cueTexts];
   return value ? value[language === "kk" ? "kk" : language === "en" ? "en" : "ru"] : fallback;
+}
+
+// Namespaced coach cues distinguish spec messages from the fixed public catalog.
+export function exerciseCueMessages(spec: MovementSpec): Record<string, Messages> {
+  return {
+    ...Object.fromEntries(spec.error_rules.map(rule => [`error:${rule.code}`, rule.messages])),
+    ...Object.fromEntries(spec.phases.map(phase => [`phase:${phase.id}`, phase.messages])),
+    calibration: spec.calibration.messages,
+    ...Object.fromEntries(Object.entries(spec.coach_messages).map(([key, cue]) => [`coach:${key}`, cue.messages])),
+  };
 }

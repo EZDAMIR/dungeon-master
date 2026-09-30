@@ -1,3 +1,6 @@
+import { useTranslation } from '../shared/uiLanguage'
+import { LanguageSwitcher } from '../features/gesture-navigation/LanguageSwitcher'
+import { UiLanguageProvider } from './UiLanguageProvider'
 import { createPortal } from "react-dom";
 import { HandsOnboarding, createHandsRuntimeAdapter, type HandsRuntimeAdapter } from "../features/hands-onboarding/public";
 import { inputPreferences } from "../features/input-settings/public";
@@ -12,6 +15,7 @@ import type { ActiveExercise } from "../api/aiCoach";
 import type { GenericView } from "../vision/exercises/generic/types";
 import { ContextFlow } from "../features/personalization/ContextFlow";
 import { PlanExperience } from "../features/personalization/PlanExperience";
+import { ReadyPrograms } from "../features/personalization/ReadyPrograms";
 import { CameraCoachShell } from "../features/personalization/CameraCoachShell";
 import { zeroLegacyErrors } from "../vision/exercises/generic/resultBuilder";
 import { browserStorage } from "../store/persistence";
@@ -24,6 +28,8 @@ import { BackendBadge } from "../shared/components/BackendBadge";
 import { ProfilePage } from "../pages/ProfilePage";
 import { PlanPage } from "../pages/PlanPage";
 import { ProgressPage } from "../pages/ProgressPage";
+import { LandingPage } from "../pages/LandingPage";
+import { useMotionRoot, usePageMotion } from "../shared/motion";
 import {
   useCallback,
   useEffect,
@@ -33,7 +39,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { appReducer, type AppAction } from "./modes";
+import { appReducer, type AppAction, INITIAL_STATE } from "./modes";
 import { mapVisionEvent } from "./visionEventMapper";
 import { FakeSource } from "./FakeSource";
 import { TutorialPage } from "../pages/TutorialPage";
@@ -51,6 +57,8 @@ import {
 import { fakeVisionEnabled } from "./visionMode";
 import { GestureCursor } from "../features/gesture-navigation/GestureCursor";
 import { GestureHud } from "../features/gesture-navigation/GestureHud";
+import { GestureTarget } from "../features/gesture-navigation/GestureTarget";
+import { GestureLink } from "../features/gesture-navigation/GestureLink";
 import {
   RealVisionSource,
   poseStage,
@@ -61,9 +69,9 @@ import type { AppState } from "./modes";
 import { CameraStage } from "../features/workout/CameraStage";
 import { CameraPermissionView } from "../shared/components/CameraPermissionView";
 import { CameraErrorView } from "../shared/components/CameraErrorView";
-import { cueText } from "../audio/cues";
+import { cueText, cueTexts } from "../audio/cues";
 import { AudioCoordinator } from "../audio/audioCoordinator";
-import { ReleaseClient, defaultVoice, type VoicePreferences } from "../api/release";
+import { ReleaseClient, defaultVoice, speechCueRequest, type VoicePreferences } from "../api/release";
 import { VoiceSelection } from "../features/voice/VoiceSelection";
 import { CoachPanel } from "../features/coach/CoachPanel";
 import { SchedulePanel } from "../features/schedule/SchedulePanel";
@@ -81,6 +89,8 @@ type WorkoutRuntime = Pick<RealVisionSource, "finishGeneric" | "dispose">;
 function CameraExperience({ fake, audio, state, exercise, onSource, onManual, onBack, handsOpen, onHandsDone, runnerControlled, onBindings }: {
  fake:boolean;audio:AudioCoordinator;state:AppState;exercise:ActiveExercise|null;onSource:(source:WorkoutRuntime|null)=>void;onManual:()=>void;onBack:()=>void;handsOpen:boolean;onHandsDone:()=>void;runnerControlled:boolean;onBindings:(adapter:HandsRuntimeAdapter,getSource:()=>RealVisionSource|null,clock:()=>number)=>void;
 }) {
+  const { language: uiLanguage, translateUi } = useTranslation()
+
  const video=useRef<HTMLVideoElement|null>(null), source=useRef<RealVisionSource|null>(null);
  const store=useGestureStore(),snapshot=useGestureSnapshot();
  const [host]=useState(()=>document.createElement('div'));
@@ -114,19 +124,27 @@ function CameraExperience({ fake, audio, state, exercise, onSource, onManual, on
   {!fake&&createPortal(<CameraStage onVideo={onVideo} sourceRef={source} guide={!handsOpen&&!!poseStage(state.mode)}/>,host)}
   <div data-guide-target="gesture"><div ref={attachNormal} data-guide-target="camera" className="stable-camera-preview"/></div>
   {adapter&&<HandsOnboarding open={handsOpen} runtime={adapter} onComplete={onHandsDone} onUseMouse={()=>{}} onTrustedInteraction={()=>audio.unlock()} preview={<div ref={attachWizard} className="stable-camera-preview"/>}/>}
-  {!handsOpen&&exercise?.item.camera_coaching_mode!=='manual_only'&&(snapshot.camera==='error'&&snapshot.error?<CameraErrorView message={snapshot.error} onRetry={start} onManual={exercise?onManual:undefined} onBack={onBack}/>:!fake&&((!runtimeStarted&&!fake)||snapshot.camera!=='ready')&&<CameraPermissionView onStart={start} loading={snapshot.camera==='loading'} instruction={exercise?.spec?localized(exercise.spec.calibration.messages,exercise.language):exercise?.item.instruction}/>)}
+  {!handsOpen&&exercise?.item.camera_coaching_mode!=='manual_only'&&(snapshot.camera==='error'&&snapshot.error?<CameraErrorView message={translateUi(snapshot.error)} onRetry={start} onManual={exercise?onManual:undefined} onBack={onBack}/>:!fake&&((!runtimeStarted&&!fake)||snapshot.camera!=='ready')&&<CameraPermissionView onStart={start} loading={snapshot.camera==='loading'} instruction={exercise?.spec?localized(exercise.spec.calibration.messages,uiLanguage):exercise?.item.instruction}/>)}
   {import.meta.env.DEV&&fake&&!exercise&&<FakeSource/>}
-  {import.meta.env.DEV&&fake&&exercise&&<MovementPreview title={exercise.item.display_name} label="SYNTHETIC REPLAY / ILLUSTRATIVE PREVIEW"/>}
+  {import.meta.env.DEV&&fake&&exercise&&<MovementPreview title={translateUi(exercise.item.display_name)} label={translateUi("SYNTHETIC REPLAY / ILLUSTRATIVE PREVIEW")}/>}
   {import.meta.env.DEV&&fake&&<FakePoseControls mode={state.mode} exercise={exercise} onSource={onSource}/>}
   {import.meta.env.DEV&&!exercise&&poseStage(state.mode)&&<PoseDebugPanel/>}
   {!handsOpen&&(!poseStage(state.mode)||exercise?.item.camera_coaching_mode==='manual_only')&&<><GestureHud/><GestureCursor/></>}
  </>;
 }
 export function App({ backend = backendStore }: { backend?: BackendStore }) {
-  if (window.location.pathname.replace(/\/$/, "").endsWith("/integrations/google/callback")) return <GoogleCallbackPage />;
+  return <UiLanguageProvider><AppContent backend={backend} /></UiLanguageProvider>
+}
+function AppContent({ backend }: { backend: BackendStore }) {
+
+  if (window.location.pathname.replace(/\/$/, "").endsWith("/integrations/google/callback")) return <GestureNavigationProvider state={INITIAL_STATE} onEvent={() => INITIAL_STATE}><div className="app-header"><LanguageSwitcher /></div><GoogleCallbackPage /></GestureNavigationProvider>;
   return <DungeonMasterApp backend={backend} />;
 }
 function DungeonMasterApp({ backend }: { backend: BackendStore }) {
+  const { language: uiLanguage, translateUi } = useTranslation()
+
+  useMotionRoot();
+  const main = useRef<HTMLElement | null>(null);
   const remote = useBackend(backend);
   const session = useRef<SessionCreate | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -179,30 +197,40 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
   const cachedVoice = readVoiceCache(voiceStorage, remote.auth?.user.id ?? null);
   const [voicePreferences, setVoicePreferences] = useState<VoicePreferences>(cachedVoice?.preferences ?? defaultVoice);
   const [voiceOpen, setVoiceOpen] = useState(!legacyFake && !cachedVoice);
+  const [voiceEditing, setVoiceEditing] = useState(false);
+  const preferenceRequest = useRef<AbortController | null>(null);
+  const voiceMutedBeforeSettings = useRef(true);
   const [guideEvent, setGuideEvent] = useState<GuideEvent | undefined>();
   const [guideEnabled, setGuideEnabled] = useState(false);
   const [guideEpoch, setGuideEpoch] = useState(0);
   const audioState = useSyncExternalStore(audio.subscribe, audio.getSnapshot);
   const remoteOwner = remote.auth?.user.id ?? null;
   const remoteConnecting = remote.status === "connecting";
+  const loadWorkoutCue = useCallback((cue: string, signal: AbortSignal) => {
+    const exercise = activeRef.current;
+    return release.speech(speechCueRequest(cue, exercise?.item.exercise_key, exercise?.specRevision), signal);
+  }, [release]);
   useEffect(() => {
     if (!remoteOwner || remoteConnecting) return;
     const controller = new AbortController();
+    preferenceRequest.current = controller;
     void release.preferences(controller.signal).then(preferences => {
       if (controller.signal.aborted) return;
       setVoicePreferences(preferences);
       if (preferences.revision > 0) { writeVoiceCache(voiceStorage, remoteOwner, preferences, true); }
       if (preferences.revision > 0) setVoiceOpen(false);
-      audio.configure((cue, signal) => release.speech({ cue_id: cue, ...(cue==='calibration'||cue.startsWith('error:')||cue.startsWith('phase:')?{exercise_key:activeRef.current?.item.exercise_key,spec_revision:activeRef.current?.specRevision??undefined}:{}) }, signal), preferences.language);
+      audio.configure(loadWorkoutCue, preferences.language);
       audio.setMuted(!preferences.audio_enabled);
     }).catch(() => {});
     return () => controller.abort();
-  }, [release, audio, remoteOwner, remoteConnecting, voiceStorage]);
+  }, [release, audio, remoteOwner, remoteConnecting, voiceStorage, loadWorkoutCue]);
   useEffect(() => {
-    audio.setScope(`${state.mode}:${voicePreferences.revision}`);
+    audio.setExerciseSpec(active?.spec ?? null, active?.specRevision ?? null);
+    audio.setScope(`${state.mode}:${voicePreferences.revision}:${active?.item.exercise_key ?? ''}:${active?.specRevision ?? ''}`);
     const cues = state.mode === "PROFILE" ? ["welcome", "context_choice"] : state.mode === "PLAN" ? ["plan_ready", "camera_permission"] : state.mode === "CALIBRATION" ? ["tracking_recovery", "countdown_3", "countdown_2", "countdown_1", "start", "depth_insufficient", "too_fast", "incomplete_extension"] : [];
-    void audio.prepare(cues);
-  }, [audio, state.mode, voicePreferences.revision]);
+    const exerciseCues = ['CALIBRATION', 'COUNTDOWN', 'WORKOUT', 'PAUSED'].includes(state.mode) ? audio.exerciseCues() : [];
+    void audio.prepare([...exerciseCues, ...cues]);
+  }, [audio, state.mode, voicePreferences, active]);
   useEffect(() => {
     const hidden = () => { if (document.hidden) audio.stop(); };
     document.addEventListener("visibilitychange", hidden);
@@ -212,9 +240,8 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
     if (voiceOpen || !pendingGreeting.current) return;
     pendingGreeting.current = false;
     audio.enqueue({ id: `welcome:${voicePreferences.revision}`, text: cueText("welcome", voicePreferences.language), priority: "guide", load: signal => release.speech({ cue_id: "welcome" }, signal) });
-    void audio.prepare(["welcome", "camera_permission", "gesture_point", "gesture_pinch", "gesture_fist", "gesture_thumb", "tracking_recovery", "stop"]);
+    void audio.prepare(Object.keys(cueTexts));
   }, [audio, release, voiceOpen, voicePreferences]);
-  useEffect(()=>audio.setExerciseSpec(active?.spec??null),[audio,active]);
   const fake = fakeVisionEnabled(import.meta.env.DEV, window.location.search);
   useEffect(() => () => audio.close(), [audio]);
   const send = useCallback(
@@ -283,7 +310,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
     },
     [backend],
   );
-  const { contextStep, setContextStep } = useBrowserRoutes(state, send);
+  const { contextStep, setContextStep, goBack } = useBrowserRoutes(state, send);
   useLayoutEffect(() => {
     document.scrollingElement?.scrollTo({
       top: 0,
@@ -310,10 +337,10 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
       if (event.type === "calibration.completed") setGuideEvent("calibration.completed");
       if (event.type === "workout.countdown") setGuideEvent("countdown.started");
       if (event.type === "workout.countdown_done") setGuideEvent("workout.started");
-      if(!controlled || event.type!=="workout.completed")audio.event(event);
+      if(!voiceOpen && (!controlled || event.type!=="workout.completed"))audio.event(event);
       return current.current;
     },
-    [send, audio],
+    [send, audio, voiceOpen],
   );
   const storePause = (type: "workout.paused" | "workout.resumed") =>
     onEvent(
@@ -381,6 +408,21 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
     if (!muted) void audio.enable();
     setVoice(audio.status());
   };
+  const openVoiceSettings = () => {
+    preferenceRequest.current?.abort();
+    voiceMutedBeforeSettings.current = audio.isMuted();
+    if (runnerRef.current) runnerRef.current.pause(runtimeClock.current());
+    else if (current.current.mode === 'WORKOUT') storePause('workout.paused');
+    audio.stop(); setVoiceEditing(true); setVoiceOpen(true);
+  };
+  const closeVoiceSettings = () => {
+    audio.configure(loadWorkoutCue, voicePreferences.language);
+    audio.setMuted(voiceMutedBeforeSettings.current);
+    setVoice(audio.status()); setVoiceOpen(false); setVoiceEditing(false);
+  };
+  const landing = state.mode === "LANDING";
+  usePageMotion(main, `${state.mode}:${contextStep}`);
+  const visibleHands = handsOpen && !landing && state.mode !== 'PLAN' && !voiceEditing;
   const planning = ["PROFILE", "PLAN", "PROGRESS", "RESULTS", "SCHEDULE"].includes(
     state.mode,
   );
@@ -388,56 +430,56 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
   const runnerActive=!!sessionSnapshot && sessionSnapshot.phase!=="results";
   const measuredSets=sessionSnapshot?projectSessionSets(sessionSnapshot.sets):[];
   const planningLinks = [
-    { mode: "PLAN", action: "OPEN_PLAN", label: "Your plan" },
-    { mode: "PROGRESS", action: "OPEN_PROGRESS", label: "Progress" },
-    { mode: "PROFILE", action: "OPEN_PROFILE", label: "Your context" },
-    { mode: "SCHEDULE", action: "OPEN_SCHEDULE", label: "Расписание" },
+    { id: "nav-plan", mode: "PLAN", action: "OPEN_PLAN", label: "Your plan" },
+    { id: "nav-progress", mode: "PROGRESS", action: "OPEN_PROGRESS", label: "Progress" },
+    { id: "nav-profile", mode: "PROFILE", action: "OPEN_PROFILE", label: "Your context" },
+    { id: "nav-schedule", mode: "SCHEDULE", action: "OPEN_SCHEDULE", label: "Расписание" },
   ] as const;
+  const headerLinks = landing ? [planningLinks[0], { id: "nav-routines", mode: "PLAN", action: "OPEN_PLAN", label: "Routines" } as const, planningLinks[1], planningLinks[2]] : planningLinks;
   return (
     <GestureNavigationProvider state={state} onEvent={onEvent}>
-      <div className={`app-shell ${inWorkout ? "workout-shell" : ""} ${["WORKOUT","PAUSED"].includes(state.mode)?"workout-active":""}`}>
-        <header>
-          <strong className="brand">
-            <img src={`${import.meta.env.BASE_URL}design/dm-mark.svg`} alt="" />
-            DUNGEON MASTER
-          </strong>
-          {planning && (
-            <nav className="planning-nav">
-              {planningLinks.map((link) => (
-                <a
-                  key={link.mode}
+      <div className={`app-shell ${landing ? "landing-shell" : ""} ${inWorkout ? "workout-shell" : ""} ${["WORKOUT","PAUSED"].includes(state.mode)?"workout-active":""}`}>
+        <header className="app-header">
+          <GestureLink id="nav-home" className="brand" href={routeUrl("LANDING", "intake", import.meta.env.BASE_URL, window.location.search)} current={landing} onSelect={() => send({ type: "NAVIGATE", mode: "LANDING" })}>
+            <img src={`${import.meta.env.BASE_URL}design/dm-mark.svg`} alt={translateUi("")} width="36" height="36"/>{translateUi("DUNGEON MASTER")}</GestureLink>
+          {(planning || landing) && (
+            <nav className="planning-nav" data-guide-target="navigation" aria-label={translateUi("Разделы сайта")}>
+              {headerLinks.map((link) => (
+                <GestureLink
+                  key={link.id}
+                  id={link.id}
                   href={routeUrl(
                     link.mode,
                     "intake",
                     import.meta.env.BASE_URL,
                     window.location.search,
                   )}
-                  aria-current={state.mode === link.mode ? "page" : undefined}
-                  onClick={(event) => {
-                    if (
-                      event.button !== 0 ||
-                      event.ctrlKey ||
-                      event.metaKey ||
-                      event.shiftKey ||
-                      event.altKey
-                    )
-                      return;
-                    event.preventDefault();
+                  current={state.mode === link.mode}
+                  onSelect={() => {
                     if (state.mode === "PROFILE" && link.mode === "PROFILE")
                       setContextStep("intake");
                     send({ type: link.action });
                   }}
                 >
-                  {link.label}
-                </a>
+                  {translateUi(link.label)}
+                </GestureLink>
               ))}
             </nav>
           )}
-          {import.meta.env.DEV && <code>{state.mode}</code>}
-          <BackendBadge status={remote.status} pending={remote.pendingCount} />
+          {landing && <>
+            <div className="header-actions"><GestureTarget id="nav-demo-profiles" onSelect={() => {
+              const url = new URL(window.location.href); url.searchParams.set("juryDemo", "1"); window.history.replaceState(null, "", url.pathname + url.search + url.hash); send({ type: "OPEN_PROFILE" });
+            }}>{translateUi("Demo profiles")}</GestureTarget><GestureTarget id="nav-settings" className="dm-ghost" onSelect={() => { setHandsOpen(true); send({ type: "OPEN_PROFILE" }); }}>{translateUi("Settings")}</GestureTarget></div>
+            <GestureLink id="nav-mobile-context" className="landing-header-context" href={routeUrl("PROFILE", "intake", import.meta.env.BASE_URL, window.location.search)} onSelect={() => send({ type: "OPEN_PROFILE" })}>{translateUi("Context")}</GestureLink>
+          </>}
+          {!landing && <div className="header-actions back-actions">
+            <GestureTarget id="nav-back" className="dm-ghost" ariaLabel={translateUi("Go back")} onSelect={goBack}><span aria-hidden="true">← </span>{translateUi("Go back")}</GestureTarget>
+            <span className="header-status">{import.meta.env.DEV && <code>{translateUi(state.mode)}</code>}<BackendBadge status={remote.status} pending={remote.pendingCount} /></span>
+          </div>}
+          <LanguageSwitcher />
         </header>
-        <div className={planning ? "planning-content" : "experience"}>
-          <div className="camera-column" hidden={planning && !legacyFake && !(inputPreferences.getSnapshot().preferences.mode==="hands" && !handsOpen) || active?.item.camera_coaching_mode==="manual_only" && inputPreferences.getSnapshot().preferences.mode!=="hands"}>
+        <div className={landing ? "landing-content" : planning ? "planning-content" : "experience"}>
+          <div className="camera-column" hidden={landing || planning && !legacyFake && !(inputPreferences.getSnapshot().preferences.mode==="hands" && !handsOpen) || active?.item.camera_coaching_mode==="manual_only" && inputPreferences.getSnapshot().preferences.mode!=="hands"}>
 
               <CameraExperience
                 fake={fake}
@@ -445,7 +487,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
                 state={state}
                 exercise={active}
                 onSource={captureSource}
-                handsOpen={handsOpen}
+                handsOpen={visibleHands}
                 onHandsDone={()=>{setHandsOpen(false);if(runnerRef.current?.getSnapshot().phase==='paused')runnerRef.current.resume(runtimeClock.current())}}
                 runnerControlled={runnerActive}
                 onBindings={captureBindings}
@@ -458,14 +500,15 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
           {active && !active.spec && inWorkout && (
             <div className="camera-column">
               <MovementPreview
-                title={active.item.display_name}
-                label="ILLUSTRATIVE GUIDED MODE / NOT LIVE VIDEO"
+                title={translateUi(active.item.display_name)}
+                label={translateUi("ILLUSTRATIVE GUIDED MODE / NOT LIVE VIDEO")}
               />
             </div>
           )}
-          <main data-guide-target={state.mode === "PROFILE" ? "context" : state.mode === "PLAN" ? "plan" : state.mode === "CALIBRATION" ? "calibration" : state.mode === "COUNTDOWN" ? "countdown" : state.mode === "WORKOUT" ? "workout" : state.mode === "RESULTS" ? "results" : state.mode === "PROGRESS" ? "progress" : undefined}>
-            {state.mode === "SCHEDULE" && <SchedulePanel key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} language={voicePreferences.language} />}
-            <GuidedTour key={guideEpoch} audio={audio} client={release} screen={state.mode} event={guideEvent} language={voicePreferences.language} planReady={!!remote.plan} enabled={guideEnabled && !voiceOpen && !handsOpen} onDone={() => setGuideEnabled(false)} />
+          <main ref={main} data-guide-target={state.mode === "PROFILE" ? "context" : state.mode === "PLAN" ? "plan" : state.mode === "CALIBRATION" ? "calibration" : state.mode === "COUNTDOWN" ? "countdown" : state.mode === "WORKOUT" ? "workout" : state.mode === "RESULTS" ? "results" : state.mode === "PROGRESS" ? "progress" : undefined}>
+            {landing && <LandingPage onBuildPlan={() => send({ type: "OPEN_PROFILE" })} onRoutines={() => send({ type: "OPEN_PLAN" })}/>}
+            {state.mode === "SCHEDULE" && <SchedulePanel key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} language={uiLanguage} />}
+            <GuidedTour key={guideEpoch} audio={audio} client={release} screen={state.mode} event={guideEvent} language={uiLanguage} planReady={!!remote.plan} enabled={guideEnabled && !voiceOpen && !handsOpen && !landing} onDone={() => setGuideEnabled(false)} />
             {state.mode === "TUTORIAL" && (
               <TutorialPage onDone={() => send({ type: "TUTORIAL_DONE" })} />
             )}
@@ -505,11 +548,12 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
             {state.mode === "PROFILE" && legacyFake && (
               <ProfilePage
                 profile={remote.profile}
-                message={remote.profileMessage}
+                message={translateUi(remote.profileMessage)}
                 onSave={(profile) => backend.saveProfile(profile)}
                 onBack={() => send({ type: "BACK" })}
               />
             )}
+            {state.mode === 'PLAN' && <ReadyPrograms backend={backend} onPlan={() => send({ type: 'OPEN_PLAN' })} onPersonalize={() => send({ type: 'OPEN_PROFILE' })} />}
             {state.mode === "PLAN" &&
               remote.plan?.ai_metadata &&
               remote.plan.ai_metadata.status !== "fallback" && (
@@ -527,7 +571,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
             {state.mode === "PLAN" &&
               remote.plan?.ai_metadata?.status === "fallback" && (
                 <p className="dm-status" role="status">
-                  {remote.plan.ai_metadata.message}
+                  {translateUi(remote.plan.ai_metadata.message)}
                 </p>
               )}
             {state.mode === "PLAN" &&
@@ -535,7 +579,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
                 remote.plan.ai_metadata.status === "fallback") && (
                 <PlanPage
                   plan={remote.plan}
-                  message={remote.planMessage}
+                  message={translateUi(remote.planMessage)}
                   onStartDay={day=>{if(!remote.plan)return;startSession(remote.plan.items.filter(item=>item.day_index===day).sort((a,b)=>a.position-b.position).map(item=>({planId:remote.plan!.id,spec:null,language:voicePreferences.language,item:{exercise_key:item.exercise.key,display_name:item.exercise.name,description:item.exercise.name,instruction:'Следуйте инструкции упражнения. Камера оценивает только поддерживаемое движение.',difficulty:item.exercise.difficulty,equipment_codes:item.exercise.equipment_codes,impact_level:item.exercise.impact_level,contraindication_tags:item.exercise.contraindication_tags,camera_angle:item.exercise.camera_angle,sets:item.sets,target_reps:item.target_reps,rest_seconds:item.rest_seconds,tempo_hint:item.tempo_hint??'',reason:'Базовый план',source_references:[],camera_coaching_mode:item.exercise.key==='bodyweight_squat'?'predefined':'manual_only',camera_coaching_status:item.exercise.key==='bodyweight_squat'?'validated':'manual_only',exercise_source:'predefined',detail_available:true,swap_available:false}})))}}
                   onGenerate={() => backend.generate()}
                   onProfile={() => send({ type: "OPEN_PROFILE" })}
@@ -572,6 +616,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
                 onCancel={()=>runnerActive?runnerRef.current?.stop(runtimeClock.current()):send({type:"OPEN_PLAN"})}
                 voice={voice}
                 onVoice={toggleVoice}
+                onVoiceSettings={openVoiceSettings}
               />
             )}
             {state.mode === "CALIBRATION" && !active && (
@@ -636,22 +681,25 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
                 }}
               />
             )}
-            {planning && !voiceOpen && !handsOpen && <CoachPanel key={state.mode + (remote.auth?.user.id ?? "")} client={release} audio={audio} language={voicePreferences.language} screen={state.mode === "SCHEDULE" ? "schedule" : state.mode === "RESULTS" ? "results" : "planning"} onAction={(action) => {
+            {planning && !voiceOpen && !handsOpen && <CoachPanel key={state.mode + (remote.auth?.user.id ?? "")} client={release} audio={audio} language={uiLanguage} screen={state.mode === "SCHEDULE" ? "schedule" : state.mode === "RESULTS" ? "results" : "planning"} onAction={(action) => {
               if (action === "open_plan" || action === "open_exercise" || action === "open_camera") send({ type: "OPEN_PLAN" });
               if (action === "open_schedule") send({ type: "OPEN_SCHEDULE" });
               if (action === "open_progress") send({ type: "OPEN_PROGRESS" });
             }} />}
           </main>
         </div>
-        <footer className="privacy-notice">
-          Видео обрабатывается локально. Кадры не отправляются, запись камеры не
-          ведётся. Общая fitness feedback не заменяет тренера или врача.
-        </footer>
-        <div className="audio-status"><span role="status">{audio.status()}</span><button onClick={() => { audio.unlock(); audio.setMuted(false); setVoice(audio.status()); }}>Включить звук</button><button onClick={() => audio.stop()}>Остановить звук</button><button disabled={runnerActive} onClick={() => setVoiceOpen(true)}>Голос тренера</button><button onClick={()=>{if(runnerActive)runnerRef.current?.pause(runtimeClock.current());setHandsOpen(true)}}>Настройки рук</button><button onClick={() => { setGuideEpoch(epoch => epoch + 1); setGuideEnabled(true); setGuideEvent("voice.selected"); }}>Обучение</button></div>
-        {planning && !voiceOpen && !handsOpen && <GestureCursor />}
-        {audioState.subtitle && <p className="audio-subtitle" aria-live="polite">{audioState.subtitle}</p>}
-        {voiceOpen && !handsOpen && <VoiceSelection key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} initial={voicePreferences} onComplete={(preferences, persisted) => { pendingGreeting.current = true; writeVoiceCache(voiceStorage, remote.auth?.user.id ?? null, preferences, persisted); setVoicePreferences(preferences); audio.configure((cue, signal) => release.speech({ cue_id: cue, ...(cue==='calibration'||cue.startsWith('error:')||cue.startsWith('phase:')?{exercise_key:activeRef.current?.item.exercise_key,spec_revision:activeRef.current?.specRevision??undefined}:{}) }, signal), preferences.language); audio.setMuted(!preferences.audio_enabled); setVoiceOpen(false); setGuideEnabled(true); setGuideEvent("voice.selected"); setVoice(audio.status()); }} />}
-        <label>
+        {!landing && <><footer className="privacy-notice">{translateUi("Видео обрабатывается локально. Кадры не отправляются, запись камеры не ведётся. Общая fitness feedback не заменяет тренера или врача.")}</footer>
+        <div className="audio-status" data-guide-target="audio-controls"><span role="status">{translateUi(audio.status())}</span>
+          <GestureTarget id="global-audio-enable" selected={audioState.status !== 'muted'} onSelect={() => { audio.setMuted(false); audio.unlock(); audio.tone(660); setVoice(audio.status()); }}>{translateUi("Включить звук")}</GestureTarget>
+          <GestureTarget id="global-audio-stop" onSelect={() => audio.stop()}>{translateUi("Остановить звук")}</GestureTarget>
+          <GestureTarget id="global-voice-settings" onSelect={openVoiceSettings}>{translateUi("Голос тренера")}</GestureTarget>
+          <GestureTarget id="global-hands-settings" onSelect={() => { if(runnerActive)runnerRef.current?.pause(runtimeClock.current());setHandsOpen(true) }}>{translateUi("Настройки рук")}</GestureTarget>
+          <GestureTarget id="global-guide" onSelect={() => { setGuideEpoch(epoch => epoch + 1);setGuideEnabled(true);setGuideEvent("voice.selected") }}>{translateUi("Обучение")}</GestureTarget>
+        </div></>}
+        {(planning || landing) && !voiceOpen && !visibleHands && <GestureCursor />}
+        {audioState.subtitle && <p className="audio-subtitle" aria-live="polite">{translateUi(audioState.subtitle)}</p>}
+        {voiceOpen && (voiceEditing || state.mode !== 'PLAN') && !visibleHands && !landing && <VoiceSelection key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} initial={voicePreferences} onClose={closeVoiceSettings} onComplete={(preferences, persisted) => { pendingGreeting.current = !voiceEditing; writeVoiceCache(voiceStorage, remote.auth?.user.id ?? null, preferences, persisted); setVoicePreferences(preferences); audio.configure(loadWorkoutCue, preferences.language); audio.setMuted(!preferences.audio_enabled); setVoiceOpen(false); setVoiceEditing(false); setGuideEnabled(true); setGuideEvent("voice.selected"); setVoice(audio.status()); }} />}
+        {!landing && <label>
           <input
             type="checkbox"
             checked={audioState.status === "muted"}
@@ -659,9 +707,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
               audio.setMuted(event.target.checked);
               setVoice(audio.status());
             }}
-          />{" "}
-          Без звука
-        </label>
+          />{translateUi(" ")}{translateUi("Без звука")}</label>}
       </div>
     </GestureNavigationProvider>
   );

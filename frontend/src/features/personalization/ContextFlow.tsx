@@ -1,3 +1,5 @@
+import { useTranslation } from '../../shared/uiLanguage'
+import { GestureTarget } from "../gesture-navigation/GestureTarget";
 import { useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
 import type { AIContext, CoachStyle, PersonaKey } from "../../api/aiCoach";
@@ -10,29 +12,7 @@ import {
   RecoveryPanel,
   SectionHeader,
 } from "./components";
-const personas = [
-  {
-    key: "maya",
-    title: "MAYA",
-    subtitle: "Low-impact return",
-    details: "15 минут · 2 дня · без оборудования",
-    story: "Короткие подходы. Спокойный темп. Больше восстановления.",
-  },
-  {
-    key: "arman",
-    title: "ARMAN",
-    subtitle: "Strength",
-    details: "30 минут · 4 дня · гантели",
-    story: "Больше объёма. Силовые варианты. Энергичный тренер.",
-  },
-  {
-    key: "dana",
-    title: "DANA",
-    subtitle: "Desk reset",
-    details: "10 минут · стоя · короткие блоки",
-    story: "Перерывы для движения. Desk reset, утро и вечер.",
-  },
-] as const;
+import { demoPersonas as personas } from "./demoPersonas";
 const empty: AIContext = {
   self_description: "",
   preferred_coach_style: "supportive",
@@ -56,6 +36,8 @@ export function ContextFlow({
   step?: "intake" | "documents" | "review";
   onStepChange?: (step: "intake" | "documents" | "review") => void;
 }) {
+  const { translateUi, translateUiList } = useTranslation()
+
   useEffect(() => () => { void backend.cancelGeneration().catch(() => {}); }, [backend]);
   const [localStep, setLocalStep] = useState<"intake" | "documents" | "review">(
       "intake",
@@ -109,38 +91,34 @@ export function ContextFlow({
     return (
       <section data-figma-node="3:112">
         <SectionHeader
-          label="JURY / SYNTHETIC PROFILES"
-          title="Same coach. Different starting points."
+          label={translateUi("JURY / SYNTHETIC PROFILES")}
+          title={translateUi("Same coach. Different starting points.")}
         >
-          <p>
-            Выберите вымышленный context. Каждый профиль открывается в отдельной
-            гостевой сессии.
-          </p>
+          <p>{translateUi("Выберите вымышленный context. Каждый профиль открывается в отдельной гостевой сессии.")}</p>
         </SectionHeader>
         <div className="persona-list">
           {personas.map((p) => (
             <article className="persona-card" key={p.key}>
-              <p className="dm-label">FICTIONAL PROFILE / {p.key}</p>
-              <h2>{p.title}</h2>
-              <h3>{p.subtitle}</h3>
-              <p>{p.details}</p>
-              <p>{p.story}</p>
+              <p className="dm-label">{translateUi("FICTIONAL PROFILE / ")}{translateUi(p.key)}</p>
+              <h2>{translateUi(p.title)}</h2>
+              <h3>{translateUi(p.subtitle)}</h3>
+              <p>{translateUi(p.details)}</p>
+              <p>{translateUi(p.story)}</p>
               <div className="dm-actions">
                 <FlowAction
                   id={"persona-" + p.key}
                   disabled={!!busy}
                   onSelect={() => choose(p.key)}
-                >
-                  Выбрать {p.title}
+                >{translateUi("Выбрать ")}{translateUi(p.title)}
                 </FlowAction>
               </div>
             </article>
           ))}
         </div>
-        {busy && <p role="status">{busy}</p>}
+        {busy && <p role="status">{translateUi(busy)}</p>}
         {error && (
           <RecoveryPanel
-            message={error}
+            message={translateUi(error)}
             onRetry={() => setError("")}
             onBack={() => setSwitcher(false)}
           />
@@ -158,13 +136,11 @@ export function ContextFlow({
           className="dm-ghost"
           disabled={!!busy}
           onClick={() => setSwitcher(true)}
-        >
-          Сменить persona
-        </button>
+        >{translateUi("Сменить persona")}</button>
       )}
       {error && (
         <RecoveryPanel
-          message={error}
+          message={translateUi(error)}
           onRetry={() => setError("")}
           onBack={() => {
             setError("");
@@ -172,40 +148,34 @@ export function ContextFlow({
           }}
         />
       )}
-      {remote.generationJob && <div className="dm-status" role="status"><p>Генерация: {remote.generationJob.status} · {remote.generationJob.stage}</p>{remote.generationJob.total_specs > 0 && <p>Подготовлено упражнений: {remote.generationJob.completed_specs} / {remote.generationJob.total_specs}</p>}{["queued", "running"].includes(remote.generationJob.status) && <button onClick={() => { void backend.cancelGeneration(); }}>Отменить генерацию</button>}</div>}
+      {remote.generationJob && <div className="dm-status" role="status"><p>{translateUi("Генерация: ")}{translateUi(remote.generationJob.status)} · {translateUi(remote.generationJob.stage)}</p>{remote.generationJob.total_specs > 0 && <p>{translateUi("Подготовлено упражнений: ")}{remote.generationJob.completed_specs} / {remote.generationJob.total_specs}</p>}{["queued", "running"].includes(remote.generationJob.status) && <button onClick={() => { void backend.cancelGeneration(); }}>{translateUi("Отменить генерацию")}</button>}</div>}
       {busy && (
         <div
           role="status"
           className="dm-status"
           data-figma-node={step === "documents" ? "3:116" : "3:119"}
         >
-          <h3>{busy}</h3>
-          <p>Можно вернуться после завершения.</p>
+          <h3>{translateUi(busy)}</h3>
+          <p>{translateUi("Можно вернуться после завершения.")}</p>
         </div>
       )}
       {step === "intake" ? (
         <div className="context-grid">
           <aside className="dm-panel dark">
-            <p className="dm-label">01 / YOUR STARTING POINT</p>
-            <h1>
-              A LITTLE CONTEXT.
-              <br />A BETTER START.
-            </h1>
-            <p>
-              Расскажите о целях, времени, опыте и предпочтениях. Вы
-              подтверждаете информацию до создания плана.
-            </p>
-            <p>Sprint 4A demo использует только synthetic data.</p>
+            <p className="dm-label">{translateUi("01 / YOUR STARTING POINT")}</p>
+            <h1>{translateUi("A LITTLE CONTEXT.")}<br />{translateUi("A BETTER START.")}</h1>
+            <p>{translateUi("Расскажите о целях, времени, опыте и предпочтениях. Вы подтверждаете информацию до создания плана.")}</p>
+            <p>{translateUi("Sprint 4A demo использует только synthetic data.")}</p>
           </aside>
           <div className="dm-panel">
             <SectionHeader
-              label="STEP 1 OF 3 / ABOUT YOU"
-              title="Tell us about you"
+              label={translateUi("STEP 1 OF 3 / ABOUT YOU")}
+              title={translateUi("Tell us about you")}
             />
             <label className="dm-field">
-              <span>Ваш context</span>
+              <span>{translateUi("Ваш context")}</span>
               <textarea
-                aria-label="Описание себя"
+                aria-label={translateUi("Описание себя")}
                 maxLength={5000}
                 value={draft.self_description}
                 onChange={(e) =>
@@ -214,7 +184,7 @@ export function ContextFlow({
               />
             </label>
             <label className="dm-field">
-              <span>Стиль тренера</span>
+              <span>{translateUi("Стиль тренера")}</span>
               <select
                 value={draft.preferred_coach_style}
                 onChange={(e) =>
@@ -225,12 +195,12 @@ export function ContextFlow({
                 }
               >
                 {["calm", "supportive", "energetic", "strict"].map((style) => (
-                  <option key={style}>{style}</option>
+                  <option key={style} value={style}>{translateUi(style)}</option>
                 ))}
               </select>
             </label>
             <label className="dm-field">
-              <span>Язык подсказок</span>
+              <span>{translateUi("Язык подсказок")}</span>
               <select
                 value={draft.preferred_language}
                 onChange={(e) =>
@@ -240,23 +210,21 @@ export function ContextFlow({
                   })
                 }
               >
-                <option value="ru">Русский</option>
-                <option value="kk">Қазақша</option>
-                <option value="en">English</option>
+                <option value="ru">{translateUi("Русский")}</option>
+                <option value="kk">{translateUi("Қазақша")}</option>
+                <option value="en">{translateUi("English")}</option>
               </select>
             </label>
             <p>
-              {remote.profile.session_minutes} минут ·{" "}
-              {remote.profile.days_per_week} дня ·{" "}
-              {remote.profile.equipment.join(", ")}
+              {remote.profile.session_minutes}{translateUi(" минут ·")}{translateUi(" ")}
+              {remote.profile.days_per_week}{translateUi(" дня ·")}{translateUi(" ")}
+              {translateUi(translateUiList(remote.profile.equipment))}
             </p>
-            <button className="dm-ghost" onClick={() => setSettings(!settings)}>
-              Цели, расписание и оборудование
-            </button>
+            <GestureTarget id="context-settings" className="dm-ghost" onSelect={() => setSettings(!settings)}>{translateUi("Цели, расписание и оборудование")}</GestureTarget>
             {settings && (
               <ProfileSettings
                 profile={remote.profile}
-                message={remote.profileMessage}
+                message={translateUi(remote.profileMessage)}
                 onSave={(p) => backend.saveProfile(p)}
                 onBack={() => setSettings(false)}
               />
@@ -271,30 +239,25 @@ export function ContextFlow({
                     setStep("documents");
                   });
                 }}
-              >
-                Продолжить →
-              </FlowAction>
-              <button onClick={onBack}>Назад</button>
+              >{translateUi("Продолжить →")}</FlowAction>
+              <GestureTarget id="context-back" onSelect={onBack}>{translateUi("Назад")}</GestureTarget>
             </div>
           </div>
         </div>
       ) : step === "documents" ? (
         <>
           <SectionHeader
-            label="STEP 2 OF 3 / OPTIONAL CONTEXT"
-            title="Bring your context. Keep control."
+            label={translateUi("STEP 2 OF 3 / OPTIONAL CONTEXT")}
+            title={translateUi("Bring your context. Keep control.")}
           >
-            <p>
-              PDF с текстовым слоем, TXT или Markdown · до 5 MB · до 5
-              источников.
-            </p>
+            <p>{translateUi("PDF с текстовым слоем, TXT или Markdown · до 5 MB · до 5 источников.")}</p>
           </SectionHeader>
           <div className="editorial-grid">
             <div className="dm-panel">
-              <h3>Add a document or personal notes</h3>
-              <p>Extracted facts не используются до подтверждения.</p>
+              <h3>{translateUi("Add a document or personal notes")}</h3>
+              <p>{translateUi("Extracted facts не используются до подтверждения.")}</p>
               <label className="dm-field">
-                <span>Выберите synthetic source document</span>
+                <span>{translateUi("Выберите synthetic source document")}</span>
                 <input
                   type="file"
                   accept="application/pdf,text/plain,text/markdown,.md"
@@ -311,42 +274,29 @@ export function ContextFlow({
               </label>
               {remote.documents.map((d) => (
                 <article className="document-card" key={d.id}>
-                  <h3>{d.filename}</h3>
+                  <h3>{translateUi(d.filename)}</h3>
                   <p>
-                    {d.status === "failed"
+                    {translateUi(d.status === "failed"
                       ? d.message
-                      : `${d.extracted_character_count} символов · ${d.facts.length} extracted facts`}
+                      : `${d.extracted_character_count} символов · ${d.facts.length} extracted facts`)}
                   </p>
                   <div className="dm-actions">
                     <button
                       disabled={!!busy || !d.facts.length}
                       onClick={() => setStep("review")}
-                    >
-                      Открыть extracted facts
-                    </button>
+                    >{translateUi("Открыть extracted facts")}</button>
                     <button
                       className="dm-danger"
                       onClick={() => setDeleteId(d.id)}
-                    >
-                      Удалить источник
-                    </button>
+                    >{translateUi("Удалить источник")}</button>
                   </div>
                 </article>
               ))}
             </div>
             <aside className="dm-panel success">
-              <h2>
-                YOUR INFORMATION.
-                <br />
-                YOUR CHOICE.
-              </h2>
-              <p>
-                Проверьте extracted facts. Отклоните лишнее. Источник можно
-                удалить.
-              </p>
-              <p>
-                В плане будут видны короткие ссылки на подтверждённые источники.
-              </p>
+              <h2>{translateUi("YOUR INFORMATION.")}<br />{translateUi("YOUR CHOICE.")}</h2>
+              <p>{translateUi("Проверьте extracted facts. Отклоните лишнее. Источник можно удалить.")}</p>
+              <p>{translateUi("В плане будут видны короткие ссылки на подтверждённые источники.")}</p>
             </aside>
           </div>
           <div className="dm-actions">
@@ -355,23 +305,20 @@ export function ContextFlow({
               disabled={!!busy}
               onSelect={() => setStep("review")}
             >
-              {remote.documents.length
+              {translateUi(remote.documents.length
                 ? "Перейти к review →"
-                : "Продолжить без документа →"}
+                : "Продолжить без документа →")}
             </FlowAction>
-            <button onClick={() => setStep("intake")}>Назад</button>
+            <GestureTarget id="context-intake-back" onSelect={() => setStep("intake")}>{translateUi("Назад")}</GestureTarget>
           </div>
         </>
       ) : (
         <>
           <SectionHeader
-            label="CONTEXT REVIEW / NOTHING IS ASSUMED"
-            title="Is this a fair starting point?"
+            label={translateUi("CONTEXT REVIEW / NOTHING IS ASSUMED")}
+            title={translateUi("Is this a fair starting point?")}
           >
-            <p>
-              Подтверждаются отдельные факты. Вы можете пропустить документ и
-              продолжить по своему context.
-            </p>
+            <p>{translateUi("Подтверждаются отдельные факты. Вы можете пропустить документ и продолжить по своему context.")}</p>
           </SectionHeader>
           <div className="editorial-grid">
             <div className="fact-list">
@@ -382,15 +329,15 @@ export function ContextFlow({
                     data-status={f.status}
                     key={f.id}
                   >
-                    <p className="dm-label">{d.filename}</p>
-                    <h3>{f.normalized_fact}</h3>
-                    <blockquote>“{f.source_excerpt}”</blockquote>
+                    <p className="dm-label">{translateUi(d.filename)}</p>
+                    <h3>{translateUi(f.normalized_fact)}</h3>
+                    <blockquote>“{translateUi(f.source_excerpt)}”</blockquote>
                     {f.status === "confirmed" ? (
-                      <p>Использовано для персонализации</p>
+                      <p>{translateUi("Использовано для персонализации")}</p>
                     ) : f.status === "rejected" ? (
-                      <p>Отклонено · не используется</p>
+                      <p>{translateUi("Отклонено · не используется")}</p>
                     ) : (
-                      <p>Ожидает подтверждения</p>
+                      <p>{translateUi("Ожидает подтверждения")}</p>
                     )}
                     <div className="dm-actions">
                       <FlowAction
@@ -401,9 +348,7 @@ export function ContextFlow({
                             backend.decideFact(d.id, f.id, "confirmed"),
                           );
                         }}
-                      >
-                        Confirm
-                      </FlowAction>
+                      >{translateUi("Confirm")}</FlowAction>
                       <FlowAction
                         id={"reject-" + f.id}
                         disabled={!!busy || f.status === "rejected"}
@@ -412,51 +357,41 @@ export function ContextFlow({
                             backend.decideFact(d.id, f.id, "rejected"),
                           );
                         }}
-                      >
-                        Reject
-                      </FlowAction>
+                      >{translateUi("Reject")}</FlowAction>
                     </div>
                   </article>
                 )),
               )}
               {!remote.documents.length && (
                 <div className="dm-panel success">
-                  <p>Используем описание и настройки профиля.</p>
+                  <p>{translateUi("Используем описание и настройки профиля.")}</p>
                 </div>
               )}
             </div>
             <aside className="dm-panel dark">
-              <p className="dm-label">YOUR CONTEXT / SOURCE</p>
-              <h3>{draft.self_description}</h3>
+              <p className="dm-label">{translateUi("YOUR CONTEXT / SOURCE")}</p>
+              <h3>{translateUi(draft.self_description)}</h3>
               <p>
                 {remote.documents.reduce(
                   (n, d) =>
                     n + d.facts.filter((f) => f.status === "confirmed").length,
                   0,
-                )}{" "}
-                подтверждённых фактов
-              </p>
-              <button onClick={() => setStep("documents")}>
-                Источники и удаление
-              </button>
+                )}{translateUi(" ")}{translateUi("подтверждённых фактов")}</p>
+              <GestureTarget id="context-documents-back" onSelect={() => setStep("documents")}>{translateUi("Источники и удаление")}</GestureTarget>
             </aside>
           </div>
           {remote.aiProfile && (
             <AIProfileSummary profile={remote.aiProfile.profile} />
           )}
           <div className="dm-actions">
-            <FlowAction id="review-build" disabled={!!busy} onSelect={generate}>
-              Создать personalized plan →
-            </FlowAction>
-            <button
+            <FlowAction id="review-build" disabled={!!busy} onSelect={generate}>{translateUi("Создать personalized plan →")}</FlowAction>
+            <GestureTarget id="context-summary"
               disabled={!!busy}
-              onClick={() => {
+              onSelect={() => {
                 void run("Что тренер учёл", () => backend.generateAIProfile());
               }}
-            >
-              Посмотреть summary
-            </button>
-            <button onClick={() => setStep("intake")}>Изменить описание</button>
+            >{translateUi("Посмотреть summary")}</GestureTarget>
+            <GestureTarget id="context-edit" onSelect={() => setStep("intake")}>{translateUi("Изменить описание")}</GestureTarget>
           </div>
         </>
       )}
@@ -464,13 +399,11 @@ export function ContextFlow({
         <div
           className="dm-status error"
           role="alertdialog"
-          aria-label="Удалить источник"
+          aria-label={translateUi("Удалить источник")}
           data-figma-node="3:148"
         >
-          <h3>Удалить источник и его факты?</h3>
-          <p>
-            Профиль и активный AI plan будут пересозданы без этого источника.
-          </p>
+          <h3>{translateUi("Удалить источник и его факты?")}</h3>
+          <p>{translateUi("Профиль и активный AI plan будут пересозданы без этого источника.")}</p>
           <div className="dm-actions">
             <button
               disabled={!!busy}
@@ -481,18 +414,16 @@ export function ContextFlow({
                   setDeleted(true);
                 });
               }}
-            >
-              Удалить
-            </button>
-            <button onClick={() => setDeleteId(null)}>Отмена</button>
+            >{translateUi("Удалить")}</button>
+            <button onClick={() => setDeleteId(null)}>{translateUi("Отмена")}</button>
           </div>
         </div>
       )}
       {deleted && (
         <div className="dm-status" role="status" data-figma-node="3:149">
-          <h3>Источник удалён</h3>
-          <p>Продолжите без него или добавьте новый документ.</p>
-          <button onClick={() => setDeleted(false)}>Продолжить</button>
+          <h3>{translateUi("Источник удалён")}</h3>
+          <p>{translateUi("Продолжите без него или добавьте новый документ.")}</p>
+          <button onClick={() => setDeleted(false)}>{translateUi("Продолжить")}</button>
         </div>
       )}
     </section>

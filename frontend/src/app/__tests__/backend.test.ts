@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiClient } from "../../api/client";
+import { ReleaseClient } from "../../api/release";
 import { BackendStore } from "../../store/backend";
 import {
   AUTH_KEY,
@@ -183,6 +184,77 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+describe("coach request deadline", () => {
+  async function setup(delayMs: number) {
+    const ordinary = server();
+    const transport = vi.fn<typeof fetch>((url, options) => {
+      if (!String(url).endsWith("/coach/turns") && !String(url).endsWith("/slow"))
+        return ordinary(url, options);
+      return new Promise<Response>((resolve, reject) => {
+        const abort = () => {
+          clearTimeout(timer);
+          reject(new DOMException("Aborted", "AbortError"));
+        };
+        const timer = setTimeout(() => {
+          options?.signal?.removeEventListener("abort", abort);
+          resolve(response({ display_text: "Coach answer" }));
+        }, delayMs);
+        options?.signal?.addEventListener("abort", abort, { once: true });
+      });
+    });
+    const store = new BackendStore(
+      new ApiClient("http://test", 7000, transport),
+      new SafeStorage(testStorage),
+    );
+    await store.bootstrap();
+    vi.useFakeTimers();
+    return { store, client: new ReleaseClient(store), transport };
+  }
+
+  it("receives an answer after the ordinary seven-second API deadline", async () => {
+    const { client, transport } = await setup(14000);
+    const result = client.turn("Explain my plan", null, "planning");
+    const assertion = expect(result).resolves.toMatchObject({ display_text: "Coach answer" });
+    await vi.advanceTimersByTimeAsync(14000);
+    await assertion;
+    const calls = requests(transport, "/coach/turns");
+    expect(calls).toHaveLength(1);
+    expect(calls[0][1]?.signal?.aborted).toBe(false);
+    expect(calls[0][1]?.headers).toMatchObject({ Authorization: "Bearer synthetic-guest-token" });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("still times out an unresponsive coach within 75 seconds", async () => {
+    const { client, transport } = await setup(100000);
+    const result = client.turn("Explain my plan", null, "planning");
+    const assertion = expect(result).rejects.toMatchObject({ kind: "timeout" });
+    await vi.advanceTimersByTimeAsync(74999);
+    expect(requests(transport, "/coach/turns")[0][1]?.signal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await assertion;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("cancels immediately when the coach view is closed", async () => {
+    const { client } = await setup(14000);
+    const controller = new AbortController();
+    const result = client.turn("Explain my plan", null, "planning", controller.signal);
+    const assertion = expect(result).rejects.toMatchObject({ kind: "aborted" });
+    controller.abort();
+    await assertion;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("preserves the ordinary deadline for other backend requests", async () => {
+    const { store } = await setup(14000);
+    const result = store.request("/slow");
+    const assertion = expect(result).rejects.toMatchObject({ kind: "timeout" });
+    await vi.advanceTimersByTimeAsync(7000);
+    await assertion;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
 describe("typed client", () => {
   it("uses the same-origin proxy without a manually supplied token", async () => {
     vi.stubEnv("VITE_API_BASE_URL", "");
@@ -275,6 +347,55 @@ describe("typed client", () => {
 });
 
 describe("bootstrap and profiles", () => {
+  it("waits for shared guest initialization before requesting voices", async () => {
+    const transport = server(), original = transport.getMockImplementation()!;
+    let finishGuest!: () => void;
+    const guestReady = new Promise<void>(resolve => { finishGuest = resolve; });
+    transport.mockImplementation(async (url, options) => {
+      if (String(url).endsWith("/auth/guest")) await guestReady;
+      if (String(url).startsWith("http://test/voices")) return response({ voices: [] });
+      return original(url, options);
+    });
+    const store = new BackendStore(new ApiClient("http://test", 1000, transport), new SafeStorage(testStorage));
+    const bootstrap = store.bootstrap();
+    const list = store.request("/voices?language=ru");
+    const cancelled = new AbortController();
+    const stopped = store.request("/voices?language=en", undefined, "GET", cancelled.signal).catch(error => error);
+    cancelled.abort();
+    expect(transport.mock.calls.some(([url]) => String(url).includes("/voices"))).toBe(false);
+    finishGuest();
+    await bootstrap;
+    await expect(list).resolves.toEqual({ voices: [] });
+    expect(await stopped).toMatchObject({ kind: "aborted" });
+    expect(requests(transport, "/auth/guest")).toHaveLength(1);
+    expect(transport.mock.calls.filter(([url]) => String(url).includes("/voices"))).toHaveLength(1);
+  });
+  it("requires explicit new-session recovery after an expired guest and preserves old owned results", async () => {
+    const storage = new SafeStorage(testStorage);
+    storage.write(AUTH_KEY, { accessToken: "expired", expiresAt: 1, user });
+    const transport = server(), original = transport.getMockImplementation()!;
+    const nextUser = { ...user, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc" };
+    transport.mockImplementation(async (url, options) => {
+      const path = String(url).replace("http://test", "");
+      if (path === "/auth/refresh" || (path === "/auth/me" && (options?.headers as Record<string, string>)?.Authorization === "Bearer expired")) return response({ status: "recovery_required" }, 401);
+      if (path === "/auth/guest" || path === "/auth/session") return response({ access_token: "new-session", expires_in: 3600, user: nextUser });
+      if (path === "/auth/me") return response(nextUser);
+      if (path.startsWith("/voices")) return response({ voices: [{ voice_id: "account-voice" }] });
+      return original(url, options);
+    });
+    const store = new BackendStore(new ApiClient("http://test", 100, transport), storage);
+    const pending = entry(); store.queue.add(pending);
+    await store.bootstrap(false);
+    await expect(store.request("/voices?language=ru")).rejects.toMatchObject({ status: 401, code: "recovery_required" });
+    expect(requests(transport, "/auth/guest")).toHaveLength(0);
+    expect(readAuth(storage)?.user.id).toBe(user.id);
+    await store.startNewGuest();
+    await expect(store.request("/voices?language=ru")).resolves.toEqual({ voices: [{ voice_id: "account-voice" }] });
+    expect(requests(transport, "/auth/guest")).toHaveLength(1);
+    expect(readAuth(storage)?.user.id).toBe(nextUser.id);
+    expect(store.queue.entries()[0].ownerId).toBe(user.id);
+    expect(requests(transport, "/workout-sessions")).toHaveLength(0);
+  });
   it("shares bootstrap, creates default profile once and reuses token/plan after reload", async () => {
     const transport = server(),
       storage = new SafeStorage(testStorage),

@@ -1,11 +1,19 @@
 import type { VisionEvent } from '../types/vision'
+const scrollToneIntervalMs = 500
 export class GestureAudio {
   private context: AudioContext | null = null
+  private scrollToneAt = -Infinity
   async enable() {
     try { this.context ??= new AudioContext(); await this.context.resume() } catch { /* Visual feedback remains usable. */ }
   }
   event(event: VisionEvent) {
-    if (event.type === 'gesture.swiped') { this.tone(event.direction === 'up' ? 620 : 440); return }
+    if (event.type === 'gesture.scrolled') {
+      if (Number.isFinite(event.deltaY) && event.deltaY !== 0 && event.at - this.scrollToneAt >= scrollToneIntervalMs) {
+        this.scrollToneAt = event.at
+        this.tone(event.deltaY < 0 ? 620 : 440)
+      }
+      return
+    }
     if (event.type !== 'gesture.confirmed' || (event.command==='select' && !event.targetId)) return
     this.tone(event.command==='select' ? 520 : event.command==='confirm' ? 780 : 360)
   }
@@ -20,5 +28,5 @@ export class GestureAudio {
       oscillator.onended=()=>{oscillator.disconnect();gain.disconnect()}
     } catch { /* Audio failure must not interrupt navigation. */ }
   }
-  close() { void this.context?.close().catch(()=>{});this.context=null }
+  close() { void this.context?.close().catch(()=>{});this.context=null;this.scrollToneAt=-Infinity }
 }

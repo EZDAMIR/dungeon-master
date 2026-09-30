@@ -28,21 +28,75 @@ function setup(strict=false){
 it('intro precedes permission, real click starts camera once even under StrictMode and cursor is inside modal',()=>{
  const s=setup(true);expect(s.start).not.toHaveBeenCalled();expect(document.querySelector('[role=dialog]')?.textContent).toContain('Твои руки — твой курсор');expect(document.querySelector('[role=dialog] .gesture-cursor')).not.toBeNull();s.click('Включить управление руками');expect(s.start).toHaveBeenCalledOnce();expect(s.trusted).toHaveBeenCalledOnce();expect(s.source.configureInput).toHaveBeenCalled()
 })
+it('animates the complete startup wait, then replaces loading with hand guidance only after readiness',()=>{
+ const s=setup();expect(document.querySelector('.camera-loading')).toBeNull()
+ s.click('Включить управление руками')
+ expect(document.querySelector('.camera-loading[aria-busy="true"]')?.textContent).toContain('Готовим камеру и управление')
+ expect(document.querySelector('[role=progressbar]')?.hasAttribute('aria-valuenow')).toBe(false)
+ expect(document.querySelector('h1')?.textContent).toBe('Скоро начнём')
+ act(()=>s.store.emit({type:'camera.loading',at:0}))
+ expect(document.querySelector('.camera-loading')).not.toBeNull()
+ act(()=>s.store.emit({type:'camera.ready',at:1}))
+ expect(document.querySelector('.camera-loading')).toBeNull()
+ expect(document.querySelector('.hands-live')?.textContent).toContain('Покажи кисть перед камерой')
+ act(()=>s.store.emit({type:'tracking.acquired',at:2,target:'hand'}))
+ expect(document.querySelector('h1')?.textContent).toBe('Двигай курсор')
+})
+it('stops the loading animation on failure and keeps a mouse exit during startup',()=>{
+ const s=setup();s.click('Включить управление руками')
+ act(()=>s.store.emit({type:'camera.error',at:1,code:'model_load_failed',message:'Распознавание не загрузилось'}))
+ expect(document.querySelector('.camera-loading')).toBeNull();expect(document.querySelector('.hands-recovery')?.textContent).toContain('Распознавание не загрузилось')
+ s.click('Повторить запуск камеры');expect(document.querySelector('.camera-loading')).toBeNull()
+ // A real runtime clears the error synchronously when a retry emits camera.loading.
+ act(()=>s.store.emit({type:'camera.loading',at:2}));expect(document.querySelector('.camera-loading')).not.toBeNull()
+ s.click('Продолжить с мышью');expect(s.stop).toHaveBeenCalledTimes(2);expect(s.mouse).toHaveBeenCalledOnce()
+})
 it('denied camera always has retry and mouse path, with honest skipped outcome',()=>{
  const s=setup();s.click('Включить управление руками');act(()=>s.store.emit({type:'camera.error',at:1,code:'not_allowed',message:'Разреши камеру в настройках сайта'}));expect(document.querySelector('[role=dialog]')?.textContent).toContain('Разреши камеру');s.click('Повторить запуск камеры');expect(s.start).toHaveBeenCalledTimes(2);expect(s.stop).toHaveBeenCalledOnce();s.click('Продолжить с мышью');expect(s.complete).toHaveBeenCalledWith(expect.objectContaining({mode:'mouse',outcome:'skipped'}));expect(s.mouse).toHaveBeenCalledOnce()
 })
 it('gesture +/- and presets reconfigure real engine without restarting camera; slider remains accessible',()=>{
- const s=setup();s.ready();act(()=>s.store.registry.activate('hands-plus'));expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(1.1);act(()=>s.store.registry.activate('hands-minus'));expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(1);act(()=>s.store.registry.activate('hands-preset-1.5'));expect(s.source.configureInput).toHaveBeenLastCalledWith(expect.objectContaining({sensitivity:1.5,smoothingMs:80}));expect(document.querySelector('input')?.getAttribute('aria-valuetext')).toBe('150%');s.click('Сбросить');expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(1);const slider=document.querySelector('input')!;act(()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(slider,'70');slider.dispatchEvent(new Event('input',{bubbles:true}));slider.dispatchEvent(new Event('change',{bubbles:true}))});expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(.7);expect(s.start).toHaveBeenCalledOnce()
+ const s=setup();s.ready();document.querySelector('details')!.open=true;act(()=>s.store.registry.activate('hands-plus'));expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(1.1);act(()=>s.store.registry.activate('hands-minus'));expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(1);act(()=>s.store.registry.activate('hands-preset-1.5'));expect(s.source.configureInput).toHaveBeenLastCalledWith(expect.objectContaining({sensitivity:1.5,smoothingMs:80}));expect(document.querySelector('input')?.getAttribute('aria-valuetext')).toBe('150%');s.click('Сбросить');expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(1);const slider=document.querySelector('input')!;act(()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(slider,'70');slider.dispatchEvent(new Event('input',{bubbles:true}));slider.dispatchEvent(new Event('change',{bubbles:true}))});expect(inputPreferences.getSnapshot().preferences.sensitivity).toBe(.7);expect(s.start).toHaveBeenCalledOnce()
 })
 it('background targets are suppressed and mouse movement cannot create a tracked hand cursor',()=>{
  const s=setup();act(()=>s.store.registry.activate('background'));expect(s.background).not.toHaveBeenCalled();act(()=>document.dispatchEvent(new MouseEvent('mousemove',{clientX:100,clientY:100})));expect(s.store.cursor.visible).toBe(false);expect(s.store.getSnapshot().hand).toBe(false)
 })
 it('practice counts genuine hand selections, completion waits for release and cannot leak command into App mapper',()=>{
- const s=setup(),mapper=vi.fn();s.store.connect(mapper);s.ready();s.click('Проверить жесты');s.click('Цель 1');expect(document.querySelector('.hands-practice')?.textContent).toContain('0/3');for(let i=0;i<3;i++)act(()=>s.store.registry.activate(`hands-practice-${i}`));act(()=>s.store.registry.activate('hands-done'));expect(s.complete).not.toHaveBeenCalled();expect(document.querySelector('[role=dialog]')?.textContent).toContain('Разъедини пальцы');act(()=>s.store.emit({type:'gesture.cancelled',at:2,command:'select'}));expect(s.complete).toHaveBeenCalledWith(expect.objectContaining({outcome:'calibrated',mode:'hands'}));expect(mapper).not.toHaveBeenCalled();expect(s.stop).not.toHaveBeenCalled();expect(s.source.requireNeutralRelease).toHaveBeenCalled()
+ const s=setup(),mapper=vi.fn();s.store.connect(mapper);s.ready();
+ act(()=>s.store.emit({type:'focus.changed',at:2,targetId:'hands-practice-start'}));s.click('Проверить жесты');s.click('Цель 1');
+ expect(document.querySelector('.hands-practice')?.textContent).toContain('0/3');
+ for(let i=0;i<3;i++)act(()=>s.store.registry.activate(`hands-practice-${i}`));
+ expect(document.querySelector('h1')?.textContent).toBe('Прокрути страницу');
+ act(()=>s.store.emit({type:'gesture.scrolled',at:10,deltaY:.1}));act(()=>s.store.emit({type:'gesture.scrolled',at:20,deltaY:-.1}));
+ s.click('Дальше');act(()=>s.store.emit({type:'gesture.confirmed',at:30,command:'back'}));
+ expect(document.querySelector('h1')?.textContent).toBe('Подтверди действие');
+ act(()=>s.store.emit({type:'gesture.confirmed',at:40,command:'confirm'}));
+ act(()=>s.store.registry.activate('hands-done'));expect(s.complete).not.toHaveBeenCalled();
+ expect(document.querySelector('[role=dialog]')?.textContent).toContain('Разъедини пальцы');
+ act(()=>s.store.emit({type:'gesture.cancelled',at:50,command:'select'}));
+ expect(s.complete).toHaveBeenCalledWith(expect.objectContaining({outcome:'calibrated',mode:'hands'}));expect(mapper).not.toHaveBeenCalled();expect(s.stop).not.toHaveBeenCalled();expect(s.source.requireNeutralRelease).toHaveBeenCalled()
 })
 it('keyboard focus is trapped, Escape switches to mouse and prior focus returns on unmount',()=>{
  const prior=document.createElement('button');document.body.append(prior);prior.focus();const s=setup();const controls=Array.from(document.querySelectorAll<HTMLButtonElement>('[role=dialog] button'));expect(document.activeElement).toBe(controls[0]);act(()=>controls[0].dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true})));expect(document.activeElement).toBe(controls.at(-1));act(()=>controls.at(-1)!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));expect(s.mouse).toHaveBeenCalledOnce();act(()=>root.render(null));expect(document.activeElement).toBe(prior);expect(prior.inert).toBeFalsy();prior.remove()
 })
 it('physical completion records default, and closing/unmount does not stop sole hands stream',()=>{
- const s=setup();s.ready();s.click('Готово — управлять руками');expect(s.complete).toHaveBeenCalledWith(expect.objectContaining({outcome:'default',preferences:expect.objectContaining({onboardingCompleted:true,mode:'hands'})}));act(()=>root.render(null));expect(s.stop).not.toHaveBeenCalled();act(()=>s.store.registry.activate('background'));expect(s.background).not.toHaveBeenCalled()
+ const s=setup();s.ready();s.click('Использовать стандартные настройки');expect(s.complete).toHaveBeenCalledWith(expect.objectContaining({outcome:'default',preferences:expect.objectContaining({onboardingCompleted:true,mode:'hands'})}));act(()=>root.render(null));expect(s.stop).not.toHaveBeenCalled();act(()=>s.store.registry.activate('background'));expect(s.background).not.toHaveBeenCalled()
+})
+it('shows animated examples before permission and handles reopening an already running camera',()=>{
+ const s=setup();s.click('Прокрутка');expect(document.querySelector('.example-scroll')).not.toBeNull();
+ act(()=>{s.store.emit({type:'camera.ready',at:0});s.store.emit({type:'tracking.acquired',at:1,target:'hand'})});
+ s.click('Включить управление руками');expect(document.querySelector('h1')?.textContent).toBe('Двигай курсор');expect(s.start).toHaveBeenCalledOnce()
+})
+it('uses the same two-finger pinch illustration in the choosing preview and practice',()=>{
+ const s=setup();s.click('Выбор')
+ const preview=document.querySelector('.example-pinch')!
+ expect(preview.getAttribute('aria-hidden')).toBe('true')
+ const index=preview.querySelector('path.example-index')!.getAttribute('d')
+ const thumb=preview.querySelector('path.example-thumb')!.getAttribute('d')
+ expect(index).not.toBe(thumb);expect(s.start).not.toHaveBeenCalled()
+ s.click('Курсор');expect(document.querySelector('.example-pinch')).toBeNull()
+ s.ready();s.click('Проверить жесты')
+ expect(document.querySelector('h1')?.textContent).toBe('Выбери кнопку')
+ expect(document.querySelector('.example-pinch path.example-index')?.getAttribute('d')).toBe(index)
+ expect(document.querySelector('.example-pinch path.example-thumb')?.getAttribute('d')).toBe(thumb)
+ expect(document.querySelector('.hands-lesson')?.textContent).toContain('Соедини большой и указательный пальцы')
 })

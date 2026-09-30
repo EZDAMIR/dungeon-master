@@ -51,7 +51,7 @@ export type VisionEvent =
   | { type: "tracking.acquired"; at: number; target: "hand" }
   | { type: "tracking.lost"; at: number; target: "hand" | "body" }
   | { type: "cursor.moved"; at: number; x: number; y: number }
-  | { type: "gesture.swiped"; at: number; direction: "up" | "down" }
+  | { type: "gesture.scrolled"; at: number; deltaY: number }
   | { type: "focus.changed"; at: number; targetId: string | null }
   | {
       type: "gesture.candidate";

@@ -81,6 +81,7 @@ export class BackendStore {
   private controller = new AbortController();
   private clients = 0;
   private authVerified = false;
+  private authFailure: ApiError | null = null;
   readonly queue: PendingQueue;
   private readonly client: ApiClient;
   private readonly storage: SafeStorage;
@@ -200,6 +201,7 @@ export class BackendStore {
       const changed = this.state.auth?.user.id !== auth.user.id;
       this.storage.write(AUTH_KEY, auth);
       this.authVerified = true;
+      this.authFailure = null;
       this.publish({
         auth,
         ...(changed
@@ -285,6 +287,7 @@ export class BackendStore {
       this.publish({ status: "online" });
       if (sync) await this.flushPending(false);
     } catch (error) {
+      if (!this.authVerified && error instanceof ApiError) this.authFailure = error;
       this.degraded(error);
     }
   }
@@ -371,20 +374,45 @@ export class BackendStore {
         expiresAt: Date.now() + response.expires_in * 1000 };
       this.storage.write(AUTH_KEY, auth);
       this.authVerified = true;
+      this.authFailure = null;
       this.publish({ auth });
       return auth.accessToken;
+    }).catch(error => {
+      if (error instanceof ApiError && error.status === 401) {
+        this.authVerified = false;
+        this.authFailure = error;
+        this.degraded(error);
+      }
+      throw error;
     }).finally(() => { this.refreshFlight = null; });
     return this.refreshFlight;
   }
-  async request<T>(path: string, body?: unknown, method: "GET" | "POST" | "PUT" | "DELETE" = "GET", signal?: AbortSignal) {
-    return this.client.json<T>(path, { ...this.authenticated(), method, body, signal: signal ?? this.controller.signal });
+  async request<T>(path: string, body?: unknown, method: "GET" | "POST" | "PUT" | "DELETE" = "GET", signal?: AbortSignal, timeoutMs?: number) {
+    if (signal?.aborted) throw new ApiError("aborted");
+    if (!this.authVerified && this.bootstrapFlight) await this.bootstrapFlight;
+    if (signal?.aborted) throw new ApiError("aborted");
+    return this.client.json<T>(path, { ...this.authenticated(), method, body, signal: signal ?? this.controller.signal, timeoutMs });
   }
   async requestBlob(path: string, body?: unknown, method: "GET" | "POST" = "GET", signal?: AbortSignal) {
+    if (signal?.aborted) throw new ApiError("aborted");
+    if (!this.authVerified && this.bootstrapFlight) await this.bootstrapFlight;
+    if (signal?.aborted) throw new ApiError("aborted");
     return this.client.blob(path, { ...this.authenticated(), method, body, signal: signal ?? this.controller.signal, timeoutMs: 30000 });
+  }
+  async startNewGuest(): Promise<void> {
+    await this.bootstrapFlight;
+    if (this.authFailure?.status !== 401 || !this.state.auth?.user.is_guest)
+      throw new ApiError("http", 409);
+    this.storage.remove(AUTH_KEY);
+    this.authVerified = false;
+    this.authFailure = null;
+    this.publish({ auth: null });
+    await this.bootstrap(false);
+    this.authenticated();
   }
   private authenticated() {
     const auth = this.state.auth;
-    if (!auth || !this.authVerified) throw new ApiError("offline");
+    if (!auth || !this.authVerified) throw this.authFailure ?? new ApiError("offline");
     return { token: auth.accessToken, signal: this.controller.signal };
   }
   async loadContext(): Promise<void> {

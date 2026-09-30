@@ -2,9 +2,11 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ContextFlow } from "../../features/personalization/ContextFlow";
+import { ReadyPrograms } from "../../features/personalization/ReadyPrograms";
 import { PlanExperience } from "../../features/personalization/PlanExperience";
 import { CameraCoachShell } from "../../features/personalization/CameraCoachShell";
 import { GestureNavigationProvider } from "../../features/gesture-navigation/GestureNavigationProvider";
+import { ApiError } from "../../api/client";
 import { BackendStore } from "../../store/backend";
 import { INITIAL_STATE } from "../modes";
 import type {
@@ -142,7 +144,7 @@ it("keeps jury personas out of normal navigation and loads three named profiles"
   expect(host.textContent).toContain("DANA");
   await click("Выбрать MAYA");
   expect(load).toHaveBeenCalledWith("maya");
-  expect(host.textContent).toContain("Tell us about you");
+  expect(host.textContent).toContain("Расскажи о себе");
   render(
     <ContextFlow
       backend={backend}
@@ -152,7 +154,56 @@ it("keeps jury personas out of normal navigation and loads three named profiles"
       onBack={() => {}}
     />,
   );
-  expect(host.textContent).not.toContain("Сменить persona");
+  expect(host.textContent).not.toContain("Сменить профиль");
+});
+it.each(['maya', 'arman', 'dana'] as const)('opens the existing %s program without questionnaire steps or duplicate requests', async key => {
+  const backend = new BackendStore(), onPlan = vi.fn(), onPersonalize = vi.fn();
+  const load = vi.spyOn(backend, 'loadPersona').mockResolvedValue();
+  let finish!: (value: never) => void;
+  const generate = vi.spyOn(backend, 'generatePersonalized').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  render(<ReadyPrograms backend={backend} onPlan={onPlan} onPersonalize={onPersonalize} />);
+  const button = host.querySelector<HTMLButtonElement>(`[data-gesture-target="ready-persona-${key}"]`)!;
+  await act(async () => { button.click(); button.click(); });
+  expect(load).toHaveBeenCalledOnce(); expect(load).toHaveBeenCalledWith(key); expect(generate).toHaveBeenCalledOnce();
+  expect(onPlan).not.toHaveBeenCalled(); expect(onPersonalize).not.toHaveBeenCalled();
+  expect(host.querySelector('textarea')).toBeNull();
+  await act(async () => finish(null as never));
+  expect(onPlan).toHaveBeenCalledOnce(); expect(host.querySelector('[data-gesture-target="ready-program-change"]')).not.toBeNull();
+  await act(async () => host.querySelector<HTMLButtonElement>('[data-gesture-target="ready-program-change"]')!.click());
+  expect(host.querySelectorAll('.persona-card')).toHaveLength(3);
+});
+it('retries program generation for the selected coach without replacing the guest again', async () => {
+  const backend = new BackendStore(), onPlan = vi.fn();
+  const load = vi.spyOn(backend, 'loadPersona').mockResolvedValue();
+  const generate = vi.spyOn(backend, 'generatePersonalized').mockRejectedValueOnce(new Error('offline')).mockResolvedValue(null as never);
+  render(<ReadyPrograms backend={backend} onPlan={onPlan} onPersonalize={() => {}} />);
+  const button = host.querySelector<HTMLButtonElement>('[data-gesture-target="ready-persona-maya"]')!;
+  await act(async () => button.click());
+  expect(host.querySelector('[role=alert]')?.textContent).toContain('Не удалось открыть программу');
+  expect(onPlan).not.toHaveBeenCalled();
+  await act(async () => button.click());
+  expect(load).toHaveBeenCalledOnce(); expect(generate).toHaveBeenCalledTimes(2); expect(onPlan).toHaveBeenCalledOnce();
+});
+it('explains when the server blocks demo program generation', async () => {
+  const backend = new BackendStore(), onPlan = vi.fn();
+  vi.spyOn(backend, 'loadPersona').mockResolvedValue();
+  vi.spyOn(backend, 'generatePersonalized').mockRejectedValue(new ApiError('http', 403));
+  render(<ReadyPrograms backend={backend} onPlan={onPlan} onPersonalize={() => {}} />);
+  await act(async () => host.querySelector<HTMLButtonElement>('[data-gesture-target="ready-persona-maya"]')!.click());
+  expect(host.querySelector('[role=alert]')?.textContent).toContain('ENABLE_FIXTURE_MODE');
+  expect(host.querySelector('[role=alert]')?.textContent).not.toContain('ENABLE_DEMO_PERSONAS');
+  expect(onPlan).not.toHaveBeenCalled();
+});
+it('does not generate or navigate after leaving the coach picker during a pending load', async () => {
+  const backend = new BackendStore(), onPlan = vi.fn(); let finish!: () => void;
+  vi.spyOn(backend, 'loadPersona').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  const generate = vi.spyOn(backend, 'generatePersonalized').mockResolvedValue(null as never);
+  const cancel = vi.spyOn(backend, 'cancelGeneration').mockResolvedValue();
+  render(<ReadyPrograms backend={backend} onPlan={onPlan} onPersonalize={() => {}} />);
+  await act(async () => host.querySelector<HTMLButtonElement>('[data-gesture-target="ready-persona-dana"]')!.click());
+  render(<p>Other screen</p>);
+  await act(async () => finish());
+  expect(cancel).toHaveBeenCalledOnce(); expect(generate).not.toHaveBeenCalled(); expect(onPlan).not.toHaveBeenCalled();
 });
 it("uploads a document and reviews individual confirmed/rejected facts without raw text", async () => {
   const backend = new BackendStore(),
@@ -207,12 +258,12 @@ it("uploads a document and reviews individual confirmed/rejected facts without r
     input.dispatchEvent(new Event("change", { bubbles: true })),
   );
   expect(upload).toHaveBeenCalledWith(file);
-  await click("Открыть extracted facts");
+  await click("Открыть извлечённые факты");
   expect(host.textContent).toContain("Avoid high impact");
   expect(host.textContent).toContain("No jumps");
-  await click("Confirm");
+  await click("Подтвердить");
   expect(decide).toHaveBeenCalledWith("document", "fact", "confirmed");
-  await click("Reject");
+  await click("Отклонить");
   expect(decide).toHaveBeenCalledWith("document", "fact", "rejected");
 });
 it("shows reasons and source chips, honestly unavailable swap and manual details", async () => {
@@ -228,7 +279,7 @@ it("shows reasons and source chips, honestly unavailable swap and manual details
     />,
   );
   expect(host.textContent).toContain("2 × 6");
-  expect(host.textContent).toContain("Из документа: Avoid impact");
+  expect(host.textContent).toContain("Из документа: Избегать ударной нагрузки");
   await click("Почему этот план подходит именно вам");
   expect(host.textContent).toContain("Что тренер учёл");
   expect(host.textContent).toContain("Jumping");
@@ -237,12 +288,12 @@ it("shows reasons and source chips, honestly unavailable swap and manual details
   expect(host.textContent).toContain(
     "Для этого упражнения пока доступно ручное выполнение",
   );
-  await click("Начать Manual →");
+  await click("Начать Вручную →");
   expect(start).toHaveBeenCalledWith(
     expect.objectContaining({ spec: null, language: "ru" }),
   );
   expect(host.querySelector("button[disabled]")?.textContent).toContain(
-    "Swap unavailable",
+    "Замена недоступна",
   );
 });
 it("renders separate tracking, repetitions and one correction without a debug panel", () => {
@@ -272,7 +323,7 @@ it("renders separate tracking, repetitions and one correction without a debug pa
   expect(host.querySelectorAll(".distance-cue:not(.cue-measure)")).toHaveLength(
     1,
   );
-  expect(host.textContent).toContain("MANUAL TIMER");
+  expect(host.textContent).toContain("РУЧНОЙ ТАЙМЕР");
   expect(host.textContent).toContain("visual only");
   expect(host.textContent).not.toContain("meanVisibility");
 });

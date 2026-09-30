@@ -91,10 +91,14 @@ CUES = {
     'incomplete_extension': ('Заверши подъём', 'Толық көтеріл', 'Finish standing up'),
 }
 PREVIEW = (
-    'Это пример выбранного голоса. Начнём спокойно и с контролем.',
-    'Бұл таңдалған дауыстың үлгісі. Асықпай, бақылаумен бастайық.',
-    'This is a sample of your selected voice. Let us begin with control.',
+    'Привет! Давай потренируемся вместе. '
+    'Держим удобный темп… и не забываем отдыхать. Готов? Начнём!',
+    'Сәлем! Бірге жаттығайық. '
+    'Өзіңе ыңғайлы қарқынмен қозғал… демалуды да ұмытпа. Дайынсың ба? Бастайық!',
+    'Hey! Let’s work out together. '
+    'Find a comfortable pace… and remember to take a break. Ready? Let’s begin!',
 )
+PREVIEW_VERSION = 'preview-v2'
 LANG_INDEX = {'ru': 0, 'kk': 1, 'en': 2}
 _cache: collections.OrderedDict[str, tuple[float, bytes]] = collections.OrderedDict()
 _cache_bytes = 0
@@ -271,7 +275,7 @@ async def preview(
             current_user,
             PREVIEW[LANG_INDEX[body.language]],
             {'voice_id': voice_id, **body.model_dump(mode='json')},
-            'preview-v1',
+            PREVIEW_VERSION,
             shared=True,
         )
     )

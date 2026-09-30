@@ -1,0 +1,15 @@
+.camera-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;border:1px solid var(--dm-line);border-radius:24px;background:var(--dm-success);color:var(--dm-ink);text-align:center;box-sizing:border-box;min-width:0}
+.camera-loading-icon{position:relative;display:grid;place-items:center;width:80px;height:80px;flex:none}
+.camera-loading-icon:before{content:"";position:absolute;inset:0;border:3px solid #292c2520;border-top-color:var(--dm-muted);border-right-color:var(--dm-muted);border-radius:50%}
+.camera-loading-icon svg{width:56px;height:56px}
+.camera-loading strong{font-size:24px;line-height:1.2;letter-spacing:-.02em;max-width:100%;overflow-wrap:anywhere}
+.camera-loading p{font-size:15px;line-height:1.6;margin:0!important;max-width:400px}
+.camera-loading small{font-size:12px;line-height:1.6;color:var(--dm-muted);max-width:400px}
+.camera-loading-track{width:100%;max-width:280px;height:5px;background:#292c2515;border-radius:999px;overflow:hidden;flex:none}
+.camera-loading-track span{display:block;width:35%;height:100%;border-radius:inherit;background:var(--dm-muted);transform:translateX(90%)}
+.hands-demo>.camera-loading{min-height:360px}
+.camera-setup>.camera-loading{margin:24px 0}
+@media(max-width:700px){.camera-loading{padding:24px 20px;gap:12px}.camera-loading strong{font-size:22px}.hands-demo>.camera-loading{min-height:230px}}
+@media(prefers-reduced-motion:no-preference){.camera-loading-icon:before{animation:camera-loading-spin 1.4s linear infinite}.camera-loading-track span{animation:camera-loading-travel 2s ease-in-out infinite}}
+@keyframes camera-loading-spin{to{transform:rotate(360deg)}}
+@keyframes camera-loading-travel{0%{transform:translateX(-110%)}100%{transform:translateX(390%)}}

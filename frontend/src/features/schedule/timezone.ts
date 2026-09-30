@@ -1,3 +1,4 @@
+import { languageLocales, type UiLanguage } from '../../shared/uiLanguage'
 function parts(at: number, timezone: string) {
   const values = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(at);
   return Object.fromEntries(values.map(part => [part.type, part.value]));
@@ -18,4 +19,4 @@ export function localToInstant(value: string, timezone: string): string {
   if (matches.length !== 1) throw new Error(matches.length ? 'Время неоднозначно из-за перехода часов. Выберите другой слот.' : 'Это время не существует в выбранном часовом поясе.');
   return new Date(matches[0]).toISOString();
 }
-export function formatAppointment(at: string, timezone: string) { return new Intl.DateTimeFormat('ru', { timeZone: timezone, weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(at)); }
+export function formatAppointment(at: string, timezone: string, language: UiLanguage = 'ru') { return new Intl.DateTimeFormat(languageLocales[language], { timeZone: timezone, weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(at)); }

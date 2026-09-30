@@ -10,6 +10,27 @@ function target() {
   button.getBoundingClientRect=()=>({left:100,top:100,right:300,bottom:300,width:200,height:200,x:100,y:100,toJSON:()=>({})})
   return button
 }
+it.each(['MENU', 'TUTORIAL', 'CALIBRATION', 'RESULTS'] as const)('activates global controls with hands in %s', mode => {
+  const store = new GestureStore(), action = vi.fn()
+  store.setAppState({ ...INITIAL_STATE, mode })
+  store.registry.register('global-audio-enable', target(), action)
+  store.emit({ type: 'gesture.confirmed', command: 'select', targetId: 'global-audio-enable', at: 100 })
+  expect(action).toHaveBeenCalledWith('hands')
+})
+it('does not focus or activate inert/hidden targets, or targets covered by another element', () => {
+  const registry = new GestureTargetRegistry(), button = target(), action = vi.fn()
+  registry.register('action', button, action)
+  button.inert = true
+  expect(registry.resolve(150, 150)).toBeNull(); registry.activate('action')
+  button.inert = false; button.hidden = true
+  expect(registry.resolve(150, 150)).toBeNull(); registry.activate('action')
+  button.hidden = false
+  const overlay = document.createElement('div'); document.body.append(overlay)
+  Object.defineProperty(document, 'elementFromPoint', { configurable: true, value: () => overlay })
+  expect(registry.resolve(150, 150)).toBeNull()
+  Reflect.deleteProperty(document, 'elementFromPoint')
+  expect(action).not.toHaveBeenCalled()
+})
 it('resolves registered visible targets, refreshes layout and excludes disabled ones',()=>{
   const registry=new GestureTargetRegistry(),button=target(),remove=registry.register('squat',button)
   expect(registry.resolve(150,150)).toBe('squat')

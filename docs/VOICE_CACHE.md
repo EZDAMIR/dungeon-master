@@ -46,6 +46,13 @@ Input seeking skips most preceding audio during each cut, with half a second of
 decoder preroll before precise trimming to preserve initial phonemes.
 Invalid or incomplete timestamps stop preparation rather than publishing wrong clips.
 
+The voice preview uses natural coaching copy with punctuation for pauses and
+questions, versioned as `preview-v2`. Preview playback and the preparation catalog
+share that version, so an older demo cannot be returned for the updated text.
+Voice cards summarize the API's descriptive labels and description in the selected
+interface language. Missing or unusable metadata prompts the user to listen to a
+sample instead of inventing acoustic characteristics.
+
 Keys include voice, model, language, style, exact text, cue version, delivery version
 and output format. Atomic replacements and file locks coordinate processes; disk
 capacity is bounded. Static clips have no time expiry; a version/text change creates

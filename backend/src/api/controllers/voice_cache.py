@@ -16,7 +16,7 @@ def catalog(language: str) -> list[tuple[str, str, str]]:
     index = speech.LANG_INDEX[language]
     return [
         (name, values[index], 'static-cues-v1') for name, values in speech.CUES.items()
-    ] + [('preview', speech.PREVIEW[index], 'preview-v1')]
+    ] + [('preview', speech.PREVIEW[index], speech.PREVIEW_VERSION)]
 
 
 async def plan(languages: list[str], style: str, voice_id: str | None = None) -> dict:

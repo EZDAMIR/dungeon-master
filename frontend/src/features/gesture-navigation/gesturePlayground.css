@@ -1,0 +1,14 @@
+.gesture-playground { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(32px, 6vw, 88px); margin: 64px 0 32px; padding: 48px 32px; border-top: 1px solid var(--dm-line); scroll-margin-top: 24px; }
+.playground-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
+.playground-intro h2 { font: var(--dm-heading); }
+.playground-intro > p:not(.dm-label) { font: var(--dm-body); color: var(--dm-muted); }
+.playground-demo { min-width: 0; }
+.playground-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 24px; }
+.playground-controls .gesture-target { flex: 1 1 88px; width: auto; margin: 0; padding: 10px 12px; min-height: 52px; font: var(--dm-small); display: flex; gap: 8px; align-items: center; justify-content: center; }
+.playground-controls .gesture-target > span { font: var(--dm-label); color: var(--dm-muted); }
+.playground-controls .selected { background: var(--dm-citron); border-color: var(--dm-citron); }
+.playground-explanation { min-height: 116px; }
+.playground-explanation h3 { font: var(--dm-title); margin-bottom: 12px; }
+.playground-explanation p { font: var(--dm-body); color: var(--dm-muted); max-width: 560px; }
+.playground-note { font: var(--dm-small); color: var(--dm-muted); margin-top: 16px; }
+@media(max-width:700px) { .gesture-playground { grid-template-columns: minmax(0, 1fr); padding: 32px 0; margin: 24px 0 0; gap: 24px; }.playground-intro { gap: 16px; }.playground-intro h2 { font-size: 48px; line-height: 1.04; }.playground-demo .gesture-example { height: 250px; }.playground-controls .gesture-target { flex-basis: 28%; }.playground-explanation { min-height: 140px; } }

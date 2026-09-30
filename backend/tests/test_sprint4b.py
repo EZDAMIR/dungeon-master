@@ -3,6 +3,7 @@
 import asyncio
 import copy
 import datetime
+import json
 import uuid
 from unittest.mock import AsyncMock
 
@@ -29,6 +30,104 @@ from tests.test_release_providers import MP3
 from tests.test_release_providers import VOICE
 
 pytestmark = pytest.mark.xdist_group('domains')
+
+
+@pytest.mark.parametrize(
+    'kind,source_id,completed_sessions,accepted',
+    [
+        (None, None, 0, True),
+        ('profile', None, 0, True),
+        ('preferences', None, 0, True),
+        ('profile', '00000000-0000-4000-8000-000000000001', 0, False),
+        ('preferences', '00000000-0000-4000-8000-000000000001', 0, False),
+        ('document', '00000000-0000-4000-8000-000000000001', 0, True),
+        ('document', '00000000-0000-4000-8000-000000000002', 0, False),
+        ('document', None, 0, False),
+        ('progress', None, 0, False),
+        ('progress', '00000000-0000-4000-8000-000000000001', 0, False),
+        ('progress', None, 1, True),
+        ('progress', '00000000-0000-4000-8000-000000000001', 1, True),
+        ('progress', '00000000-0000-4000-8000-000000000002', 1, False),
+    ],
+)
+async def test_coach_prompt_keeps_strict_source_acceptance(
+    monkeypatch,
+    kind,
+    source_id,
+    completed_sessions,
+    accepted,
+):
+    owner = schemas.UserCurrent(id=uuid.uuid4(), email=None)
+    owned_id = uuid.UUID('00000000-0000-4000-8000-000000000001')
+    references = (
+        [] if kind is None else [{'type': kind, 'label': 'Source', 'source_id': source_id}]
+    )
+    answer = schemas.coach.CoachAnswer.model_validate_json(
+        json.dumps(
+            {
+                'display_text': 'Grounded answer',
+                'speech_text': 'Grounded answer',
+                'source_references': references,
+                'ui_actions': [],
+            },
+        ),
+    ).model_dump(mode='json')
+    monkeypatch.setattr(
+        coach.models.coach, 'message_by_operation', AsyncMock(return_value=None)
+    )
+    monkeypatch.setattr(coach.controllers.speech, 'budget', AsyncMock())
+    monkeypatch.setattr(
+        coach.models.coach,
+        'conversation_ensure',
+        AsyncMock(return_value={'id': uuid.uuid4()}),
+    )
+    monkeypatch.setattr(
+        coach,
+        'context',
+        AsyncMock(
+            return_value={
+                'sources': {'facts': [{'document_id': owned_id}]},
+                'progress': {
+                    'completed_sessions': completed_sessions,
+                    'recent_sessions': [{'id': owned_id}] if completed_sessions else [],
+                },
+                'preferences': {'language': 'ru'},
+                'revision': 'source-test-v1',
+            },
+        ),
+    )
+    provider = AsyncMock(return_value={'answer': answer, 'calls': [], 'output': []})
+    monkeypatch.setattr(openai, 'coach_response', provider)
+
+    async def save_message(user_id, data):
+        assert user_id == owner.id
+        return data
+
+    monkeypatch.setattr(coach.models.coach, 'message_save', save_message)
+    monkeypatch.setenv('COACH_EXECUTION_MODE', 'live')
+    config.clear_settings_cache()
+    result = await coach.turn(
+        owner,
+        schemas.coach.CoachTurn(
+            operation_id=uuid.uuid4(),
+            conversation_id=None,
+            text='Explain my plan',
+            screen='planning',
+            exercise_key=None,
+        ),
+    )
+    assert result['provenance']['prompt_version'] == 'coach-v3'
+    assert provider.await_args.args[2] == coach.INSTRUCTIONS
+    if accepted:
+        assert result['provenance']['execution_mode'] == 'live'
+        assert result['error_category'] is None
+        assert result['source_references'] == references
+        assert result['display_text'] == 'Grounded answer'
+    else:
+        assert result['provenance']['execution_mode'] == 'fallback'
+        assert result['error_category'] == 'schema'
+        assert result['source_references'] == []
+        assert 'Grounded answer' not in result['display_text']
 
 
 @pytest.fixture(autouse=True)

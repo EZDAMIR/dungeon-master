@@ -26,6 +26,21 @@ function setup(){
  return {source,hands,poses,handFactory,poseFactory,events,track,getUserMedia,tick,poseRaw}
 }
 async function settle(){for(let i=0;i<8;i++)await Promise.resolve()}
+it.each(['camera', 'model'])('stays loading until both camera and model are ready when %s is delayed',async delayed=>{
+ const s=setup();let release!:()=>void
+ const gate=new Promise<void>(resolve=>{release=resolve})
+ if(delayed==='camera'){
+  const original=s.getUserMedia.getMockImplementation()!
+  s.getUserMedia.mockImplementation(async()=>{await gate;return original()})
+ }else s.hands[0].initialize.mockImplementation(()=>gate)
+ const pending=s.source.start();await settle()
+ expect(s.events.some(event=>event.type==='camera.loading')).toBe(true)
+ expect(s.events.some(event=>event.type==='camera.ready')).toBe(false)
+ expect(frames.size).toBe(0)
+ release();await pending
+ expect(s.events.filter(event=>event.type==='camera.ready')).toHaveLength(1)
+ expect(frames.size).toBe(1);s.source.dispose()
+})
 it('keeps one stream, closes old models before starting new ones, and one loop across all modes',async()=>{
  const s=setup();await s.source.start();expect(frames.size).toBe(1)
  s.tick(0);s.source.setMode('CALIBRATION');expect(frames.size).toBe(0);expect(s.hands[0].close).toHaveBeenCalledOnce()

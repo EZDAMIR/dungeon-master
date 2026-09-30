@@ -76,3 +76,28 @@ Existing frames/tokens remain the design baseline. New compositions below have n
 | Full workout/rest/next/results | CameraCoachShell/RestView/NextExerciseView/SessionResults | Frozen runner snapshot/all durable sets | Primary workout cue first on mobile |
 
 Measured screenshots: [Sprint4B integration report](SPRINT_4B_INTEGRATION_REPORT.md).
+
+## Sprint 4B landing entry follow-up — 2026-09-30
+
+Read desktop welcome `3:111` and mobile welcome `3:154` with design context and
+screenshots using the Figma design-to-code skill. Downloaded the actual SVG layers
+`4:3` (kinetic reach, native 520×470) and `22:1098` (mobile squat, native 350×238).
+The existing 36×36 brand mark and typography/color tokens remain shared.
+
+| Figma frame/node | Route/AppMode | Code component | Responsive counterpart |
+|---|---|---|---|
+| 3:111 welcome | `/` / LANDING | LandingPage + shared App header | 1440×960 desktop |
+| 3:154 m-welcome | `/` / LANDING | LandingPage mobile composition | 390×844 mobile |
+| No tablet welcome frame verified | `/` / LANDING | Responsive desktop composition | 834×1112 inferred |
+
+Ordinary first visits show welcome before the hand/audio overlays. Build my plan
+opens Context and the existing introductory guide; camera access still requires
+the explicit enable action. Name/logo links use native hrefs, browser history and
+pinch selection to return home. Development-only legacy fake replay keeps its
+existing initial camera mode. Returning home preserves a started camera lease.
+
+Routines entries open the existing Plan view, which displays returned routine
+blocks; no new standalone routine catalog is claimed. Mobile Build my plan and
+camera-off copy replace prototype-specific demo copy. The footer uses actual
+local-camera/privacy text. Demo profiles remains an explicit jury-demo shortcut.
+Shared header, guide and loading surfaces use the established design tokens.

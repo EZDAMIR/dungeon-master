@@ -11,7 +11,8 @@ import {
   type TutorialState,
 } from "../onboarding/tutorialMachine";
 import { GestureTargetRegistry } from "./gestureTargetRegistry";
-import { scrollForSwipe } from "./gestureScroll";
+import { scrollForGesture } from "./gestureScroll";
+import { isTwoFingerScrollPose } from "../../vision/gestures/twoFingerScrollDetector";
 export type GestureSnapshot = {
   camera: "idle" | "loading" | "ready" | "error";
   error: string | null;
@@ -117,12 +118,13 @@ export class GestureStore {
     if (at - this.lastPublish < visionConfig.hudIntervalMs) return;
     this.lastPublish = at;
     let qualityHint: string | null = null;
+    const scrollPose = sample !== null && isTwoFingerScrollPose(sample);
     if (sample) {
       const palm = distance(sample.landmarks[5], sample.landmarks[17]);
       if (palm > gestureConfig.maxPalmWidth)
         qualityHint = "Отодвинь ладонь немного дальше от камеры";
       else if (
-        sample.gesture &&
+        !scrollPose && sample.gesture &&
         sample.gesture.name !== "None" &&
         sample.gesture.confidence <
           gestureConfig.minimumClassificationConfidence
@@ -135,8 +137,8 @@ export class GestureStore {
         ? clamp((at - since) / visionConfig.handStableMs)
         : 0;
     this.publish({
-      recognized: sample?.gesture?.name ?? "—",
-      confidence: sample?.gesture?.confidence ?? null,
+      recognized: scrollPose ? "Two_Finger_Scroll" : sample?.gesture?.name ?? "—",
+      confidence: scrollPose ? null : sample?.gesture?.confidence ?? null,
       fps,
       inferenceMs,
       qualityHint,
@@ -144,8 +146,10 @@ export class GestureStore {
     });
   };
   emit = (original: VisionEvent) => {
-    if (original.type === "gesture.swiped" &&
-      !["TUTORIAL", "MENU", "PROFILE", "PLAN", "PROGRESS", "RESULTS"].includes(this.mode)) return;
+    if (original.type === "gesture.scrolled" &&
+      (!Number.isFinite(original.deltaY) || original.deltaY === 0 ||
+      !this.scope?.hasAttribute('data-hands-tutorial') &&
+      !["LANDING", "TUTORIAL", "MENU", "PROFILE", "PLAN", "PROGRESS", "SCHEDULE", "RESULTS"].includes(this.mode))) return;
     let event = original;
     if (event.type === "cursor.moved") {
       this.cursor.x = event.x;
@@ -216,18 +220,23 @@ export class GestureStore {
       case "focus.changed":
         this.publish({ focused: event.targetId });
         break;
-      case "gesture.swiped": {
-        const moved = scrollForSwipe(event.direction, this.cursor);
+      case "gesture.scrolled": {
+        const moved = scrollForGesture(event.deltaY, this.cursor, this.scope);
+        const lastCommand = event.deltaY < 0 ? "scroll-up" : "scroll-down";
+        const message = moved
+          ? `Прокрутка ${event.deltaY < 0 ? "вверх" : "вниз"}. Раскрой ладонь, чтобы снова двигать курсор.`
+          : "Достигнут край области. Двигай два пальца в другую сторону.";
         this.cursor.pinching = false;
-        this.publish({
-          candidate: null,
-          progress: 0,
-          focused: null,
-          lastCommand: event.direction === "up" ? "scroll-up" : "scroll-down",
-          message: moved
-            ? `Прокрутка ${event.direction === "up" ? "вверх" : "вниз"}. Останови ладонь перед следующим свайпом.`
-            : "Достигнут край страницы. Свайпни открытой ладонью в другую сторону.",
-        });
+        // Deltas are frequent; only publish when the semantic HUD state changes.
+        if (this.snapshot.lastCommand !== lastCommand || this.snapshot.message !== message ||
+          this.snapshot.focused !== null || this.snapshot.candidate !== null || this.snapshot.progress !== 0)
+          this.publish({
+            candidate: null,
+            progress: 0,
+            focused: null,
+            lastCommand,
+            message,
+          });
         break;
       }
       case "gesture.candidate":
@@ -285,7 +294,7 @@ export class GestureStore {
       event.type === "gesture.confirmed" &&
       event.command === "select" &&
       event.targetId &&
-      (event.targetId.startsWith("session-") || ["PROFILE", "PLAN", "PROGRESS", "SCHEDULE"].includes(targetMode) ||
+      (/^(global-|nav-|guide-|session-)/.test(event.targetId) || ["PROFILE", "PLAN", "PROGRESS", "SCHEDULE"].includes(targetMode) ||
         (targetMode === "RESULTS" &&
           ["results-sync", "results-progress", "results-plan"].includes(event.targetId)))
     )

@@ -1,5 +1,5 @@
 import { localized, type MovementSpec } from "../vision/exercises/generic/types";
-import { cueText } from "./cues";
+import { cueText, exerciseCueMessages } from "./cues";
 import { GestureAudio } from './gestureAudio';
 import type { VisionEvent } from '../types/vision';
 
@@ -17,7 +17,15 @@ export class AudioCoordinator extends GestureAudio {
   private recording = false;
   private lastGenericPrimary = "";
   private exerciseSpec: MovementSpec | null = null;
-  setExerciseSpec(spec: MovementSpec | null) {this.exerciseSpec=spec;this.lastGenericPrimary="";}
+  private specRevision: string | null = null;
+  setExerciseSpec(spec: MovementSpec | null, revision: string | null = null) {
+    if (spec === this.exerciseSpec && revision === this.specRevision) return;
+    this.stop();
+    this.exerciseSpec = spec; this.specRevision = revision; this.lastGenericPrimary = "";
+    for (const cue of this.prepared.keys()) if (/^(error|phase|coach):/.test(cue) || cue === 'calibration') this.prepared.delete(cue);
+    this.seen.clear();
+  }
+  exerciseCues() { return this.exerciseSpec ? Object.keys(exerciseCueMessages(this.exerciseSpec)) : []; }
   private prepared = new Map<string, Blob>();
   private prepareController: AbortController | null = null;
   private muted = true;
@@ -36,21 +44,33 @@ export class AudioCoordinator extends GestureAudio {
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private publish(patch: Partial<AudioSnapshot>) { this.snapshot = { ...this.snapshot, ...patch }; for (const listener of this.listeners) listener(); }
   configure(loader: ((cue: string, signal: AbortSignal) => Promise<Blob>) | null, language = 'ru') { this.stop(); this.loader = loader; this.language = language; this.prepared.clear(); this.lastGenericPrimary = ""; this.seen.clear(); }
-  setScope(scope: string) { if (scope !== this.scope) { this.scope = scope; this.stop(); this.prepared.clear(); this.seen.clear(); this.lastGenericPrimary=""; } }
+  setScope(scope: string) { if (scope !== this.scope) { this.scope = scope; this.stop(); this.seen.clear(); this.lastGenericPrimary=""; } }
   setRecording(value: boolean) { this.recording = value; if (value) this.stop(); }
   async prepare(cues: readonly string[]) {
     if (!this.loader || this.muted || this.recording) return;
     this.prepareController?.abort(); const controller = new AbortController(); this.prepareController = controller;
-    const load = this.loader, pending = cues.slice(0, 8).filter(cue => !this.prepared.has(cue));
+    const load = this.loader, pending = [...new Set(cues)].slice(0, 64).filter(cue => !this.prepared.has(cue));
     const worker = async () => {
       while (pending.length && !controller.signal.aborted) {
         const cue = pending.shift()!;
-        try { const blob = await load(cue, controller.signal); if (!controller.signal.aborted && blob.type.startsWith('audio/') && blob.size <= 1024 * 1024) { this.prepared.set(cue, blob); while (this.prepared.size > 8) this.prepared.delete(this.prepared.keys().next().value!); } } catch { /* Preview and visual coaching remain available. */ }
+        try { const blob = await load(cue, controller.signal); if (!controller.signal.aborted) this.cacheCue(cue, blob); } catch { /* Preview and visual coaching remain available. */ }
       }
     };
     await Promise.all([worker(), worker()]);
   }
-  private loadCue(cue: string, signal: AbortSignal) { const cached = this.prepared.get(cue); return cached ? Promise.resolve(cached) : this.loader!(cue, signal); }
+  private cacheCue(cue: string, blob: Blob) {
+    if (!blob.type.startsWith('audio/') || blob.size > 1024 * 1024) return;
+    this.prepared.set(cue, blob);
+    while (this.prepared.size > 64) this.prepared.delete(this.prepared.keys().next().value!);
+  }
+  private async loadCue(cue: string, signal: AbortSignal) {
+    const cached = this.prepared.get(cue);
+    if (cached) return cached;
+    const load = this.loader!, spec = this.exerciseSpec, revision = this.specRevision;
+    const blob = await load(cue, signal);
+    if (!signal.aborted && load === this.loader && spec === this.exerciseSpec && revision === this.specRevision) this.cacheCue(cue, blob);
+    return blob;
+  }
   isMuted() { return this.muted; }
   status() { return this.snapshot.status === 'muted' ? 'Voice muted' : this.snapshot.provider === 'system' ? 'Системный голос' : this.snapshot.status === 'blocked' ? 'Включить звук' : this.snapshot.status === 'unavailable' ? 'Звук недоступен · субтитры' : 'Voice on'; }
   setMuted(muted: boolean) { this.muted = muted; if (muted) this.stop(); this.publish({ status: muted ? 'muted' : 'idle' }); }
@@ -117,18 +137,30 @@ export class AudioCoordinator extends GestureAudio {
   override event(event: VisionEvent) {
     if (!this.muted) super.event(event);
     let cue = '', text = '', kind: AudioPriority = 'technique';
-    if (event.type === 'pose.tracking_lost') { cue = 'tracking_recovery'; text = 'Вернись в кадр'; kind = 'recovery'; }
+    if (event.type === 'pose.tracking_lost') {
+      cue = this.exerciseSpec ? 'coach:tracking_recovery' : 'tracking_recovery';
+      text = this.exerciseSpec ? localized(this.exerciseSpec.coach_messages.tracking_recovery.messages, this.language as 'ru'|'kk'|'en') : 'Вернись в кадр'; kind = 'recovery';
+    }
     if (event.type === 'workout.technique_error') { cue = event.code; text = { depth_insufficient: 'Опустись немного ниже', too_fast: 'Медленнее вниз', incomplete_extension: 'Заверши подъём' }[event.code]; }
     if (event.type === 'workout.countdown') { cue = event.count > 0 ? `countdown_${event.count}` : 'start'; text = event.count > 0 ? String(event.count) : 'Начали'; kind = 'countdown'; }
     if (event.type === 'workout.completed') { cue = 'workout_complete'; text = 'Тренировка завершена'; kind = 'guide'; }
-    if ((event.type === 'workout.rep_completed'||event.type === 'workout.generic_rep_completed') && event.accepted) { cue = 'good_rep'; text = 'Хорошее повторение'; kind = 'motivation'; }
+    if ((event.type === 'workout.rep_completed'||event.type === 'workout.generic_rep_completed') && event.accepted) {
+      const generic = event.type === 'workout.generic_rep_completed' && this.exerciseSpec;
+      cue = generic ? 'coach:good_rep' : 'good_rep';
+      text = generic ? localized(generic.coach_messages.good_rep.messages, this.language as 'ru'|'kk'|'en') : 'Хорошее повторение'; kind = 'motivation';
+    }
     if (event.type === 'workout.generic_updated') {
       if (event.view.primary === this.lastGenericPrimary) return;
       this.lastGenericPrimary = event.view.primary;
       text = event.view.primary; cue = event.view.tracking ? '' : 'tracking_recovery'; kind = event.view.tracking ? 'technique' : 'recovery';
-      if(event.view.tracking && this.exerciseSpec){
-        const language=this.language as 'ru'|'kk'|'en', rule=this.exerciseSpec.error_rules.find(rule=>localized(rule.messages,language)===text), phase=this.exerciseSpec.phases.find(phase=>localized(phase.messages,language)===text);
-        cue=rule?`error:${rule.code}`:phase?`phase:${phase.id}`:localized(this.exerciseSpec.calibration.messages,language)===text?'calibration':'';
+      if(this.exerciseSpec){
+        // Recognition copy can use a different language from the saved voice.
+        const match = Object.entries(exerciseCueMessages(this.exerciseSpec)).find(([, messages]) => localized(messages, event.language) === text);
+        if (match) {
+          cue = match[0]; text = localized(match[1], this.language as 'ru'|'kk'|'en');
+          if (cue === 'coach:good_rep') kind = 'motivation';
+          if (cue === 'coach:ready' || cue === 'coach:complete') kind = 'guide';
+        }
       }
     }
     if (text) this.enqueue({ id: `${cue}:${text}`, text: cueText(cue, this.language, text), priority: kind, load: cue && this.loader ? signal => this.loadCue(cue, signal) : undefined });

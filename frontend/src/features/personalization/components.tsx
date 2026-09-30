@@ -1,3 +1,4 @@
+import { useTranslation } from '../../shared/uiLanguage'
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { SourceReference } from "../../api/aiCoach";
 import type { AIProfile } from "../../api/aiCoach";
@@ -11,11 +12,13 @@ export function SectionHeader({
   title: string;
   children?: ReactNode;
 }) {
+  const { translateUi } = useTranslation()
+
   return (
     <div className="section-header">
-      <p className="dm-label">{label}</p>
-      <h2>{title}</h2>
-      {children}
+      <p className="dm-label">{translateUi(label)}</p>
+      <h2>{translateUi(title)}</h2>
+      {translateUi(children)}
     </div>
   );
 }
@@ -26,6 +29,8 @@ export function SourceChip({
   source: SourceReference;
   onOpen?: () => void;
 }) {
+  const { translateUi } = useTranslation()
+
   const names = {
     profile: "Из профиля",
     preferences: "Из предпочтений",
@@ -34,36 +39,36 @@ export function SourceChip({
   };
   return onOpen ? (
     <button className="source-chip" onClick={onOpen}>
-      {names[source.type]}: {source.label}
+      {translateUi(names[source.type])}: {translateUi(source.label)}
     </button>
   ) : (
     <span className="source-chip">
-      {names[source.type]}: {source.label}
+      {translateUi(names[source.type])}: {translateUi(source.label)}
     </span>
   );
 }
 export function AIProfileSummary({ profile }: { profile: AIProfile }) {
+  const { translateUi, translateUiList } = useTranslation()
+
   return (
     <div className="ai-summary dm-panel success" data-figma-node="3:145">
-      <h3>Что тренер учёл</h3>
-      <p>{profile.summary}</p>
+      <h3>{translateUi("Что тренер учёл")}</h3>
+      <p>{translateUi(profile.summary)}</p>
       <p>
-        {profile.schedule.days_per_week} дня ·{" "}
-        {profile.schedule.minutes_per_session} минут ·{" "}
-        {profile.equipment.join(", ")} · {profile.coach_persona.tone}
+        {profile.schedule.days_per_week}{translateUi(" дня ·")}{translateUi(" ")}
+        {profile.schedule.minutes_per_session}{translateUi(" минут ·")}{translateUi(" ")}
+        {translateUi(translateUiList(profile.equipment))} · {translateUi(profile.coach_persona.tone)}
       </p>
-      <p>
-        Цели: {profile.primary_goals.join(", ")} · Уровень:{" "}
-        {profile.fitness_level}
+      <p>{translateUi("Цели: ")}{translateUi(translateUiList(profile.primary_goals))}{translateUi(" · Уровень:")}{translateUi(" ")}
+        {translateUi(profile.fitness_level)}
       </p>
-      <p>Предпочтения: {profile.preferences.join(", ") || "Не заданы"}</p>
-      <p>
-        Подтверждённые ограничения:{" "}
-        {profile.constraints.join(", ") || "Не заданы"}
+      <p>{translateUi("Предпочтения: ")}{translateUi(translateUiList(profile.preferences) || "Не заданы")}</p>
+      <p>{translateUi("Подтверждённые ограничения:")}{translateUi(" ")}
+        {translateUi(translateUiList(profile.constraints) || "Не заданы")}
       </p>
       <ul>
         {profile.personalization_highlights.map((text, i) => (
-          <li key={i}>{text}</li>
+          <li key={i}>{translateUi(text)}</li>
         ))}
       </ul>
       <div className="source-chips">
@@ -90,13 +95,15 @@ export function RecoveryPanel({
   onRetry: () => void;
   onBack: () => void;
 }) {
+  const { translateUi } = useTranslation()
+
   return (
     <div className="dm-status error" role="alert" data-figma-node="3:146">
-      <h3>Попробуем ещё раз</h3>
-      <p>{message}</p>
+      <h3>{translateUi("Попробуем ещё раз")}</h3>
+      <p>{translateUi(message)}</p>
       <div className="dm-actions">
-        <button onClick={onRetry}>Повторить</button>
-        <button onClick={onBack}>Назад</button>
+        <button onClick={onRetry}>{translateUi("Повторить")}</button>
+        <button onClick={onBack}>{translateUi("Назад")}</button>
       </div>
     </div>
   );
@@ -108,17 +115,19 @@ export function CameraCoachingBadge({
   mode: string;
   synthetic?: boolean;
 }) {
+  const { translateUi } = useTranslation()
+
   return (
     <span
       className={`coach-badge ${mode === "ai_generated" ? "experimental" : ""}`}
     >
-      {mode === "predefined"
+      {translateUi(mode === "predefined"
         ? "Camera Coach"
         : mode === "ai_generated"
           ? synthetic
             ? "Camera Coach · synthetic demo"
             : "AI-generated camera coaching"
-          : "Manual · ручное выполнение"}
+          : "Manual · ручное выполнение")}
     </span>
   );
 }
@@ -131,6 +140,8 @@ export function DistanceCue({
   correction?: boolean;
   tracking?: boolean;
 }) {
+  const { translateUi } = useTranslation()
+
   const ref = useRef<HTMLSpanElement>(null),
     [overflow, setOverflow] = useState(false);
   useLayoutEffect(() => {
@@ -152,14 +163,14 @@ export function DistanceCue({
   return (
     <div style={{ position: "relative" }}>
       <span ref={ref} className="distance-cue cue-measure" aria-hidden="true">
-        {text}
+        {translateUi(text)}
       </span>
       <p
         className="distance-cue"
         data-correction={correction}
         aria-live="polite"
       >
-        {overflow ? (tracking ? "Контроль движения" : "Вернись в кадр") : text}
+        {translateUi(overflow ? (tracking ? "Контроль движения" : "Вернись в кадр") : text)}
       </p>
     </div>
   );
@@ -175,9 +186,11 @@ export function FlowAction({
   disabled?: boolean;
   children: ReactNode;
 }) {
+  const { translateUi } = useTranslation()
+
   return (
     <GestureTarget id={id} onSelect={onSelect} disabled={disabled}>
-      {children}
+      {translateUi(children)}
     </GestureTarget>
   );
 }
@@ -189,12 +202,14 @@ export function MovementPreview({
   title: string;
   label: string;
 }) {
+  const { translateUi } = useTranslation()
+
   return (
     <div className="guided-preview" data-figma-node="3:140">
-      <p className="dm-label">{label}</p>
+      <p className="dm-label">{translateUi(label)}</p>
       <img
         src={`${import.meta.env.BASE_URL}design/${title.toLowerCase().includes("squat") ? "pose-squat" : "pose-standing"}.svg`}
-        alt="Illustrative movement position"
+        alt={translateUi("Illustrative movement position")}
       />
     </div>
   );

@@ -25,6 +25,9 @@ describe("Sprint 4A browser routes", () => {
     expect(readRoute("/missing", "/").mode).toBe("PROFILE");
   });
   it("boots direct planning links but never boots a counting gate or fabricated result", () => {
+    expect(initialRouteState("/", "/", false).mode).toBe("LANDING");
+    expect(initialRouteState("/dungeon-master/", "/dungeon-master/", false).mode).toBe("LANDING");
+    expect(routeUrl("LANDING", "intake", "/dungeon-master/", "?juryDemo=1")).toBe("/dungeon-master/?juryDemo=1");
     expect(initialRouteState("/plan", "/", false).mode).toBe("PLAN");
     expect(initialRouteState("/progress", "/", false).mode).toBe("PROGRESS");
     expect(initialRouteState("/", "/", true).mode).toBe("CAMERA_PERMISSION");

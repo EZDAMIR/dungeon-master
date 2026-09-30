@@ -9,7 +9,11 @@ export function useModalFocus(root: RefObject<HTMLElement | null>, onEscape: () 
     const background = [...document.body.children].filter(element => element !== host && !element.contains(modal)) as HTMLElement[];
     const states = background.map(element => ({ element, inert: element.inert }));
     for (const { element } of states) element.inert = true;
-    const targets = () => [...modal.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]')].filter(element => !element.hidden);
+    const targets = () => [...modal.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')].filter(element => {
+      if (element.closest('[hidden], [inert]')) return false;
+      const details = element.closest('details');
+      return !details || details.open || element === details.querySelector('summary');
+    });
     targets()[0]?.focus();
     const key = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); escape.current(); }

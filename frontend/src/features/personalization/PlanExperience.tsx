@@ -1,3 +1,5 @@
+import { useTranslation } from '../../shared/uiLanguage'
+import { GestureTarget } from "../gesture-navigation/GestureTarget";
 import { useEffect, useRef, useState } from "react";
 import type {
   ActiveExercise,
@@ -36,6 +38,8 @@ export function PlanExperience({
   onStartSession?: (exercises: ActiveExercise[]) => void;
   onQuickDemo?: (exercise: ActiveExercise) => void;
 }) {
+  const { language: uiLanguage, translateUi, translateUiList } = useTranslation()
+
   const [details, setDetails] = useState<{
       item: AIPlanExercise;
       spec: ExerciseSpec | null;
@@ -83,7 +87,7 @@ export function PlanExperience({
       spec: parsed.valid ? parsed.spec : null,
       planId,
       specRevision: spec?.spec_revision ?? null,
-      language: plan.coach_persona.language,
+      language: uiLanguage,
     });
   };
   async function startDay(items: AIPlanExercise[]) {
@@ -114,54 +118,50 @@ export function PlanExperience({
       <div className="plan-intro">
         <div>
           <SectionHeader
-            label={`TODAY / ${plan.ai_profile.persona_key?.toUpperCase() ?? "YOUR PLAN"} / ${plan.coach_persona.tone}`}
-            title={plan.title}
+            label={`${translateUi("TODAY")} / ${plan.ai_profile.persona_key?.toUpperCase() ?? translateUi("YOUR PLAN")} / ${translateUi(plan.coach_persona.tone)}`}
+            title={translateUi(plan.title)}
           >
-            <p>{plan.summary}</p>
+            <p>{translateUi(plan.summary)}</p>
           </SectionHeader>
           <div className="dm-actions">
-            <button onClick={() => setWhy(!why)}>
-              Почему этот план подходит именно вам
-            </button>
-            <button onClick={onContext}>Ваш context</button>
+            <GestureTarget id="plan-why" onSelect={() => setWhy(!why)}>{translateUi("Почему этот план подходит именно вам")}</GestureTarget>
+            <GestureTarget id="plan-context" onSelect={onContext}>{translateUi("Ваш context")}</GestureTarget>
           </div>
           <p className="dm-label">
-            {plan.status === "synthetic"
+            {translateUi(plan.status === "synthetic"
               ? "SYNTHETIC DEMO · FIXTURE PLAN"
-              : "AI-GENERATED PLAN"}{" "}
-            · {plan.model}
+              : "AI-GENERATED PLAN")}{translateUi(" ")}
+            · {translateUi(plan.model)}
           </p>
         </div>
         <div className="time-budget">
           <strong>{first.estimated_minutes}</strong>
           <div>
-            <p className="dm-label">MIN / YOUR TIME</p>
+            <p className="dm-label">{translateUi("MIN / YOUR TIME")}</p>
             <p>
-              {plan.days.length} дня · {first.items.length} упражнения
-            </p>
+              {plan.days.length}{translateUi(" дня · ")}{first.items.length}{translateUi(" упражнения")}</p>
           </div>
         </div>
       </div>
       {why && (
         <div className="dm-panel" data-figma-node="3:123">
-          <h3>Why this plan</h3>
+          <h3>{translateUi("Why this plan")}</h3>
           <ul>
             {plan.why_this_plan.map((reason, i) => (
-              <li key={i}>{reason}</li>
+              <li key={i}>{translateUi(reason)}</li>
             ))}
           </ul>
-          <p>
-            Исключены:{" "}
-            {plan.excluded_exercises.join(", ") ||
-              "Нет дополнительных исключений"}
+          <p>{translateUi("Исключены:")}{translateUi(" ")}
+            {translateUi(translateUiList(plan.excluded_exercises) ||
+              "Нет дополнительных исключений")}
           </p>
-          <p>Стиль тренера: {plan.coach_persona.tone}</p>
+          <p>{translateUi("Стиль тренера: ")}{translateUi(plan.coach_persona.tone)}</p>
           <AIProfileSummary profile={plan.ai_profile} />
         </div>
       )}
       {error && (
         <RecoveryPanel
-          message={error}
+          message={translateUi(error)}
           onRetry={() => setError("")}
           onBack={onContext}
         />
@@ -169,27 +169,25 @@ export function PlanExperience({
       {plan.days.map((day) => (
         <article className="plan-day" key={day.day_index}>
           <h3>
-            {day.title} · {day.estimated_minutes} min
-          </h3>
-          {onStartSession && <FlowAction id={`day-start-${day.day_index}`} disabled={busy} onSelect={() => { void startDay(day.items); }}>Начать тренировку дня · {day.items.reduce((total, item) => total + item.sets, 0)} подходов</FlowAction>}
+            {translateUi(day.title)} · {day.estimated_minutes}{translateUi(" min")}</h3>
+          {onStartSession && <FlowAction id={`day-start-${day.day_index}`} disabled={busy} onSelect={() => { void startDay(day.items); }}>{translateUi("Начать тренировку дня · ")}{day.items.reduce((total, item) => total + item.sets, 0)}{translateUi(" подходов")}</FlowAction>}
           <div className="plan-list">
             {day.items.map((item, index) => (
               <div className="exercise-row" key={item.exercise_key}>
                 <span className="dm-label">
-                  {String(index + 1).padStart(2, "0")}
+                  {translateUi(String(index + 1).padStart(2, "0"))}
                 </span>
                 <div>
-                  <strong>{item.display_name}</strong>
+                  <strong>{translateUi(item.display_name)}</strong>
                   <p>
-                    <small>{item.reason}</small>
+                    <small>{translateUi(item.reason)}</small>
                   </p>
                 </div>
                 <span>
                   {item.sets} × {item.target_reps}
                   <br />
                   <small>
-                    {item.tempo_hint} · отдых {item.rest_seconds} с
-                  </small>
+                    {translateUi(item.tempo_hint)}{translateUi(" · отдых ")}{item.rest_seconds}{translateUi(" с")}</small>
                 </span>
                 <div>
                   <CameraCoachingBadge
@@ -198,11 +196,11 @@ export function PlanExperience({
                   />
                   <p>
                     <small>
-                      {item.camera_angle === "front"
+                      {translateUi(item.camera_angle === "front"
                         ? "Front view"
                         : item.camera_angle === "side"
                           ? "Side view"
-                          : "Camera optional"}
+                          : "Camera optional")}
                     </small>
                   </p>
                 </div>
@@ -218,12 +216,8 @@ export function PlanExperience({
                     onSelect={() => {
                       void open(item);
                     }}
-                  >
-                    Инструкции и камера →
-                  </FlowAction>
-                  <button disabled title="Sprint 4A: swap пока недоступен">
-                    Swap unavailable
-                  </button>
+                  >{translateUi("Инструкции и камера →")}</FlowAction>
+                  <button disabled title={translateUi("Sprint 4A: swap пока недоступен")}>{translateUi("Swap unavailable")}</button>
                 </div>
               </div>
             ))}
@@ -233,8 +227,8 @@ export function PlanExperience({
       {plan.routine_blocks.length > 0 && (
         <>
           <SectionHeader
-            label="LIGHTWEIGHT ROUTINES / SEPARATE FROM YOUR WORKOUT"
-            title="A little every day."
+            label={translateUi("LIGHTWEIGHT ROUTINES / SEPARATE FROM YOUR WORKOUT")}
+            title={translateUi("A little every day.")}
           />
           <div className="routine-list">
             {plan.routine_blocks.map((block) => (
@@ -244,9 +238,9 @@ export function PlanExperience({
         </>
       )}
       <div className="dm-actions">
-        <button
+        <GestureTarget id="plan-regenerate"
           disabled={busy}
-          onClick={() => {
+          onSelect={() => {
             setBusy(true);
             void backend
               .generatePersonalized()
@@ -257,10 +251,8 @@ export function PlanExperience({
               )
               .finally(() => setBusy(false));
           }}
-        >
-          Создать другой вариант
-        </button>
-        <button onClick={onContext}>Изменить context</button>
+        >{translateUi("Создать другой вариант")}</GestureTarget>
+        <GestureTarget id="plan-edit-context" onSelect={onContext}>{translateUi("Изменить context")}</GestureTarget>
       </div>
       <dialog
         ref={dialog}
@@ -271,13 +263,13 @@ export function PlanExperience({
         {details && (
           <div className="editorial-grid" data-figma-node="3:124">
             <div className="detail-stage">
-              <p className="dm-label">ILLUSTRATIVE PREVIEW / NOT LIVE VIDEO</p>
+              <p className="dm-label">{translateUi("ILLUSTRATIVE PREVIEW / NOT LIVE VIDEO")}</p>
               <img
                 className="illustration"
                 src={`${import.meta.env.BASE_URL}design/${details.item.display_name.toLowerCase().includes("squat") ? "pose-squat" : "pose-standing"}.svg`}
-                alt="Illustrative movement position"
+                alt={translateUi("Illustrative movement position")}
               />
-              <h2>{details.item.display_name}</h2>
+              <h2>{translateUi(details.item.display_name)}</h2>
               <CameraCoachingBadge
                 mode={
                   details.spec?.status === "valid"
@@ -289,63 +281,56 @@ export function PlanExperience({
             </div>
             <div className="dm-panel">
               <SectionHeader
-                label="EXERCISE / YOUR SELECTION"
-                title="A steady start."
+                label={translateUi("EXERCISE / YOUR SELECTION")}
+                title={translateUi("A steady start.")}
               />
               <h3>
                 {details.item.sets} × {details.item.target_reps}
               </h3>
-              <p>{details.item.instruction}</p>
-              <p>{details.item.reason}</p>
+              <p>{translateUi(details.item.instruction)}</p>
+              <p>{translateUi(details.item.reason)}</p>
               {details.spec?.movement_spec ? (
                 <>
-                  <p>
-                    Камера: {details.spec.movement_spec.camera.preferred_angle}
+                  <p>{translateUi("Камера: ")}{translateUi(details.spec.movement_spec.camera.preferred_angle)}
                   </p>
                   <p>
-                    {localized(
+                    {translateUi(localized(
                       details.spec.movement_spec.calibration.messages,
-                      plan.coach_persona.language,
-                    )}
+                      uiLanguage,
+                    ))}
                   </p>
-                  <p>
-                    Ключевые суставы:{" "}
-                    {details.spec.movement_spec.camera.required_landmarks.join(
-                      ", ",
-                    )}
+                  <p>{translateUi("Ключевые суставы:")}{translateUi(" ")}
+                    {translateUi(translateUiList(details.spec.movement_spec.camera.required_landmarks))}
                   </p>
-                  <p>
-                    Этапы движения:{" "}
-                    {details.spec.movement_spec.phases
+                  <p>{translateUi("Этапы движения:")}{translateUi(" ")}
+                    {translateUi(details.spec.movement_spec.phases
                       .map((p) =>
-                        localized(p.messages, plan.coach_persona.language, 32),
+                        localized(p.messages, uiLanguage, 32),
                       )
-                      .join(" → ")}
+                      .join(" → "))}
                   </p>
-                  <p>
-                    Подсказки:{" "}
-                    {details.spec.movement_spec.error_rules
+                  <p>{translateUi("Подсказки:")}{translateUi(" ")}
+                    {translateUi(details.spec.movement_spec.error_rules
                       .map((r) =>
-                        localized(r.messages, plan.coach_persona.language),
+                        localized(r.messages, uiLanguage),
                       )
-                      .join(" · ")}
+                      .join(" · "))}
                   </p>
                 </>
               ) : (
-                <p>Для этого упражнения пока доступно ручное выполнение</p>
+                <p>{translateUi("Для этого упражнения пока доступно ручное выполнение")}</p>
               )}
               <div className="dm-actions">
                 <FlowAction
                   id="exercise-start"
                   onSelect={() => start(details.item, details.spec)}
-                >
-                  Начать{" "}
-                  {details.spec?.status === "valid" ? "Camera Coach" : "Manual"}{" "}
+                >{translateUi("Начать")}{translateUi(" ")}
+                  {translateUi(details.spec?.status === "valid" ? "Camera Coach" : "Manual")}{translateUi(" ")}
                   →
                 </FlowAction>
-                {onQuickDemo && <FlowAction id="exercise-quick-demo" onSelect={() => start(details.item, details.spec, true)}>Быстрая демонстрация · 1 × 5</FlowAction>}
-                <button onClick={() => setDetails(null)}>Закрыть</button>
-                <button disabled>Swap unavailable</button>
+                {onQuickDemo && <FlowAction id="exercise-quick-demo" onSelect={() => start(details.item, details.spec, true)}>{translateUi("Быстрая демонстрация · 1 × 5")}</FlowAction>}
+                <GestureTarget id="plan-close-details" onSelect={() => setDetails(null)}>{translateUi("Закрыть")}</GestureTarget>
+                <button disabled>{translateUi("Swap unavailable")}</button>
               </div>
             </div>
           </div>
@@ -355,6 +340,8 @@ export function PlanExperience({
   );
 }
 function RoutineCard({ block }: { block: RoutineBlock }) {
+  const { translateUi } = useTranslation()
+
   const [started, setStarted] = useState(false),
     [elapsed, setElapsed] = useState(0),
     [complete, setComplete] = useState(false);
@@ -369,18 +356,17 @@ function RoutineCard({ block }: { block: RoutineBlock }) {
   }, [started, complete, target]);
   return (
     <article className="dm-panel" data-figma-node="44:1223">
-      <p className="dm-label">{block.routine_type} / MANUAL TIMER</p>
-      <h3>{block.title}</h3>
-      <p>{block.estimated_minutes} min</p>
+      <p className="dm-label">{translateUi(block.routine_type)}{translateUi(" / MANUAL TIMER")}</p>
+      <h3>{translateUi(block.title)}</h3>
+      <p>{block.estimated_minutes}{translateUi(" min")}</p>
       {block.items.map((item, i) => (
         <p key={i}>
-          {item.title} · {item.instruction}
+          {translateUi(item.title)} · {translateUi(item.instruction)}
         </p>
       ))}
       {started && (
         <p>
-          {elapsed} / {target} s
-        </p>
+          {elapsed} / {target}{translateUi(" s")}</p>
       )}
       <button
         onClick={() => {
@@ -394,14 +380,14 @@ function RoutineCard({ block }: { block: RoutineBlock }) {
           }
         }}
       >
-        {complete
+        {translateUi(complete
           ? "Повторить"
           : started
             ? "Отметить выполненным"
-            : "Начать routine"}
+            : "Начать routine")}
       </button>
       {complete && (
-        <p>Выполнено вручную · routine отдельно от основной тренировки</p>
+        <p>{translateUi("Выполнено вручную · routine отдельно от основной тренировки")}</p>
       )}
     </article>
   );

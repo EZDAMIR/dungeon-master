@@ -8,8 +8,10 @@ import { App } from "../App";
 import { GestureStore } from '../../features/gesture-navigation/gestureStore';
 import { inputPreferences } from '../../features/input-settings/preferences';
 import { RealVisionSource } from '../../features/workout/RealVisionSource';
+import { ReleaseClient } from '../../api/release';
 let root: Root, container: HTMLDivElement, time: number, backend: BackendStore;
 beforeEach(() => {
+  inputPreferences.set({ mode: "mouse", onboardingCompleted: false });
   backend = new BackendStore(
     new ApiClient(
       "http://test",
@@ -35,17 +37,17 @@ beforeEach(() => {
     vi.fn(() => 1),
   );
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) { return {
     left: 100,
     top: 100,
     right: 300,
     bottom: 300,
-    width: 200,
-    height: 200,
+    width: /^(global-|nav-|guide-)/.test(this.dataset.gestureTarget ?? '') ? 0 : 200,
+    height: /^(global-|nav-|guide-)/.test(this.dataset.gestureTarget ?? '') ? 0 : 200,
     x: 100,
     y: 100,
     toJSON: () => ({}),
-  });
+  } });
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
   window.history.replaceState({}, "", "/?fakeVision=1");
   container = document.createElement("div");
@@ -72,15 +74,101 @@ function click(label: string, at: number) {
   act(() => button.click());
 }
 async function traverseHistory(direction: "back" | "forward") {
+  await navigateHistory(() => window.history[direction]());
+}
+async function navigateHistory(action: () => void) {
   await act(async () => {
     const navigated = new Promise<void>((resolve) => {
       window.addEventListener("popstate", () => resolve(), { once: true });
     });
-    window.history[direction]();
+    action();
     await navigated;
   });
 }
-it('keeps the started camera and swipe instructions across planning routes, then disposes on unmount', () => {
+it('returns through app history with Go back and preserves Forward and query parameters', async () => {
+  window.history.replaceState({}, '', '/?juryDemo=1');
+  act(() => root.render(<App backend={backend}/>));
+  expect(container.querySelector('[data-gesture-target="nav-back"]')).toBeNull();
+  click('Твой план', 1);
+  click('Прогресс', 2);
+  await navigateHistory(() => click('← Вернись назад', 3));
+  expect(window.location.pathname).toBe('/plan');
+  await traverseHistory('forward');
+  expect(window.location.pathname).toBe('/progress');
+  await traverseHistory('back');
+  await navigateHistory(() => click('← Вернись назад', 4));
+  expect(container.querySelector('.landing-page')).not.toBeNull();
+  expect(window.location.search).toBe('?juryDemo=1');
+});
+it('returns a directly opened page home without traversing unrelated browser history', () => {
+  window.history.replaceState({}, '', '/plan?fakeVision=1');
+  const back = vi.spyOn(window.history, 'back');
+  act(() => root.render(<App backend={backend}/>));
+  click('← Вернись назад', 1);
+  expect(window.location.pathname).toBe('/');
+  expect(window.location.search).toBe('?fakeVision=1');
+  expect(container.querySelector('.landing-page')).not.toBeNull();
+  expect(back).not.toHaveBeenCalled();
+});
+it('returns to the previous screen when Go back is selected by pinch', async () => {
+  window.history.replaceState({}, '', '/plan?fakeVision=1');
+  const stores: GestureStore[] = [], connect = GestureStore.prototype.connect;
+  vi.spyOn(GestureStore.prototype, 'connect').mockImplementation(function (this: GestureStore, callback) {
+    connect.call(this, callback); stores.push(this);
+  });
+  act(() => root.render(<App backend={backend}/>));
+  click('Прогресс', 1);
+  expect(window.location.pathname).toBe('/progress');
+  await navigateHistory(() => stores[0].emit({ type: 'gesture.confirmed', command: 'select', targetId: 'nav-back', at: 2 }));
+  expect(window.location.pathname).toBe('/plan');
+  expect(container.querySelector('header code')?.textContent).toBe('PLAN');
+});
+it('opens the Figma landing page before onboarding and camera preparation', () => {
+  window.history.replaceState({}, '', '/')
+  inputPreferences.set({ mode: 'mouse', onboardingCompleted: false })
+  const start = vi.spyOn(RealVisionSource.prototype, 'start').mockResolvedValue()
+  act(() => root.render(<App backend={backend}/>))
+  expect(window.location.pathname).toBe('/')
+  expect(container.querySelector('#landing-title')?.textContent).toBe('ТВОЁ ТЕЛО.ТВОИ ПРАВИЛА.')
+  expect(document.querySelector('[role=dialog]')).toBeNull()
+  expect(start).not.toHaveBeenCalled()
+  click('03Прокрутка', 0)
+  expect(container.querySelector('.playground-demo .example-scroll')).not.toBeNull()
+  expect(document.querySelector('[role=dialog]')).toBeNull()
+  expect(start).not.toHaveBeenCalled()
+  click('Создать мой план →', 0)
+  expect(window.location.pathname).toBe('/context')
+  expect(document.querySelector('.hands-intro')).not.toBeNull()
+  expect(start).not.toHaveBeenCalled()
+})
+it('returns home from both the name and logo, supports pinch and preserves browser history', async () => {
+  window.history.replaceState({}, '', '/plan?fakeVision=1')
+  const stores: GestureStore[] = [], connect = GestureStore.prototype.connect
+  vi.spyOn(GestureStore.prototype, 'connect').mockImplementation(function (this: GestureStore, callback) { connect.call(this, callback); stores.push(this) })
+  act(() => root.render(<App backend={backend}/>))
+  act(() => container.querySelector<HTMLImageElement>('.brand img')!.click())
+  expect(window.location.pathname).toBe('/'); expect(container.querySelector('.landing-page')).not.toBeNull()
+  await traverseHistory('back'); expect(window.location.pathname).toBe('/plan')
+  await traverseHistory('forward'); expect(container.querySelector('.landing-page')).not.toBeNull()
+  click('Твой план', 1)
+  act(() => stores[0].emit({ type: 'gesture.confirmed', command: 'select', targetId: 'nav-home', at: 2 }))
+  expect(container.querySelector('.landing-page')).not.toBeNull()
+  expect(container.querySelector('.brand')?.getAttribute('href')).toBe('/?fakeVision=1')
+})
+it('makes footer audio, guide and navigation actions selectable by hands', () => {
+  window.history.replaceState({}, '', '/context?fakeVision=1')
+  const stores: GestureStore[] = []
+  const connect = GestureStore.prototype.connect
+  vi.spyOn(GestureStore.prototype, 'connect').mockImplementation(function (this: GestureStore, callback) { connect.call(this, callback); stores.push(this) })
+  act(() => root.render(<App backend={backend}/>))
+  act(() => stores[0].emit({ type: 'gesture.confirmed', command: 'select', targetId: 'global-audio-enable', at: 100 }))
+  expect(container.querySelector('[data-gesture-target="global-audio-enable"]')?.getAttribute('aria-pressed')).toBe('true')
+  act(() => stores[0].emit({ type: 'gesture.confirmed', command: 'select', targetId: 'global-guide', at: 200 }))
+  expect(container.querySelector('.guided-tour')).not.toBeNull()
+  act(() => stores[0].emit({ type: 'gesture.confirmed', command: 'select', targetId: 'nav-plan', at: 300 }))
+  expect(window.location.pathname).toBe('/plan')
+})
+it('keeps the started camera across planning and landing routes, then disposes on unmount', () => {
   window.history.replaceState({}, '', '/context');
   let emit: GestureStore['emit'] | null = null;
   const connect = GestureStore.prototype.connect;
@@ -96,22 +184,28 @@ it('keeps the started camera and swipe instructions across planning routes, then
   const modalButton = (name: string) => [...document.querySelectorAll<HTMLButtonElement>('[role=dialog] button')].find(button => button.textContent === name)!;
   act(() => modalButton('Включить управление руками').click());
   act(() => { emit!({type:'camera.ready', at:0}); emit!({type:'tracking.acquired', at:1, target:'hand'}); });
-  act(() => modalButton('Готово — управлять руками').click());
+  act(() => modalButton('Использовать стандартные настройки').click());
   const video = container.querySelector('video');
   expect(start).toHaveBeenCalledOnce();
   dispose.mockClear();
-  click('Your plan', 1000);
-  click('Progress', 2000);
-  click('Your context', 3000);
+  click('Твой план', 1000);
+  click('Прогресс', 2000);
+  click('Твой профиль', 3000);
+  act(() => container.querySelector<HTMLAnchorElement>('.brand')!.click());
+  expect(container.querySelector('.landing-page')).not.toBeNull();
   expect(container.querySelector('video')).toBe(video);
-  expect(container.textContent).toContain('свайпни открытой ладонью');
+  expect(dispose).not.toHaveBeenCalled();
+  click('Твой профиль', 4000);
+  expect(start).toHaveBeenCalledOnce();
+  expect(container.querySelector('video')).toBe(video);
+  expect(container.textContent).toContain('выпрями указательный и средний пальцы');
   expect(dispose).not.toHaveBeenCalled();
   act(() => root.unmount());
   expect(dispose).toHaveBeenCalledOnce();
   root = createRoot(container);
   inputPreferences.set(previousPreferences);
 });
-it('scrolls planning screens through fake swipe events and shows recognized direction', () => {
+it('scrolls planning screens through fake two-finger events and shows natural direction', () => {
   window.history.replaceState({}, '', '/plan?fakeVision=1');
   Object.defineProperties(document.documentElement, {
     scrollHeight: { configurable: true, value: 2000 },
@@ -120,20 +214,21 @@ it('scrolls planning screens through fake swipe events and shows recognized dire
     scrollBy: { configurable: true, value: vi.fn() },
   });
   act(() => root.render(<App backend={backend} />));
-  click('Swipe down', 1000);
-  expect(document.documentElement.scrollBy).toHaveBeenLastCalledWith({ top: 325, behavior: 'smooth' });
+  click('Two fingers up', 1000);
+  expect(document.documentElement.scrollBy).toHaveBeenLastCalledWith({ top: 50, behavior: 'instant' });
   expect(container.querySelector('.gesture-hud [role="status"]')?.textContent).toContain('Прокрутка вниз');
-  click('Swipe up', 2000);
-  expect(document.documentElement.scrollBy).toHaveBeenLastCalledWith({ top: -300, behavior: 'smooth' });
+  click('Two fingers down', 2000);
+  expect(document.documentElement.scrollBy).toHaveBeenLastCalledWith({ top: -50, behavior: 'instant' });
   expect(window.location.pathname).toBe('/plan');
 });
 it("updates URLs and restores planning screens with browser Back and Forward", async () => {
   window.history.replaceState({}, "", "/?juryDemo=1");
   act(() => root.render(<App backend={backend} />));
-  expect(window.location.pathname).toBe("/context");
-  click("Your plan", 1);
+  expect(window.location.pathname).toBe("/");
+  expect(container.querySelector('.landing-page')).not.toBeNull();
+  click("Твой план", 1);
   expect(window.location.pathname).toBe("/plan");
-  click("Progress", 2);
+  click("Прогресс", 2);
   expect(window.location.pathname).toBe("/progress");
   await traverseHistory("back");
   expect(window.location.pathname).toBe("/plan");
@@ -146,15 +241,15 @@ it("updates URLs and restores planning screens with browser Back and Forward", a
 it("routes document review steps and restores them through browser history", async () => {
   window.history.replaceState({}, "", "/context/documents");
   act(() => root.render(<App backend={backend} />));
-  expect(container.textContent).toContain("Bring your context");
+  expect(container.textContent).toContain("Добавь данные");
   click("Продолжить без документа →", 1);
   expect(window.location.pathname).toBe("/context/review");
-  expect(container.textContent).toContain("Is this a fair starting point?");
-  await traverseHistory("back");
+  expect(container.textContent).toContain("Подходит ли такая отправная точка?");
+  await navigateHistory(() => click('← Вернись назад', 2));
   expect(window.location.pathname).toBe("/context/documents");
-  expect(container.textContent).toContain("Bring your context");
+  expect(container.textContent).toContain("Добавь данные");
   await traverseHistory("forward");
-  expect(container.textContent).toContain("Is this a fair starting point?");
+  expect(container.textContent).toContain("Подходит ли такая отправная точка?");
 });
 it.each([
   "/workout",
@@ -186,7 +281,7 @@ it("restarts calibration on Forward to an abandoned workout and never restores r
   act(() => root.render(<App backend={backend} />));
   click("Camera ready", 0);
   click("Продолжить без проверки жестов", 500);
-  click("Bodyweight SquatДемонстрационный подход · 5 повторений", 1000);
+  click("Присед без оборудованияДемонстрационный подход · 5 повторений", 1000);
   click("Подтвердить выбор", 1500);
   expect(window.location.pathname).toBe("/camera/setup");
   click("Stable calibration / countdown", 7000);
@@ -195,7 +290,7 @@ it("restarts calibration on Forward to an abandoned workout and never restores r
   expect(window.location.pathname).toBe("/workout");
   click("Correct rep", 22000);
   expect(container.textContent).toContain("1 / 5");
-  await traverseHistory("back");
+  await navigateHistory(() => click('← Вернись назад', 23000));
   expect(window.location.pathname).toBe("/menu");
   await traverseHistory("forward");
   expect(window.location.pathname).toBe("/camera/setup");
@@ -246,7 +341,7 @@ it("drives the rendered application through the shared fake semantic pipeline", 
   expect(container.querySelector('[role="alert"]')?.textContent).toContain(
     "Камера отключена",
   );
-  click("Повторить / Retry", 6100);
+  click("Повторить", 6100);
   expect(container.querySelector("header code")?.textContent).toBe("TUTORIAL");
 });
 it("hides fake controls by default and does not request camera before the start action", () => {
@@ -258,14 +353,14 @@ it("hides fake controls by default and does not request camera before the start 
   });
   act(() => root.render(<App backend={backend} />));
   expect(container.textContent).not.toContain("Fake vision");
-  expect(container.textContent).toContain("Tell us about you");
+  expect(container.textContent).toContain("ТВОЁ ТЕЛО.ТВОИ ПРАВИЛА.");
   expect(getUserMedia).not.toHaveBeenCalled();
 });
 it("renders a five-cycle pose workout, pause recovery, specific corrections and results", async () => {
   act(() => root.render(<App backend={backend} />));
   click("Camera ready", 0);
   click("Продолжить без проверки жестов", 500);
-  click("Bodyweight SquatДемонстрационный подход · 5 повторений", 1000);
+  click("Присед без оборудованияДемонстрационный подход · 5 повторений", 1000);
   click("Подтвердить выбор", 1500);
   click("Wrong camera angle", 2000);
   expect(container.textContent).toContain("Повернись боком к камере");
@@ -297,7 +392,7 @@ it("renders a five-cycle pose workout, pause recovery, specific corrections and 
   expect(container.textContent).toContain("Среднее время повторения");
   expect(window.location.pathname).toBe("/results");
   const queued = backend.queue.entries().length;
-  click("Progress", 75000);
+  click("Прогресс", 75000);
   expect(window.location.pathname).toBe("/progress");
   await traverseHistory("back");
   expect(window.location.pathname).toBe("/results");
@@ -322,7 +417,7 @@ it("keeps calibration, squat and immediate Results usable when every backend req
   expect(container.textContent).toContain("Локальный режим");
   click("Camera ready", 0);
   click("Продолжить без проверки жестов", 500);
-  click("Bodyweight SquatДемонстрационный подход · 5 повторений", 1000);
+  click("Присед без оборудованияДемонстрационный подход · 5 повторений", 1000);
   click("Подтвердить выбор", 1500);
   click("Stable calibration / countdown", 7000);
   click("Stable calibration / countdown", 14000);
@@ -457,7 +552,7 @@ it("boots an online guest, starts the planned squat, shows Results before sync a
   click("Fist hold", 1000);
   expect(container.querySelector("header code")?.textContent).toBe("MENU");
   click(
-    "Сегодня · Базовый планBodyweight Squat · 1 × 5 · Контролируемый темп",
+    "Сегодня · Базовый планПрисед без оборудования · 1 × 5 · Контролируемый темп",
     1100,
   );
   expect(container.querySelector("header code")?.textContent).toBe("PLAN");
@@ -465,7 +560,7 @@ it("boots an online guest, starts the planned squat, shows Results before sync a
   click("Изменить профиль", 1300);
   click("Назад в меню", 1400);
   click(
-    "Bodyweight SquatПо базовому плану · 1 × 5 · Контролируемый темп",
+    "Присед без оборудованияПо базовому плану · 1 × 5 · Контролируемый темп",
     1500,
   );
   click("Подтвердить выбор", 2000);
@@ -511,7 +606,7 @@ it('runs the full two-set manual plan and persists both globally numbered sets w
   click('Начать следующий подход',3000);expect(container.querySelector('header code')?.textContent).toBe('WORKOUT');
   click('Отметить выполненным',5000);expect(container.querySelector('header code')?.textContent).toBe('RESULTS');expect(save).toHaveBeenCalledOnce();
   const entry=backend.queue.entries()[0];expect(entry.session.client_engine_version).toBe('workout-session-v1');expect(entry.sets?.map(set=>set.set_index)).toEqual([1,2]);expect(entry.sets?.every(set=>set.accepted_reps===0&&set.metrics.mean_min_knee_angle===null)).toBe(true);expect(new Set(entry.sets?.map(set=>set.client_set_id)).size).toBe(2);
-  expect(entry.complete.summary).toMatchObject({total_sets:2,total_reps:10,camera_total_reps:0,accepted_reps:0,rejected_reps:0,manual_completed_sets:2});expect(container.textContent).toContain('FULL WORKOUT / ACTUAL SETS');expect(container.textContent).toContain('Оценка камерой отсутствует');
+  expect(entry.complete.summary).toMatchObject({total_sets:2,total_reps:10,camera_total_reps:0,accepted_reps:0,rejected_reps:0,manual_completed_sets:2});expect(container.textContent).toContain('ПОЛНАЯ ТРЕНИРОВКА / ВСЕ ПОДХОДЫ');expect(container.textContent).toContain('Оценка камерой отсутствует');
 });
 it('places hands introduction before voice selection without requesting camera or awaiting backend', async()=>{
   window.history.replaceState({},'', '/schedule');
@@ -520,4 +615,50 @@ it('places hands introduction before voice selection without requesting camera o
   expect(document.querySelector('.hands-intro')).not.toBeNull();expect(document.querySelector('.voice-screen')).toBeNull();expect(getUserMedia).not.toHaveBeenCalled();
   await act(async()=>[...document.querySelectorAll<HTMLButtonElement>('.hands-intro button')].find(button=>button.textContent==='Продолжить с мышью')!.click());
   expect(document.querySelector('.hands-intro')).toBeNull();expect(document.querySelector('.voice-screen')).not.toBeNull();expect(getUserMedia).not.toHaveBeenCalled();expect(window.location.pathname).toBe('/schedule');
+});
+it.each(['nav-ready-routines', 'nav-mobile-routines', 'nav-how-start'])('shows the three existing coaches immediately from %s before onboarding', async id => {
+  window.history.replaceState({}, '', '/');
+  const camera = vi.spyOn(RealVisionSource.prototype, 'start').mockResolvedValue();
+  const load = vi.spyOn(backend, 'loadPersona').mockResolvedValue();
+  const generate = vi.spyOn(backend, 'generatePersonalized').mockResolvedValue(null as never);
+  await act(async () => root.render(<App backend={backend} />));
+  await act(async () => container.querySelector<HTMLButtonElement>(`[data-gesture-target="${id}"]`)!.click());
+  expect(window.location.pathname).toBe('/plan');
+  expect(container.querySelector('#ready-programs-title')?.textContent).toBe('Готовые тренеры и программы');
+  expect([...container.querySelectorAll('.ready-programs .persona-card h3')].map(node => node.textContent)).toEqual(['MAYA', 'ARMAN', 'DANA']);
+  expect(document.querySelector('[role=dialog]')).toBeNull(); expect(camera).not.toHaveBeenCalled();
+  expect(load).not.toHaveBeenCalled(); expect(generate).not.toHaveBeenCalled();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-gesture-target="ready-persona-maya"]')!.click());
+  expect(load).toHaveBeenCalledWith('maya'); expect(generate).toHaveBeenCalledOnce();
+  expect(window.location.pathname).toBe('/plan'); expect(document.querySelector('[role=dialog]')).toBeNull();
+  expect(container.querySelector('[data-gesture-target="ready-program-change"]')).not.toBeNull();
+});
+it('opens and saves coach voice during a workout while preserving completed repetitions and session identity', async () => {
+  window.history.replaceState({}, '', '/plan?fakeVision=1');
+  const exercise = { id: 'squat', key: 'bodyweight_squat', name: 'Bodyweight Squat', difficulty: 'beginner' as const, equipment_codes: ['none' as const], impact_level: 'low' as const, contraindication_tags: ['avoid_deep_knee_flexion' as const], camera_angle: 'side' as const, analysis_profile: { version: 1 as const, engine_key: 'bodyweight_squat_side_v1' as const, engine_version: 'squat-v1', target_reps: 5, supported_client: 'web' as const } };
+  const plan = { id: 'owned-plan', status: 'active' as const, source: 'deterministic' as const, starts_on: '2026-09-28', rationale: '', generator_version: 'deterministic-v1', created_at: '', updated_at: '', items: [{ id: 'set', exercise_id: 'squat', exercise, day_index: 0, position: 0, sets: 1, target_reps: 5, rest_seconds: 60, tempo_hint: null, scheduled_at: null }] };
+  vi.spyOn(backend, 'getSnapshot').mockReturnValue({ ...backend.getSnapshot(), plan });
+  vi.spyOn(ReleaseClient.prototype, 'voices').mockResolvedValue({ voices: [{ voice_id: 'chosen-voice', name: 'Анна', description: '', labels: { language: 'ru' } }], has_more: false, next_page_token: null, model_id: 'model', language: 'ru' });
+  const save = vi.spyOn(ReleaseClient.prototype, 'savePreferences').mockImplementation(async preferences => ({ ...preferences, revision: 2 }));
+  vi.spyOn(ReleaseClient.prototype, 'speech').mockResolvedValue(new Blob(['audio'], { type: 'audio/mpeg' }));
+  const start = vi.spyOn(backend, 'startWorkout');
+  await act(async () => root.render(<App backend={backend} />));
+  click('Начать · Понедельник', 0);
+  click('Stable calibration / countdown', 7000); click('Stable calibration / countdown', 14000); click('Correct rep', 21000);
+  expect(container.querySelector('.rep-counter')?.textContent).toBe('1 / 5');
+  const settings = container.querySelector<HTMLButtonElement>('[data-gesture-target="global-voice-settings"]')!;
+  expect(settings.disabled).toBe(false);
+  await act(async () => { time = 29000; settings.click(); });
+  expect(container.querySelector('header code')?.textContent).toBe('PAUSED'); expect(document.querySelector('.voice-screen')).not.toBeNull();
+  await act(async () => document.querySelector<HTMLButtonElement>('[data-gesture-target="voice-chosen-voice"]')!.click());
+  await act(async () => document.querySelector<HTMLButtonElement>('[data-gesture-target="voice-continue"]')!.click());
+  expect(save).toHaveBeenCalledWith({ voice_id: 'chosen-voice', language: 'ru', style: 'supportive', audio_enabled: true });
+  expect(document.querySelector('.voice-screen')).toBeNull(); expect(container.querySelector('header code')?.textContent).toBe('PAUSED');
+  expect(container.querySelector('.rep-counter')?.textContent).toBe('1 / 5'); expect(start).toHaveBeenCalledOnce();
+  await act(async () => { time = 30000; container.querySelector<HTMLButtonElement>('[data-gesture-target="session-voice-settings"]')!.click(); });
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(save).toHaveBeenCalledOnce(); expect(document.querySelector('.voice-screen')).toBeNull();
+  expect(container.querySelector('.rep-counter')?.textContent).toBe('1 / 5');
+  click('Продолжить', 32000); click('Stable calibration / countdown', 39000); click('Stable calibration / countdown', 46000); click('Correct rep', 53000);
+  expect(container.querySelector('.rep-counter')?.textContent).toBe('2 / 5'); expect(start).toHaveBeenCalledOnce();
 });

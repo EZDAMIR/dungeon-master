@@ -3,6 +3,7 @@ import { ApiClient, ApiError } from '../../api/client';
 import { GuideMachine } from '../../features/guided-tour/guideMachine';
 import { localToInstant } from '../../features/schedule/timezone';
 import { PushToTalk } from '../../features/coach/pushToTalk';
+import { ReleaseClient, speechCueRequest } from '../../api/release';
 it('binary transport sends bearer only in header and includes cookie credentials', async () => {
   const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(new Blob(['audio'], { type: 'audio/mpeg' }))), client = new ApiClient('http://test', 100, transport);
   const audio = await client.blob('/voices/id/preview', { method: 'POST', token: 'private', body: { language: 'kk' } });
@@ -12,12 +13,29 @@ it('audio provider JSON error remains an error', async () => {
   const client = new ApiClient('http://test', 100, vi.fn().mockResolvedValue(new Response('{}', { status: 503 })));
   await expect(client.blob('/speech')).rejects.toMatchObject({ status: 503 });
 });
+it.each(['coach:ready', 'coach:good_rep', 'coach:tracking_recovery', 'coach:complete', 'calibration', 'error:range_short', 'phase:standing'])('sends %s as an owned exercise cue to the selected-voice speech endpoint', async cue => {
+  const backend = new BackendStore(new ApiClient(), new SafeStorage());
+  const request = vi.spyOn(backend, 'requestBlob').mockResolvedValue(new Blob(['audio'], { type: 'audio/mpeg' }));
+  const client = new ReleaseClient(backend), signal = new AbortController().signal;
+  await client.speech(speechCueRequest(cue, 'calf_raise', 'saved-spec-revision'), signal);
+  expect(request).toHaveBeenCalledWith('/speech', { cue_id: cue.replace(/^coach:/, ''), exercise_key: 'calf_raise', spec_revision: 'saved-spec-revision' }, 'POST', signal);
+});
+it('keeps fixed cues outside the exercise scope and never sends incomplete spec identifiers', () => {
+  expect(speechCueRequest('good_rep', 'calf_raise', 'revision')).toEqual({ cue_id: 'good_rep' });
+  expect(speechCueRequest('coach:ready', 'calf_raise', null)).toEqual({ cue_id: 'ready' });
+});
 it('one rejected access token uses recovery then retries once', async () => {
   const transport = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response('{}', { status: 401 })).mockResolvedValue(new Response('{"ok":true}')), client = new ApiClient('http://test', 100, transport), recover = vi.fn().mockResolvedValue('renewed'); client.setAuthRecovery(recover);
   await expect(client.json('/private', { token: 'old' })).resolves.toEqual({ ok: true }); expect(recover).toHaveBeenCalledOnce(); expect(transport.mock.calls[1][1]?.headers).toMatchObject({ Authorization: 'Bearer renewed' });
 });
-it('guided demo waits for actual events and remembers out-of-order camera readiness', () => {
-  const guide = new GuideMachine(); guide.consume('camera.ready'); expect(guide.getSnapshot()?.event).toBe('voice.selected'); guide.consume('voice.selected'); expect(guide.getSnapshot()?.event).toBe('context.opened'); guide.consume('context.opened'); guide.consume('plan.ready'); guide.consume('exercise.opened'); expect(guide.getSnapshot()?.event).toBe('gesture.success'); guide.stop(); expect(guide.getSnapshot()).toBeNull();
+it('guide follows the current screen and stays visible until explicitly advanced', () => {
+  const guide = new GuideMachine('PROFILE'); expect(guide.getSnapshot()?.target).toBe('navigation');
+  guide.skip(); expect(guide.getSnapshot()?.target).toBe('context');
+  guide.setScreen('PLAN'); expect(guide.getSnapshot()?.target).toBe('navigation');
+  guide.skip(); expect(guide.getSnapshot()?.target).toBe('plan');
+  guide.stop(); expect(guide.getSnapshot()).toBeNull();
+  guide.restart(); expect(guide.getSnapshot()?.target).toBe('navigation');
+  guide.setScreen('WORKOUT'); expect(guide.getSnapshot()).toBeNull();
 });
 it('timezone conversion preserves Almaty and rejects DST gap/fold', () => {
   expect(localToInstant('2026-10-01T18:00', 'Asia/Almaty')).toBe('2026-10-01T13:00:00.000Z'); expect(() => localToInstant('2026-03-08T02:30', 'America/New_York')).toThrow('не существует'); expect(() => localToInstant('2026-11-01T01:30', 'America/New_York')).toThrow('неоднозначно');

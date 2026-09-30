@@ -1,3 +1,4 @@
+import { useTranslation } from '../shared/uiLanguage'
 import type { WorkoutResult } from "../app/modes";
 import { recommendation } from "../vision/exercises/squat/resultBuilder";
 import { GestureTarget } from "../features/gesture-navigation/GestureTarget";
@@ -20,6 +21,8 @@ export function ResultsPage({
   persona?: string;
   onProgress?: () => void;
 }) {
+  const { translateUi } = useTranslation()
+
   const generic = result.engineVersion !== "squat-v1",
     manual = result.engineVersion === "manual-v1";
   const message = generic
@@ -37,37 +40,31 @@ export function ResultsPage({
     <section className="results-page editorial-grid" data-figma-node="3:141">
       <div className="dm-panel citron">
         <p className="dm-label">
-          {manual ? "MANUAL COMPLETION" : "SESSION / LOCAL METRICS"}
+          {translateUi(manual ? "MANUAL COMPLETION" : "SESSION / LOCAL METRICS")}
         </p>
-        <h1>
-          YOU
-          <br />
-          SHOWED
-          <br />
-          UP.
-        </h1>
-        <h3>Подход завершён</h3>
-        <p>{exercise ?? "Bodyweight Squat"}</p>
+        <h1>{translateUi("YOU")}<br />{translateUi("SHOWED")}<br />{translateUi("UP.")}</h1>
+        <h3>{translateUi("Подход завершён")}</h3>
+        <p>{translateUi(exercise ?? "Bodyweight Squat")}</p>
         <table>
           <tbody>
             {!manual && (
               <>
                 <tr>
-                  <th>Всего повторений</th>
+                  <th>{translateUi("Всего повторений")}</th>
                   <td>
                     {result.totalReps} / {result.targetReps}
                   </td>
                 </tr>
                 <tr>
-                  <th>Корректные повторения</th>
+                  <th>{translateUi("Корректные повторения")}</th>
                   <td>{result.acceptedReps}</td>
                 </tr>
                 <tr>
-                  <th>Повторения с ошибками</th>
+                  <th>{translateUi("Повторения с ошибками")}</th>
                   <td>{result.rejectedReps}</td>
                 </tr>
                 <tr>
-                  <th>Доля корректных повторений</th>
+                  <th>{translateUi("Доля корректных повторений")}</th>
                   <td>
                     {result.totalReps
                       ? Math.round(
@@ -82,15 +79,15 @@ export function ResultsPage({
             {!generic && (
               <>
                 <tr>
-                  <th>Недостаточная глубина</th>
+                  <th>{translateUi("Недостаточная глубина")}</th>
                   <td>{result.errorCounts.depth_insufficient}</td>
                 </tr>
                 <tr>
-                  <th>Слишком быстро</th>
+                  <th>{translateUi("Слишком быстро")}</th>
                   <td>{result.errorCounts.too_fast}</td>
                 </tr>
                 <tr>
-                  <th>Неполное выпрямление</th>
+                  <th>{translateUi("Неполное выпрямление")}</th>
                   <td>{result.errorCounts.incomplete_extension}</td>
                 </tr>
               </>
@@ -100,11 +97,11 @@ export function ResultsPage({
                 ([code, n]) => (
                   <tr key={code}>
                     <th>
-                      {code === "too_fast"
+                      {translateUi(code === "too_fast"
                         ? "Слишком быстро"
                         : code === "range_too_small"
                           ? "Недостаточный диапазон"
-                          : code.replace(/_/g, " ")}
+                          : code.replace(/_/g, " "))}
                     </th>
                     <td>{n}</td>
                   </tr>
@@ -112,46 +109,32 @@ export function ResultsPage({
               )}
             {!manual && (
               <tr>
-                <th>Среднее время повторения</th>
-                <td>{(result.meanRepDurationMs / 1000).toFixed(1)} с</td>
+                <th>{translateUi("Среднее время повторения")}</th>
+                <td>{translateUi((result.meanRepDurationMs / 1000).toFixed(1))}{translateUi(" с")}</td>
               </tr>
             )}
             <tr>
-              <th>Время подхода</th>
-              <td>{(result.durationMs / 1000).toFixed(0)} с</td>
+              <th>{translateUi("Время подхода")}</th>
+              <td>{translateUi((result.durationMs / 1000).toFixed(0))}{translateUi(" с")}</td>
             </tr>
           </tbody>
         </table>
       </div>
       <div className="dm-panel">
-        <h2>
-          THE MOMENT
-          <br />
-          THAT MATTERED.
-        </h2>
-        <p className="instruction">{message}</p>
+        <h2>{translateUi("THE MOMENT")}<br />{translateUi("THAT MATTERED.")}</h2>
+        <p className="instruction">{translateUi(message)}</p>
         <p role="status" aria-live="polite">
-          {syncMessage}
+          {translateUi(syncMessage)}
         </p>
         <div className="results-actions">
-          <GestureTarget id="results-sync" onSelect={onRetry}>
-            Повторить синхронизацию
-          </GestureTarget>
-          <GestureTarget id="repeat-squat" onSelect={onRepeat}>
-            Повторить подход
-          </GestureTarget>
-          <GestureTarget id="results-menu" onSelect={onMenu}>
-            Вернуться в меню
-          </GestureTarget>
+          <GestureTarget id="results-sync" onSelect={onRetry}>{translateUi("Повторить синхронизацию")}</GestureTarget>
+          <GestureTarget id="repeat-squat" onSelect={onRepeat}>{translateUi("Повторить подход")}</GestureTarget>
+          <GestureTarget id="results-menu" onSelect={onMenu}>{translateUi("Вернуться в меню")}</GestureTarget>
           {onProgress && (
-            <GestureTarget id="results-progress" onSelect={onProgress}>
-              Открыть progress
-            </GestureTarget>
+            <GestureTarget id="results-progress" onSelect={onProgress}>{translateUi("Открыть progress")}</GestureTarget>
           )}
         </div>
-        <p>
-          👍 Повторить подход · ✊ Вернуться в меню · или выбери кнопку щипком.
-        </p>
+        <p>{translateUi("👍 Повторить подход · ✊ Вернуться в меню · или выбери кнопку щипком.")}</p>
       </div>
     </section>
   );

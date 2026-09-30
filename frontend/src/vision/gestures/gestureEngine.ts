@@ -2,7 +2,7 @@ import type { GestureCommand, VisionEvent } from '../../types/vision'
 import { HoldGate } from '../core/holdGate'
 import { CursorMapper, type CursorSettings, type Viewport } from './cursorMapper'
 import { PinchDetector } from './pinchDetector'
-import { SwipeDetector } from './swipeDetector'
+import { isTwoFingerScrollPose, TwoFingerScrollDetector } from './twoFingerScrollDetector'
 import { gestureConfig } from './gestureConfig'
 import type { HandRecognitionSample } from './types'
 const commands: Record<string, 'back' | 'confirm' | undefined> = { Closed_Fist: 'back', Thumb_Up: 'confirm' }
@@ -10,7 +10,7 @@ const commands: Record<string, 'back' | 'confirm' | undefined> = { Closed_Fist: 
 export class GestureEngine {
   private cursor = new CursorMapper()
   private pinch = new PinchDetector()
-  private swipe = new SwipeDetector()
+  private scroll = new TwoFingerScrollDetector()
   private hold = new HoldGate()
   private tracked = false
   private candidate: GestureCommand | null = null
@@ -19,7 +19,7 @@ export class GestureEngine {
   private neutralSince: number | null = null
   private side: HandRecognitionSample['handedness'] = null
   configureInput(settings: CursorSettings) { this.cursor.configure(settings); this.requireRelease() }
-  requireRelease() { this.blocked = true; this.neutralSince = null; this.candidate = null; this.pinch.reset(); this.hold.reset(); this.wasPinched = false; this.cursor.reset(); this.swipe.reset() }
+  requireRelease() { this.blocked = true; this.neutralSince = null; this.candidate = null; this.pinch.reset(); this.hold.reset(); this.wasPinched = false; this.cursor.reset(); this.scroll.reset() }
   update(sample: HandRecognitionSample | null, at: number, viewport: Viewport): VisionEvent[] {
     const events: VisionEvent[] = []
     if (!sample || sample.landmarks.length !== 21 || sample.landmarks.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) {
@@ -33,8 +33,8 @@ export class GestureEngine {
     const command = classification && classification.confidence >= gestureConfig.minimumClassificationConfidence ? commands[classification.name] ?? null : null
     if (this.side && sample.handedness && this.side !== sample.handedness) this.requireRelease()
     this.side = sample.handedness
-    // A fist/confirm changes fingertip geometry: clutch instead of moving the UI.
-    if (command) this.cursor.reset()
+    // Clutch while scrolling so the panel under the cursor stays the target.
+    if (command || isTwoFingerScrollPose(sample)) this.cursor.reset()
     else events.push({ type: 'cursor.moved', at, ...this.cursor.map(sample.landmarks[8], viewport, at) })
     const hold = this.hold.update(command, at)
     // Pinch geometry can look closed inside a fist. A recognized held command takes priority.
@@ -45,8 +45,8 @@ export class GestureEngine {
       if (this.neutralSince !== null && at - this.neutralSince >= 250) { this.blocked = false; this.hold.reset(); this.pinch.reset() }
       return events
     }
-    const direction = this.swipe.update(sample, at, !!command || !pinch.valid || pinch.progress > 0 || pinch.pinched)
-    if (direction) events.push({ type: 'gesture.swiped', at, direction })
+    const deltaY = this.scroll.update(sample, at, !!command || !pinch.valid || pinch.progress > 0 || pinch.pinched)
+    if (deltaY !== null) events.push({ type: 'gesture.scrolled', at, deltaY })
     if (this.wasPinched && !pinch.pinched) events.push({ type: 'gesture.cancelled', at, command: 'select' })
     this.wasPinched = pinch.pinched
     const nextCandidate = hold.command ?? (!command && pinch.progress > 0 && !pinch.pinched ? 'select' : null)
@@ -58,5 +58,5 @@ export class GestureEngine {
     if (pinch.confirmed && !command) events.push({ type: 'gesture.confirmed', at, command: 'select' })
     return events
   }
-  reset() { this.tracked = false; this.candidate = null; this.wasPinched = false; this.cursor.reset(); this.swipe.reset(); this.pinch.reset(); this.hold.reset(); this.side = null; this.requireRelease() }
+  reset() { this.tracked = false; this.candidate = null; this.wasPinched = false; this.cursor.reset(); this.scroll.reset(); this.pinch.reset(); this.hold.reset(); this.side = null; this.requireRelease() }
 }

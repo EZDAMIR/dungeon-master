@@ -1,0 +1,16 @@
+.language-switcher { position: relative; margin-left: auto; flex: none; }
+.language-switcher > .gesture-target { width: auto; min-width: 76px; min-height: 48px; margin: 0; padding: 10px 14px; white-space: nowrap; }
+.language-options { position: absolute; right: 0; top: calc(100% + 8px); z-index: 100; min-width: 180px; padding: 8px; background: var(--dm-paper); border: 1px solid var(--dm-line); border-radius: var(--dm-radius-16); box-shadow: 0 12px 32px #161c1926; }
+.language-options .gesture-target { width: 100%; min-height: 48px; margin: 4px 0; text-align: left; }
+:root:lang(ru), :root:lang(kk) { --heading: Manrope, sans-serif; }
+:root:lang(ru) :is(h1, h2, h3), :root:lang(kk) :is(h1, h2, h3) { overflow-wrap: anywhere; }
+:root:lang(ru) .landing-narrative h1, :root:lang(kk) .landing-narrative h1 { font-size: clamp(44px, 5.6vw, 88px); line-height: 1.06; }
+@media (max-width: 700px) {
+  .landing-shell .app-header { flex-wrap: wrap; }
+  .landing-header-context { padding-inline: 8px; }
+  .language-switcher > .gesture-target { min-width: 64px; padding-inline: 10px; }
+  :root:lang(ru) .landing-narrative h1, :root:lang(kk) .landing-narrative h1 { font-size: clamp(36px, 10vw, 64px); }
+  :root:lang(ru) .workout-shell main h2, :root:lang(kk) .workout-shell main h2 { font-size: clamp(28px, 8.5vw, 40px); line-height: 1.14; }
+}
+.modal-language-switcher { position: relative; z-index: 2; display: flex; justify-content: flex-end; margin: 0 16px 8px; }
+.modal-language-switcher .language-switcher { margin: 0; }

@@ -35,7 +35,7 @@ target hardware.
 | Thumb-index pinch | select focused target | edge-triggered with hysteresis |
 | Closed fist | back | stable hold |
 | Thumb up | confirm/start | stable hold |
-| Open palm swiped up/down | scroll up/down | multi-frame stroke, settle/release and cooldown |
+| Index and middle fingers extended, ring/little fingers curled | continuous vertical scroll | stable pose, coordinated movement, release to stop |
 | Raised hand in workout | pause/resume | stable hold and workout-only |
 
 At least the pinch, fist and thumb-up commands must be robust before extra gestures
@@ -61,24 +61,35 @@ measurement. Use different enter and exit thresholds to prevent flicker.
 Do not call DOM `.click()` from the low-level engine. Emit a semantic select event
 with the currently focused target ID.
 
-Swipe scrolling extends Sprint 1 navigation. `SwipeDetector` tracks the smoothed
-center of the wrist and palm bases only for a confident Open_Palm category.
-Pointing, pinch and held commands cannot scroll. Defaults require at least three
-samples, 0.16 normalized vertical travel in 120–600 ms, at most 0.1 horizontal
-drift and no sample jump over 0.14. Gaps over 250 ms cancel partial strokes.
-After firing, the palm must settle within 0.025 for 200 ms or release for 200 ms;
-a 700 ms cooldown also applies. Hand loss resets the detector.
+Two-finger scrolling extends Sprint 1 navigation and replaces open-palm swipes.
+`TwoFingerScrollDetector` recognizes extended index/middle fingers and curled
+ring/little fingers from aspect-corrected landmark geometry, without relying on
+the model's Victory category. Extended PIP angle is at least 155°, curled angle
+at most 135°; fingertip reach relative to the wrist also gates the pose. Three
+samples and 120 ms of stable pose engage scrolling. Both fingertips must move
+together; EMA alpha 0.7 and a 0.002 normalized dead zone filter jitter. Named
+configuration rejects sideways motion, sample jumps over 0.14, inference gaps
+over 250 ms and fingertip travel disagreement over 0.015. Release, hand loss,
+hand switch, hidden-tab reset and pinch/held commands interrupt scrolling.
 
-The engine emits `gesture.swiped { direction: "up" | "down", at }`; it never
-queries the DOM. GestureStore consumes this in hand-navigation modes only.
-The UI smoothly scrolls 65% of the viewport of the nearest scrollable panel under
-the cursor, falling back to the page and stopping at modal boundaries. Up moves
-toward the top; down moves toward the bottom. HUD feedback and optional local
-tones identify the direction. Stop the palm briefly before another stroke.
+The engine emits `gesture.scrolled { deltaY, at }`, where deltaY is a signed
+viewport fraction (gain 3 × normalized vertical motion). Natural direction matches
+a trackpad: fingers up moves content up, increasing scrollTop. There is no
+page-sized jump, stroke cooldown or added momentum. Scroll deltas apply immediately;
+restarting browser smooth-scroll animations every frame would lose movement.
+The virtual cursor is clutched throughout the pose so its chosen panel stays under
+the cursor. Opening the palm restores cursor movement without a position jump.
+
+GestureStore consumes scrolling only in Tutorial/Menu/Profile/Plan/Progress/
+Schedule/Results. The nearest scrollable panel under the cursor receives deltas,
+falling back to the page; native dialogs, aria-modal dialog overlays and active
+gesture scopes contain scrolling at their edges. Repeated deltas with unchanged
+feedback do not publish a global state update; optional local tones are limited
+to one per 500 ms. HUD shows the two-finger pose and natural-scroll instructions.
 Planning and Results retain the shared camera runtime after explicit permission;
-direct planning links expose the camera start action without requesting access
-automatically. Pose modes disable scrolling. Synthetic tests cover these defaults;
-live-camera tuning remains pending the Sprint 1 manual checklist.
+direct planning links never request access automatically. Pose modes disable
+scrolling. Synthetic tests cover these defaults; live-camera tuning remains
+pending the Sprint 1 manual checklist.
 
 ## 5. Pose pipeline
 
