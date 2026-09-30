@@ -71,12 +71,15 @@ class Settings(pydantic_settings.BaseSettings):
     ELEVENLABS_ALLOWED_VOICE_IDS: str = ''
     ELEVENLABS_OUTPUT_FORMAT: str = 'mp3_44100_128'
     ELEVENLABS_TIMEOUT_SECONDS: float = pydantic.Field(default=20, gt=0, le=60)
+    ELEVENLABS_BATCH_TIMEOUT_SECONDS: float = pydantic.Field(default=120, gt=0, le=180)
     ELEVENLABS_MAX_CONCURRENCY: int = pydantic.Field(default=2, ge=1, le=4)
     VOICE_INPUT_ENABLED: bool = True
     OPENAI_TRANSCRIBE_MODEL: str = 'gpt-4o-mini-transcribe'
     VOICE_INPUT_MAX_SECONDS: int = pydantic.Field(default=30, ge=1, le=30)
     VOICE_INPUT_MAX_BYTES: int = pydantic.Field(default=4194304, ge=1024, le=4194304)
     AUDIO_CACHE_MAX_MB: int = pydantic.Field(default=100, ge=1, le=500)
+    AUDIO_SHARED_CACHE_DIR: str = ''
+    AUDIO_SHARED_CACHE_MAX_MB: int = pydantic.Field(default=1024, ge=1, le=4096)
     PERSONAL_AUDIO_TTL_SECONDS: int = pydantic.Field(default=3600, ge=60, le=86400)
     AUDIO_DAILY_CHARACTER_CAP: int = pydantic.Field(default=10000, ge=100, le=100000)
     GOOGLE_CALENDAR_ENABLED: bool = False

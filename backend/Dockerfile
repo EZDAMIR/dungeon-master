@@ -5,6 +5,7 @@ WORKDIR /app
 # System deps for asyncpg and bcrypt C extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    ffmpeg \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -20,6 +21,7 @@ COPY alembic.ini .
 
 # Non-root user for production safety
 RUN addgroup --system app && adduser --system --group app
+RUN mkdir -p /var/cache/dungeon-master/voice && chown app:app /var/cache/dungeon-master/voice
 USER app
 
 EXPOSE 8000

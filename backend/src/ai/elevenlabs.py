@@ -19,7 +19,7 @@ async def request(method: str, path: str, **kwargs) -> httpx.Response:
             method,
             'https://api.elevenlabs.io' + path,
             headers={'xi-api-key': settings.ELEVENLABS_API_KEY.get_secret_value()},
-            timeout=settings.ELEVENLABS_TIMEOUT_SECONDS,
+            timeout=kwargs.pop('timeout', settings.ELEVENLABS_TIMEOUT_SECONDS),
             **kwargs,
         )
         if response.status_code != 200:
@@ -98,12 +98,20 @@ async def voice_allowed(voice_id: str) -> bool:
     return False
 
 
+async def remaining_characters() -> int:
+    try:
+        body = (await request('GET', '/v1/user/subscription')).json()
+        return max(0, int(body['character_limit']) - int(body['character_count']))
+    except (KeyError, ValueError, TypeError) as exc:
+        raise SpeechUnavailable('subscription_schema') from exc
+
+
 def model_for(language: str) -> str:
     return getattr(config.get_settings(), 'ELEVENLABS_MODEL_' + language.upper())
 
 
-async def validate_model(language: str) -> str:
-    model_id = model_for(language)
+async def validate_model(language: str, model_id: str | None = None) -> str:
+    model_id = model_id or model_for(language)
     model = next((row for row in await models() if row['model_id'] == model_id), None)
     if (
         not model
@@ -118,17 +126,41 @@ async def synthesize(voice_id: str, text: str, language: str, style: str) -> byt
     if not await voice_allowed(voice_id):
         raise SpeechUnavailable('voice_unavailable')
     model_id = await validate_model(language)
+    return await render(voice_id, text, language, style, model_id)
+
+
+def delivery_text(text: str, style: str, model_id: str) -> str:
+    text = text.strip()
+    if text and text[-1] not in '.!?…':
+        text += '.'
+    if model_id.startswith(('eleven_v4', 'eleven_v3')) and len(text) > 40:
+        tag = {
+            'calm': '[calm]',
+            'supportive': '[warmly]',
+            'energetic': '[excited]',
+            'strict': '[firmly]',
+        }[style]
+        return tag + ' ' + text
+    return text
+
+
+def voice_settings(style: str) -> dict:
     # Stability exists in the current model contract; v3 supports .0/.5/1 only.
     stability = {'calm': 1.0, 'supportive': 0.5, 'energetic': 0.0, 'strict': 0.5}[style]
+    return {'stability': stability}
+
+
+async def render(voice_id: str, text: str, language: str, style: str, model_id: str) -> bytes:
+    """Render after account voice and model validation by the caller."""
     response = await request(
         'POST',
         '/v1/text-to-speech/' + voice_id,
         params={'output_format': config.get_settings().ELEVENLABS_OUTPUT_FORMAT},
         json={
-            'text': text,
+            'text': delivery_text(text, style, model_id),
             'model_id': model_id,
             'language_code': language,
-            'voice_settings': {'stability': stability},
+            'voice_settings': voice_settings(style),
         },
     )
     if response.headers.get('content-type', '').split(';')[0] not in {

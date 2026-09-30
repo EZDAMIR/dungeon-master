@@ -37,6 +37,11 @@ account-accessible `ELEVENLABS_DEFAULT_VOICE_ID` (or choose an account voice in 
 local app). `ELEVENLABS_MODEL_RU`/`EN` default to `eleven_flash_v2_5`; KK defaults
 to `eleven_v3`. Existing OpenAI and Sprint 4B provider settings are preserved.
 
+For the approved v4 coaching pack, set all three model variables to `eleven_v4`
+and `AUDIO_SHARED_CACHE_DIR=/var/cache/dungeon-master/voice`. The backend mounts
+the persistent `dungeon-master-voice-assets` volume. See [voice cache operations](../docs/VOICE_CACHE.md)
+for quota checks, preparation and resumable generation.
+
 
 CI still checks the local frontend, including production assets, alongside backend
 and isolated Docker checks. Main-only exact-SHA/digest trust, backup/restore checks,

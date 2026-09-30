@@ -1,7 +1,8 @@
-"""Authenticated cue/message synthesis with owner-scoped bounded memory cache."""
+"""Persistent shared base cues; personal speech retains an owner-scoped memory cache."""
 
 import asyncio
 import collections
+import contextlib
 import time
 
 import fastapi
@@ -9,6 +10,7 @@ import fastapi
 from ...ai import elevenlabs
 from ...ai import openai
 from ...core import config
+from ...core import voice_assets
 from .. import exceptions
 from .. import models
 from .. import schemas
@@ -168,7 +170,12 @@ async def list_models() -> dict:
 
 
 async def audio(
-    current_user: schemas.UserCurrent, text: str, preferences: dict, version: str
+    current_user: schemas.UserCurrent,
+    text: str,
+    preferences: dict,
+    version: str,
+    *,
+    shared: bool = False,
 ) -> dict:
     global _cache_bytes, _gate, _gate_loop
     if not preferences['voice_id']:
@@ -176,18 +183,34 @@ async def audio(
             detail='Choose a voice', status='voice_required'
         )
     settings = config.get_settings()
-    key = payload_hash(
-        {
-            'owner': str(current_user.id),
-            'voice': preferences['voice_id'],
-            'model': elevenlabs.model_for(preferences['language']),
-            'language': preferences['language'],
-            'style': preferences['style'],
-            'text': text,
-            'version': version,
-            'format': settings.ELEVENLABS_OUTPUT_FORMAT,
-        }
+    key = (
+        voice_assets.key(
+            text,
+            preferences['voice_id'],
+            elevenlabs.model_for(preferences['language']),
+            preferences['language'],
+            preferences['style'],
+            version,
+        )
+        if shared
+        else payload_hash(
+            {
+                'owner': str(current_user.id),
+                'voice': preferences['voice_id'],
+                'model': elevenlabs.model_for(preferences['language']),
+                'language': preferences['language'],
+                'style': preferences['style'],
+                'text': text,
+                'version': version,
+                'format': settings.ELEVENLABS_OUTPUT_FORMAT,
+                'delivery': voice_assets.DELIVERY_VERSION,
+            }
+        )
     )
+    if shared:
+        persisted = await voice_assets.get(key)
+        if persisted is not None:
+            return {'audio': persisted, 'cache': 'hit'}
     now = time.monotonic()
     for stale, (expires, data) in list(_cache.items()):
         if expires <= now:
@@ -200,7 +223,12 @@ async def audio(
     if _gate is None or _gate_loop is not loop:
         _gate = asyncio.Semaphore(settings.ELEVENLABS_MAX_CONCURRENCY)
         _gate_loop = loop
-    async with _gate:
+    lease = voice_assets.lease(key) if shared else contextlib.nullcontext()
+    async with _gate, lease:
+        if shared:
+            persisted = await voice_assets.get(key)
+            if persisted is not None:
+                return {'audio': persisted, 'cache': 'hit'}
         if key in _cache:
             return {'audio': _cache[key][1], 'cache': 'hit'}
         await budget(current_user.id, 'tts', len(text), settings.AUDIO_DAILY_CHARACTER_CAP)
@@ -210,6 +238,8 @@ async def audio(
             )
         except elevenlabs.SpeechUnavailable as exc:
             raise provider_error(exc) from exc
+        if shared:
+            await voice_assets.put(key, data)
         max_bytes = settings.AUDIO_CACHE_MAX_MB * 1024 * 1024
         while _cache and _cache_bytes + len(data) > max_bytes:
             _, (_, old) = _cache.popitem(last=False)
@@ -241,6 +271,7 @@ async def preview(
             PREVIEW[LANG_INDEX[body.language]],
             {'voice_id': voice_id, **body.model_dump(mode='json')},
             'preview-v1',
+            shared=True,
         )
     )
 
@@ -286,7 +317,15 @@ async def speak(
 ) -> fastapi.Response:
     prefs = await get_preferences(current_user)
     text, version = await resolve(current_user, body, prefs['language'])
-    return binary(await audio(current_user, text, prefs, version))
+    return binary(
+        await audio(
+            current_user,
+            text,
+            prefs,
+            version,
+            shared=body.message_id is None and body.exercise_key is None,
+        )
+    )
 
 
 async def prewarm(

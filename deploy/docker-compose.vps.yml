@@ -21,6 +21,8 @@ services:
     restart: unless-stopped
     env_file:
       - ${RUNTIME_ENV_FILE:-/etc/dungeon-master/runtime.env}
+    volumes:
+      - voice_assets:/var/cache/dungeon-master/voice
     ports:
       - '127.0.0.1:8020:8000'
     command:
@@ -46,6 +48,8 @@ services:
       start_period: 10s
 
 volumes:
+  voice_assets:
+    name: dungeon-master-voice-assets
   postgres_data:
     name: dungeon-master-postgres-data
 
