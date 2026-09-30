@@ -198,3 +198,7 @@ Keep `APP_ENV=development` or explicitly set `ENABLE_DEMO_PERSONAS=true` for syn
 Without a provider the deterministic Sprint 3 plan and stable squat analyzer remain available. Invalid generated declarations get one repair and then manual execution. Raw uploaded files are discarded after text extraction. Camera frames remain local, and no AI call runs during a workout.
 
 [Personalization contract](docs/AI_PERSONALIZATION.md), [MovementSpec](docs/MOVEMENT_SPEC_V1.md), [manual checklist](docs/SPRINT_4A_MANUAL_CHECKLIST.md) and [verification report](docs/SPRINT_4A_REPORT.md) explain the demo and known limits. Swap is unavailable; extra routines use manual timers; one demo set is completed per session. Sprint 4B integrations are intentionally left for later.
+
+For VPS setup and continuous delivery, agents should follow the
+[Sprint 4A VPS/CD guide](docs/VPS_CD_AGENT_GUIDE.md): same-origin API, HTTPS,
+SPA routes, model/WASM delivery, migrations, release artifacts and rollback.

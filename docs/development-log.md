@@ -532,3 +532,14 @@ Routing follow-up verification: 144 frontend tests passed; 87.44% statement/line
 coverage; lint/type-check/instruction checker passed. Production Chrome verified
 root and prefixed deep links, query flags and guarded browser history without
 page errors. Existing result traversal does not enqueue duplicate sync.
+
+## 2026-09-30 — Sprint 4A VPS and CD agent instructions
+
+Added [VPS/CD agent guide](VPS_CD_AGENT_GUIDE.md), linked from README and the
+architecture's deployment section. It describes same-origin root deployment,
+HTTPS/Nginx SPA and asset routing, separate VPS Compose, owned persistent DB,
+AI/demo environment, root artifact rebuild after the existing base smoke build,
+SHA/digest deployment, migration/backup/rollback order and browser acceptance.
+Commands, local links and runtime setting names were reviewed against the repo
+and official infrastructure docs. Server access/CD implementation was not part
+of this documentation task; Nginx/Compose configuration was not run on a VPS.

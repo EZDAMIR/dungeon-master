@@ -199,6 +199,10 @@ The browser does not send:
 
 ## 9. Deployment
 
+Agents configuring the owner's VPS or CD should read
+[the Sprint 4A VPS/CD guide](VPS_CD_AGENT_GUIDE.md) before editing deployment files.
+It describes the target configuration; server setup and CD are not yet implemented.
+
 Recommended deployment split:
 
 - Static frontend on a platform that serves HTTPS.
