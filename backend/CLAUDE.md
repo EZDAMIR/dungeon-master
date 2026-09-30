@@ -14,6 +14,33 @@ Before backend changes, read:
 The existing backend stack and layer rules are fixed. Do not replace them with a
 different architecture.
 
+## Layer instruction map
+
+All nine guides from [fastapi-backend-starter](https://github.com/EZDAMIR/fastapi-backend-starter)
+are copied in full, including every example, at commit
+`304fc54210ccf2b59b11f88916678643e7e704f8`. They are byte-for-byte identical to
+the source files, with the source `src/` paths under this project's `backend/`.
+The [source manifest](docs/starter-instructions.json) records the revision and
+SHA-256 of each guide; automated tests prevent accidental truncation or drift.
+
+| Layer | Guide |
+|---|---|
+| Shared backend rules | [source](src/CLAUDE.md) |
+| Shared API architecture | [API](src/api/CLAUDE.md) |
+| Request/response validation | [schemas](src/api/schemas/CLAUDE.md) |
+| Tables, SQL and atomic persistence | [models](src/api/models/CLAUDE.md) |
+| Business policy and orchestration | [controllers](src/api/controllers/CLAUDE.md) |
+| HTTP wiring and permissions | [endpoints](src/api/v1/endpoints/CLAUDE.md) |
+| Reserved process lifecycle | [services](src/api/services/CLAUDE.md) |
+| Reserved external protocols | [webhooks](src/api/webhooks/CLAUDE.md) |
+| PostgreSQL migrations | [migrations](src/migrations/postgres/CLAUDE.md) |
+
+Read the applicable guide before edits. The Dungeon Master context below extends
+the complete source guides. Example entity names, permissions, upload helpers,
+cursor metadata and worker/scheduler classes illustrate patterns; implement them
+only when an actual capability needs them. `make test` checks the instruction map,
+local links and exact source-file hashes.
+
 ## Dungeon Master backend responsibilities
 
 The backend may own:
@@ -49,7 +76,7 @@ src/api/v1/endpoints/<domain>.py
 tests/test_<domain>.py
 ```
 
-Planned domains:
+Implemented Sprint 3 domains:
 
 - `users`
 - `profiles`
@@ -57,8 +84,10 @@ Planned domains:
 - `training_plans`
 - `workout_sessions`
 - `progress`
-- `integrations`
-- `voice_assets` only when needed
+
+`integrations` and `voice_assets` are deferred to Sprint 4. The existing `ai/`,
+`webhooks/` and `services/` packages are reserved boundaries, not implemented
+provider integrations or worker frameworks. Do not add unused CRUD modules.
 
 Do not create a parallel `repositories/`, `use_cases/`, or generic `services/`
 hierarchy.

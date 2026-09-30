@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/EZDAMIR/fastapi-backend-starter",
+  "revision": "304fc54210ccf2b59b11f88916678643e7e704f8",
+  "files": {
+    "src/CLAUDE.md": "d57ed77aecf38436a8bbadd994f16938d65e22ebe24041e69c9bc95af562292a",
+    "src/api/CLAUDE.md": "71b26aa5f2c98720de12b1a2d58142644c4062eb6a03bceffada4658f600214f",
+    "src/api/controllers/CLAUDE.md": "6b02babbab30a7c96b26e5cc62956febace78dd6bb45dc8ad746782ea9758e1a",
+    "src/api/models/CLAUDE.md": "7e4c0d0fea8b83c493d608c84caa1728cc276584ae9b6c99173688813ed469b1",
+    "src/api/schemas/CLAUDE.md": "df0770a3a7ee5fb8b435f5410e7264f4667297d8df7ef9cd127e74ae2a5e90a3",
+    "src/api/services/CLAUDE.md": "a468a6bd2b1e3007c05b6f512e709bdc863dbb9c8f43f513fd59efc10beed03c",
+    "src/api/v1/endpoints/CLAUDE.md": "60cce2e7d83dbd5192164873f41415131187ec9d51c2581b8e6a0030ccaa3529",
+    "src/api/webhooks/CLAUDE.md": "a6dc1cd5bcce03430e74a97b2f493108c69f62adea0e52d281009b393469f369",
+    "src/migrations/postgres/CLAUDE.md": "3dd5faf72fcd0d942342bfcffa17cbb551dfc7e02963d5dea6beb115f1fb4fa9"
+  }
+}
