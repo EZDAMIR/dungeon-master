@@ -230,3 +230,224 @@ memory with a visible reload-persistence limitation. Guest JWT expiry defaults t
 new guest. Earlier history/pending entries stay with their former identity and
 are never reassigned. No AI, Calendar, ElevenLabs or medical-document flow exists.
 Live acceptance is still required before claiming full Sprint 3 Definition of Done.
+
+## Sprint 3 maintenance — Adapt reference backend instructions (2026-09-30)
+
+### Acceptance criteria completed
+
+Compared the current backend with the local reference repository at
+`/Users/ezdamir/PycharmProjects/template/backend` and the
+`fastapi-backend-starter` skill's archived rules. Restored the six missing layer
+guides referenced by the existing API contract. Each guide describes the actual
+Sprint 3 responsibilities, dependencies and verification rather than introducing
+reference-only capabilities.
+
+- Schemas: strict/bounded inputs, required-nullable fields, full profile updates,
+  enum parity and typed aggregate privacy boundaries.
+- Models: SQLAlchemy Core, primitive results, explicit atomic workflows, guarded
+  ownership/status writes and structured wrapped-constraint translation.
+- Controllers: canonical eligibility and deterministic plan policy, primitive
+  persistence commands and exception/outcome mapping without database context.
+- Endpoints: current guest/public routes, seven permissions, current parameter
+  ordering, limit/offset pagination and accurate response documentation.
+- Services/webhooks: reserved lifecycle/protocol boundaries. No worker framework,
+  calendar, AI, speech or later-sprint runtime capability was added.
+
+The adaptation preserves bounded VARCHAR columns and client UUID defaults in the
+existing schema, rather than converting storage types or requiring a UUID
+extension solely to match reference examples. It does not generate unused CRUD
+for catalog/progress or mutable operations for completed workout results. Existing
+parent/migration contracts, pyproject.toml and main.py were untouched.
+
+### Focused refactoring and files changed
+
+`schemas/fields.py` now makes `fields.Int` strict, rejecting string/float/bool
+coercion while retaining its int4 bounds. Current product requests already use
+their own strict constrained types.
+
+Readiness previously raised a dictionary-valued FastAPI HTTPException, producing
+a nested detail body while OpenAPI documented 500. `exceptions.py`, `responses.py`
+and `v1/endpoints/health.py` now use the existing application exception handler
+for a flat 503 body with detail/database fields, a request ID and matching OpenAPI.
+This intentionally corrects the old nested readiness error shape; clients that
+parsed that shape must read the flat fields. Successful readiness/health behavior
+is preserved.
+
+Added the six `src/api/{schemas,models,controllers,services,webhooks}/CLAUDE.md`
+and `src/api/v1/endpoints/CLAUDE.md` guides, plus the map in `backend/CLAUDE.md`.
+Updated `docs/PROJECT_STRUCTURE.md`, `docs/API_CONTRACT.md`, this log and the
+backend log. `scripts/verify_architecture.py` now requires all layer guides.
+`tests/test_instructions.py` validates navigation links and verifies that removing
+any required guide makes the architecture check fail. Schema/health/error tests
+cover the behavior corrections. Pre-existing Dockerfile/.dockerignore work was
+preserved.
+
+### Tests/checks run and result
+
+- Baseline `make check` and focused schema/health/boundary tests: passed (32 tests).
+- Updated focused schema/health/error/instruction/boundary checks: passed
+  (56 tests, one database case intentionally outside this focused selection).
+- Instruction checks after strengthening missing-guide regression coverage:
+  seven passed.
+- Final `make check`: Ruff format and lint passed.
+- Full `make test` with explicit local application/test URLs on the isolated
+  `dungeon_guidance_test` PostgreSQL cluster at 127.0.0.1:55439: **176 passed**,
+  **99.10% coverage**, original 90% gate retained. Fixtures created a disposable
+  UUID database, applied the complete Alembic chain and passed `alembic check`.
+- `python3 scripts/verify_architecture.py` and `git diff --check`: passed.
+- `docker-compose version`: Compose v2.39.4 is available via the standalone
+  command; `docker-compose config --quiet` passed.
+- `docker build -t dungeon-master-guidance-check .`: unavailable because the
+  configured Docker daemon is not running. Container startup/health verification
+  was consequently not performed.
+
+The sandbox blocked PostgreSQL shared memory/local connections, so database
+verification ran with approved elevated execution. The owned temporary cluster
+was stopped after the suite. No existing application/test database was migrated,
+cleared or dropped. No schema changes or new migrations were required.
+
+### Known limitations and next safe task
+
+Container verification remains pending until Docker is available. Frontend/live
+camera acceptance was not part of this maintenance task and remains pending in
+the existing Sprint 3 checklist. Next safe task: run the Docker build and container
+health checks once the daemon is running, then continue the Sprint 3 manual checks.
+
+## Sprint 3 maintenance correction — Full upstream instruction copies (2026-09-30)
+
+The user clarified that the backend should contain complete starter rules and
+concrete examples, rather than abbreviated project-specific guides. Retrieved
+the source through authenticated GitHub access from
+`https://github.com/EZDAMIR/fastapi-backend-starter` at main revision
+`304fc54210ccf2b59b11f88916678643e7e704f8`. The upstream tree contains nine
+CLAUDE.md files, all mapped to their matching paths under `backend/`.
+
+Replaced the six abbreviated schema/model/controller/endpoint/service/webhook
+guides with byte-for-byte copies, preserving all sections, code examples, tables
+and avoidance examples. Existing `src/CLAUDE.md`, `src/api/CLAUDE.md` and
+`src/migrations/postgres/CLAUDE.md` already matched upstream exactly. The earlier
+adaptation descriptions are historical; the current guides are complete copies.
+Dungeon Master context remains in `backend/CLAUDE.md` rather than rewriting the
+source guides. No additional runtime or schema refactoring was made in this
+correction.
+
+Added `backend/docs/starter-instructions.json` with source repository, revision
+and SHA-256 hashes for all nine files. Verified downloaded contents against
+upstream Git blob IDs, then compared every destination directly with its source.
+Updated `backend/tests/test_instructions.py` to protect all nine exact copies and
+report any missing guide, plus the backend instruction map and project structure
+documentation.
+
+- Focused instruction checks: **11 passed**.
+- `make check`: Ruff formatting and lint passed.
+- `make test` on the owned temporary PostgreSQL cluster: **180 passed**,
+  **99.10% coverage**; the 90% gate is retained. Fresh migration-chain and metadata
+  drift checks passed through the existing fixtures. Temporary server stopped.
+- `python3 scripts/verify_architecture.py`: passed.
+- Direct upstream/destination byte comparison: **9/9 identical**.
+- `git diff --check`: passed.
+
+Container verification remains pending from the preceding maintenance work
+because the Docker daemon is unavailable. Next safe task: use the full folder
+guides for subsequent backend changes; run container checks when Docker is ready.
+
+## Sprint 3 maintenance — Backend refactor against complete rules (2026-09-30)
+
+Acceptance: bring implemented backend capabilities into the copied folder
+conventions while preserving the thirteen API operations, ownership, atomic
+writes, immutable completed results and retry behavior. No later-sprint provider
+or unused CRUD capability was added. All nine upstream guide hashes remain intact.
+
+### Changes
+
+- Models now use TEXT for all eleven former VARCHAR columns. Named SQLAlchemy
+  length checks preserve each original bound and nullable behavior. Generated
+  migration `d14a8a94311f` follows `e2dc2dbe10a5`; reviewed explicit check additions
+  because Alembic does not autogenerate them. Existing revisions remain unchanged
+  and the new downgrade is the required no-op.
+- Profile and set request/response schemas share bases without responses inheriting
+  command schemas. Output strings and counters use strict bounded validation;
+  generic `fields.Dict` rejects non-JSON/nonfinite and oversized values. Shared
+  health/error/caller schemas and pagination counters also reject coercion. Existing
+  workout JSON schemas retain their domain-specific aggregate/privacy validation.
+- Controllers exclude separately handled set exercise/engine fields from the
+  persistence dictionary and pass them as primitive keyword arguments. The model
+  operation retains its transaction and conditional-update retry guarantees.
+  Typed profile-required/session-conflict responses now document existing custom
+  statuses; endpoints and custom responses have purpose/error docstrings.
+- Public implemented schemas/model operations/custom responses are exported from
+  their layer initializers. Ruff's single-import setting enforces the guide and
+  imports/multiline calls were normalized across source and tests. `main.py` changes
+  are imports only; startup design, dependencies and coverage settings are intact.
+- Added `test_backend_contracts.py` and `test_migrations.py`, adjusted direct model
+  tests, and made disposable database creation explicitly UTF8/template0. The
+  initial multibyte-bound tests exposed the temporary cluster's SQL_ASCII default;
+  UTF8 fixtures now verify PostgreSQL character semantics consistently.
+- Updated domain, API, project structure and test documentation. Existing user
+  Dockerfile/.dockerignore edits were preserved.
+
+### Verification
+
+- Focused schema/domain/migration selection: **77 passed**.
+- Final shared-schema/auth/permission regression selection: **55 passed**.
+- `cd backend && make check`: format/lint passed.
+- `cd backend && make test`: **222 passed, 99.22% coverage**, 90% gate retained.
+  Fresh full-chain migration and metadata checks pass; the separate populated
+  upgrade test compares all tables, API responses and identical command retries.
+- OpenAPI comparison against the pre-refactor snapshot: all thirteen operations
+  retain methods, paths, operation IDs, security, parameters, request shapes and
+  response fields. Response bounds/custom error documentation were improved.
+- `python3 scripts/verify_architecture.py`, guide hashes and `git diff --check`:
+  passed. No historical migration or upstream guide was rewritten.
+
+Database verification used approved elevated local execution against the owned
+temporary PostgreSQL cluster at 127.0.0.1:55439. Fixtures created and dropped only
+their own UUID databases. No existing application database was migrated. Apply
+the forward migration with `cd backend && make migrate` to the configured target
+before deploying this code; downgrade is not a rollback strategy. The owned
+temporary server was stopped after verification.
+
+Docker build/container checks remain pending because the configured daemon is
+not running. Browser/camera acceptance remains outside this backend maintenance
+task. Next safe task: apply the migration to the intended development/deployment
+database, then run container checks when Docker is available.
+
+## Sprint 3 maintenance — Apply migration and prepare verified commits (2026-09-30)
+
+The user authorized applying the development migration, committing the completed
+backend work and pushing after CI checks. The configured application target is
+the local development `dungeon_master` database on localhost:5432. Its prior
+revision was `e2dc2dbe10a5`; `cd backend && make migrate` advanced it to
+`d14a8a94311f (head)`. Alembic reports no metadata drift and all eight table row
+counts are unchanged. In-process startup/readiness checks use the migrated
+database without creating application records.
+
+There is no hosted CI workflow in this checkout. Ran the repository's documented
+automated verification before committing:
+
+- Backend `make check`, `make test`, `.venv/bin/alembic check`: **222 passed**,
+  **99.31% coverage**, 90% gate retained, no schema drift. Tests created and
+  removed their owned UUID databases through the configured local test service.
+- Frontend `npm run check:instructions` (43 folders), `npm run test:instructions`
+  (2 checks), `npm run lint`, `npm run type-check`, `npm run test:coverage`:
+  **116 passed**, statements/lines **98.11%**, branches **89.94%**, functions
+  **93.14%**; existing coverage gates remain intact.
+- Root and `/dungeon-master/` production builds pass. Both matching local
+  previews deliver HTML/JS/CSS, both pinned model checksums and all six installed
+  WASM files byte-for-byte. Fake controls are absent from the production bundle.
+  Temporary preview servers were stopped after verification.
+- Backend lifespan, `/api/v1/health`, `/api/v1/ready`, `/docs`, `/openapi.json`,
+  generated/echoed request IDs and flat unauthorized response smoke checks pass.
+- `python3 scripts/verify_architecture.py` and `git diff --check`: passed.
+
+Commit grouping: complete upstream guides/provenance checks; backend convention
+refactor/migration/regression tests; current documentation and verification record.
+The branch is `sprint/core-backend-domains`; its remote was up to date before
+committing. Existing user Dockerfile/.dockerignore edits are kept outside these
+commits. No environment files, secrets, generated assets or database snapshots
+are included.
+
+Docker build/container checks remain unavailable because the configured Docker
+daemon is stopped. No unrelated Colima profile or persistent volume was changed.
+Hosted CI cannot be reported as passed when no workflow exists. Live browser and
+camera acceptance remains separate checklist work.

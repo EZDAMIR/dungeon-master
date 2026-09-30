@@ -4,6 +4,20 @@ The following eight PostgreSQL tables are implemented. SQLAlchemy Core metadata
 is the source of truth; controllers return primitive model data through Pydantic
 response schemas. UUID primary keys and timezone-aware timestamps are used.
 
+Text columns use SQLAlchemy `Text` with named database checks preserving their
+original character limits: email 254, display name 100, locale 35, timezone 100,
+constraint note 500, exercise key 80/name 100, plan rationale 500/generator version
+50, tempo hint 80 and client engine version 50. Check names follow
+`ck_<table>_<column>_length`; nullable values remain nullable. Native enum columns
+retain their existing declarations.
+
+Forward migration `d14a8a94311f` follows `e2dc2dbe10a5`, converts the eleven
+VARCHAR columns to TEXT and adds these checks. Apply it with
+`cd backend && make migrate` before running the updated backend against an
+existing database. Populated-upgrade tests verify every table, API responses and
+session retries survive unchanged. Historical migrations remain intact;
+`downgrade()` is a no-op under the starter's forward-only migration convention.
+
 ## Identity, profile and confirmed constraints
 
 | Table | Persisted fields | Database invariants |

@@ -108,3 +108,78 @@ payload levels and ensure validation responses do not echo submitted data.
 Guest identity has no refresh credential: expiry/401 recovery starts a new guest;
 this demo limitation is documented without broad production-security claims.
 Manual live browser/camera acceptance is not performed.
+
+## Sprint 3 maintenance — Reference instruction adaptation (2026-09-30)
+
+Adapted the reference controller/model/schema/endpoint/service/webhook guides to
+the current backend and linked them from `backend/CLAUDE.md`. Added automated
+guide/link and missing-guide checks. Current SQLAlchemy Core boundaries, atomic
+model operations, guest auth, immutable sessions and deferred integrations remain
+the architectural contract; no schema migrations or new providers were added.
+
+Fixed `fields.Int` strictness and readiness's nested HTTP error/incorrect OpenAPI
+status using the existing flat application error handler and a documented 503.
+Readiness now returns top-level detail/database fields; its previous nested error
+shape is intentionally corrected. Added schema/health/error regression coverage.
+
+`make check` passed. Final `make test`: **176 passed, 99.10% coverage**, including
+fresh migrations and Alembic drift verification on an owned temporary PostgreSQL
+cluster at 127.0.0.1:55439, stopped after testing. Architecture/diff checks and
+standalone Compose configuration validation passed. Docker build/container checks
+remain pending because the configured Docker daemon is unavailable. Existing
+Dockerfile/.dockerignore edits were preserved. Full file/command details and
+limitations are in [the repository log](../../docs/development-log.md).
+
+## Sprint 3 correction — Complete starter rules and examples (2026-09-30)
+
+Replaced the six abbreviated folder guides with complete upstream files from
+`EZDAMIR/fastapi-backend-starter` at revision
+`304fc54210ccf2b59b11f88916678643e7e704f8`. All nine upstream CLAUDE.md files now
+match byte for byte, including all code examples; the three shared/migration
+guides already matched. Project context stays in the backend overview.
+
+`docs/starter-instructions.json` records source hashes, checked automatically by
+`tests/test_instructions.py`. Updated the overview, folder documentation and
+missing-guide regression checks. No additional runtime/schema change was made.
+
+Verification: 11 focused instruction tests; full suite **180 passed**, **99.10%
+coverage**; Ruff, architecture and diff checks passed. Fresh migrations and
+metadata drift passed on the owned temporary PostgreSQL server, stopped after
+testing. All nine source/destination byte comparisons passed. Container checks
+remain pending because the Docker daemon is unavailable.
+
+## Sprint 3 maintenance — Refactor to copied conventions (2026-09-30)
+
+Converted eleven bounded string columns to TEXT with named length checks and
+added reviewed forward migration `d14a8a94311f`. Shared profile/set schema bases,
+strict output/shared schema types, finite bounded JSON, persistence-only set dictionaries,
+typed custom error documentation and public layer exports now follow the copied
+guides. Single-import Ruff enforcement and source formatting preserve runtime
+bootstrap and dependencies; all nine guide hashes are unchanged.
+
+New contract tests verify multibyte storage limits and schema/OpenAPI boundaries.
+The populated migration test verifies all table data, API results and retry
+compatibility. Disposable databases are explicitly UTF8/template0. Verification:
+77 focused checks plus 55 shared-schema/auth/permission checks, full suite
+**222 passed / 99.22% coverage**, Ruff and architecture
+checks passed; the 90% gate is intact. All thirteen API operations retain input
+contracts and response fields. Historical migrations remain unchanged.
+
+No existing application database was migrated; run `make migrate` against the
+configured target before deployment. The owned temporary PostgreSQL server was
+stopped after verification. Docker/container verification remains pending because
+the daemon is unavailable. Full details: [repository log](../../docs/development-log.md).
+
+## Sprint 3 maintenance — Development upgrade and pre-commit checks (2026-09-30)
+
+Applied `make migrate` to the configured local development `dungeon_master`
+database: `e2dc2dbe10a5` → `d14a8a94311f (head)`. All eight table row counts are
+unchanged and `alembic check` reports no drift. Application lifespan/readiness,
+docs/OpenAPI, request IDs and flat unauthorized errors passed against that target.
+
+Before committing, backend check/test passed: **222 tests, 99.31% coverage**.
+Frontend instruction/lint/type/coverage checks passed (116 tests), along with
+both production builds and exact model/WASM delivery through matching previews.
+Root architecture and diff checks passed. No hosted CI workflow exists; Docker
+container checks remain unavailable while the daemon is stopped. Existing user
+Docker edits stay uncommitted. Details: [repository log](../../docs/development-log.md).

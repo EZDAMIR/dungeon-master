@@ -215,10 +215,18 @@ No errors means dominant_error=null. Progress does not expose unnecessary raw me
 
 ## Error and privacy conventions
 
-HTTP errors return `detail`; no-eligible plan adds stable `status`.
+HTTP errors return `detail`. Missing profiles return 404 with
+`status="profile_required"`; no-eligible plans return 409 with
+`status="no_eligible_exercises"`; conflicting session commands return 409 with
+`status="session_conflict"`. OpenAPI documents these same controller-owned typed
+status responses. The backend convention refactor preserves the existing request
+contracts, response fields and status values.
 Validation errors return `detail="Validation error"` and sanitized errors with
 loc/msg/type, never submitted input. Unexpected errors return no internal exception
 body. Request IDs support debugging without logging JWTs, Authorization, profile
 notes or request bodies. SQL parameters are hidden and engine echo is disabled.
-CORS stays configured through the environment. Health/readiness scaffold routes
-remain unchanged. No integration/provider endpoints are implemented in Sprint 3.
+CORS stays configured through the environment. Health/readiness remain public.
+GET `/ready` returns 503 when PostgreSQL is unreachable, with the flat body
+`{"detail":"Database not reachable", "database":"unreachable"}` and a request ID;
+OpenAPI documents that same status and schema. No integration/provider endpoints
+are implemented in Sprint 3.

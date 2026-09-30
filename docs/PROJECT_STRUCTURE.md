@@ -14,6 +14,14 @@ shows capability locations rather than repeating all folder guides. Generated
 dependencies, model/WASM directories and build output do not receive guides.
 Run `cd frontend && npm run check:instructions` to verify coverage and guide links.
 
+All nine backend guides are complete copies of `EZDAMIR/fastapi-backend-starter`
+at revision `304fc54210ccf2b59b11f88916678643e7e704f8`, including the concrete
+examples. Read the instruction map in `backend/CLAUDE.md` and the applicable guide
+before editing that layer. Services and webhooks remain reserved packages.
+`backend/docs/starter-instructions.json` records source hashes; `make test` checks
+all nine exact copies, the map and local links. The root architecture verifier
+requires the guides. Dungeon Master context stays in the backend overview.
+
 The shared camera view is `frontend/src/features/workout/CameraStage.tsx`: it
 composes gesture state and the pose overlay. `shared/components/` keeps the
 callback-driven permission/error views and progress presentation.
@@ -137,12 +145,14 @@ dungeon-master/
 │   │   ├── api/
 │   │   │   ├── CLAUDE.md                  [existing] *
 │   │   │   ├── schemas/
+│   │   │   │   ├── CLAUDE.md              [full upstream guide] *
 │   │   │   │   ├── profiles.py            [sprint 3]
 │   │   │   │   ├── exercises.py           [sprint 3]
 │   │   │   │   ├── training_plans.py      [sprint 3]
 │   │   │   │   ├── workout_sessions.py    [sprint 3]
 │   │   │   │   └── integrations.py        [sprint 4]
 │   │   │   ├── models/
+│   │   │   │   ├── CLAUDE.md              [full upstream guide] *
 │   │   │   │   ├── users.py               [sprint 3]
 │   │   │   │   ├── profiles.py            [sprint 3]
 │   │   │   │   ├── exercises.py           [sprint 3]
@@ -150,18 +160,24 @@ dungeon-master/
 │   │   │   │   ├── workout_sessions.py    [sprint 3]
 │   │   │   │   └── integrations.py        [sprint 4]
 │   │   │   ├── controllers/
+│   │   │   │   ├── CLAUDE.md              [full upstream guide] *
 │   │   │   │   ├── profiles.py            [sprint 3]
 │   │   │   │   ├── training_plans.py      [sprint 3]
 │   │   │   │   ├── workout_sessions.py    [sprint 3]
 │   │   │   │   └── integrations.py        [sprint 4]
 │   │   │   ├── v1/endpoints/
+│   │   │   │   ├── CLAUDE.md              [full upstream guide] *
 │   │   │   │   ├── profiles.py            [sprint 3]
 │   │   │   │   ├── exercises.py           [sprint 3]
 │   │   │   │   ├── training_plans.py      [sprint 3]
 │   │   │   │   ├── workout_sessions.py    [sprint 3]
 │   │   │   │   └── integrations.py        [sprint 4]
+│   │   │   ├── services/
+│   │   │   │   ├── CLAUDE.md              [full upstream guide] *
+│   │   │   │   └── __init__.py            [reserved process boundary]
 │   │   │   └── webhooks/
-│   │   │       └── google_calendar.py      [sprint 4]
+│   │   │       ├── CLAUDE.md              [full upstream guide] *
+│   │   │       └── google_calendar.py     [sprint 4]
 │   │   └── migrations/postgres/
 │   │       ├── CLAUDE.md                  [existing] *
 │   │       └── versions/                  [created by first domain migration]
@@ -191,9 +207,12 @@ The existing flat backend layers now each contain users, profiles, exercises,
 training_plans, workout_sessions and progress domain modules. HTTP modules are
 `v1/endpoints/auth.py`, `profile.py`, `exercises.py`, `training_plans.py`,
 `workout_sessions.py`, `progress.py`; all are registered in the existing router.
-Five generated migrations under `backend/src/migrations/postgres/versions/`
-create eight tables and seed only the supported squat. Flat `backend/tests/`
-files cover each domain plus the permission/privacy/layer boundary matrix.
+Six migrations under `backend/src/migrations/postgres/versions/` create eight
+tables, seed only the supported squat and convert bounded strings to TEXT with
+explicit length checks. Flat `backend/tests/` files cover each domain plus the
+permission/privacy/layer boundary matrix. `test_backend_contracts.py` verifies
+schema boundaries, typed error documentation and all eleven database text limits;
+`test_migrations.py` verifies a populated forward upgrade and retry compatibility.
 
 Frontend additions use existing folders rather than a new state framework:
 

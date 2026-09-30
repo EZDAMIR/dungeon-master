@@ -155,7 +155,7 @@ Frontend tests mock fetch/storage rather than camera or real DB. They cover:
   all API calls failing. Backend state never clears the workout result.
 - Banner live region/style classes and retention after a short semantic error.
 
-Current results: 161 backend tests, 99.19% coverage; 116 frontend tests, statements/
+Initial Sprint 3 results: 161 backend tests, 99.19% coverage; 116 frontend tests, statements/
 lines 98.11%, branches 89.96%, functions 93.14%. Coverage configuration and strict
 TypeScript were not weakened. Root and /dungeon-master/ production builds, matching
 preview, both model checksums and all six installed WASM byte comparisons are
@@ -166,3 +166,26 @@ Manual boundary: [Sprint 3 checklist](SPRINT_3_MANUAL_CHECKLIST.md) remains **no
 performed**. Automated synthetic/mocked scenarios do not prove camera accuracy,
 distance readability, real gesture UI operation or live reconnection. Record only
 aggregate observations, never tokens, camera recordings or personal health notes.
+
+## Sprint 3 backend convention refactor verification
+
+The backend suite now contains 222 tests and retains the 90% coverage gate.
+Regression checks cover request/response base separation, persistence-only
+controller dumps, strict response counters, finite size-bounded generic JSON and
+typed OpenAPI errors. Shared health/error responses, caller claim fields and
+pagination counters also reject coercion. All eleven TEXT limits accept a multibyte string at the
+boundary, reject an extra character through the named database check and retain
+nullable values and rollback behavior.
+
+Disposable databases use `template0` with explicit UTF8 encoding so these tests
+exercise character limits independently of the local cluster's default encoding.
+The populated migration test creates a separate owned database, applies the prior
+head, saves a profile/plan/completed session, then upgrades to the new head and
+runs `alembic check`. It compares all table contents and API responses and retries
+session start, set submission and completion after the upgrade. Both database
+fixtures drop only the UUID databases they created.
+
+Final refactor results: 222 passed, 99.22% backend coverage. Ruff formatting/lint,
+architecture verification and instruction-source hash checks also pass. All
+thirteen API operations retain their request contracts and response fields;
+response validation bounds and custom error schemas are more explicit.
