@@ -1,10 +1,12 @@
 PYTHON ?= python3
 NPM ?= npm
 RUFF ?= backend/.venv/bin/ruff
+VPS_SSH ?= backend-hr
 
 .DEFAULT_GOAL := help
 .PHONY: help fix format check check-architecture check-automation check-backend check-frontend ci ci-backend ci-frontend ci-docker
 .PHONY: smoke-tests smoke-tests-frontend smoke-tests-docker
+.PHONY: release deploy check-deploy vps-status vps-logs
 
 help:
 	@echo 'make fix          Format Python and apply frontend lint fixes'
@@ -15,6 +17,11 @@ help:
 	@echo 'make ci-frontend  Run frontend checks, tests and both production builds'
 	@echo 'make ci-docker    Build and smoke-test an isolated Docker stack'
 	@echo 'make smoke-tests  Run frontend and Docker smoke tests'
+	@echo 'make release      Build and publish a SHA-pinned VPS release (CD)'
+	@echo 'make deploy       Deploy the built release over verified SSH (CD)'
+	@echo 'make check-deploy Check deployment scripts and regression tests'
+	@echo 'make vps-status   Show only Dungeon Master services on the VPS'
+	@echo 'make vps-logs     Follow only Dungeon Master backend logs'
 
 fix:
 	$(MAKE) -C backend format
@@ -33,6 +40,9 @@ check-automation:
 	$(RUFF) check --select E,F,I,UP,B,SIM --ignore E501 --target-version py312 scripts/
 	$(RUFF) format --check --config 'line-length = 95' --config 'format.quote-style = "double"' scripts/
 	bash -n scripts/check-docker.sh
+	@for script in scripts/build-release.sh scripts/deploy-ssh.sh deploy/*.sh; do bash -n "$$script" || exit; done
+	$(RUFF) check --select E,F,I,UP,B,SIM --ignore E501 --target-version py312 deploy/*.py
+	$(RUFF) format --check --config 'line-length = 95' --config 'format.quote-style = "double"' deploy/*.py
 
 check-backend:
 	$(MAKE) -C backend check
@@ -65,3 +75,19 @@ ci-docker: smoke-tests-docker
 
 smoke-tests-docker:
 	bash scripts/check-docker.sh
+
+release:
+	bash scripts/build-release.sh
+
+deploy:
+	bash scripts/deploy-ssh.sh
+
+check-deploy: check-automation
+	$(PYTHON) -m unittest discover -s scripts -p 'test_deploy*.py'
+	node --check scripts/check_deployed_browser.cjs
+
+vps-status:
+	ssh "$(VPS_SSH)" 'make -C /srv/dungeon-master/backend status'
+
+vps-logs:
+	ssh "$(VPS_SSH)" 'make -C /srv/dungeon-master/backend logs'

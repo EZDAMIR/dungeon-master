@@ -37,6 +37,12 @@ asset delivery; its regression tests cover SPA fallbacks and incorrect builds.
 `scripts/check-docker.sh` owns the ephemeral stack described by
 `backend/docker-compose.ci.yml` and always cleans up its own project/volume.
 
+`.github/workflows/cd.yml` deploys successfully tested `main` SHAs. `deploy/`
+contains the isolated VPS Compose, Nginx/setup templates, deployment state and
+public release checker. Root scripts validate CI trust, build release bundles,
+transfer them over verified SSH and run Chromium smoke. `make release`, `deploy`,
+`check-deploy`, `vps-status` and `vps-logs` expose those operations.
+
 The shared camera view is `frontend/src/features/workout/CameraStage.tsx`: it
 composes gesture state and the pose overlay. `shared/components/` keeps the
 callback-driven permission/error views and progress presentation.

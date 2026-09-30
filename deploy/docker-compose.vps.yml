@@ -1,0 +1,58 @@
+name: dungeon-master
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in runtime.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in runtime.env}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in runtime.env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    image: ${BACKEND_IMAGE:?Set the immutable backend image digest}
+    restart: unless-stopped
+    env_file:
+      - ${RUNTIME_ENV_FILE:-/etc/dungeon-master/runtime.env}
+    ports:
+      - '127.0.0.1:8020:8000'
+    command:
+      - uvicorn
+      - src.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8000'
+      - --workers
+      - '2'
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - '172.30.80.1'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8000/api/v1/ready']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    name: dungeon-master-postgres-data
+
+networks:
+  default:
+    name: dungeon-master-private
+    ipam:
+      config:
+        - subnet: 172.30.80.0/24
+          gateway: 172.30.80.1

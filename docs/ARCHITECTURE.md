@@ -201,7 +201,9 @@ The browser does not send:
 
 Agents configuring the owner's VPS or CD should read
 [the Sprint 4A VPS/CD guide](VPS_CD_AGENT_GUIDE.md) before editing deployment files.
-It describes the target configuration; server setup and CD are not yet implemented.
+The implemented [deployment workflow and operations](../deploy/README.md) use
+same-origin HTTPS/Nginx, an isolated production Compose project and SHA/digest
+release verification. Backend binds localhost port 8020 on the shared VPS.
 
 Recommended deployment split:
 

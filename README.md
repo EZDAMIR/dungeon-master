@@ -202,3 +202,9 @@ Without a provider the deterministic Sprint 3 plan and stable squat analyzer rem
 For VPS setup and continuous delivery, agents should follow the
 [Sprint 4A VPS/CD guide](docs/VPS_CD_AGENT_GUIDE.md): same-origin API, HTTPS,
 SPA routes, model/WASM delivery, migrations, release artifacts and rollback.
+
+GitHub Actions now deploys successful `main` CI releases to
+[Dungeon Master](https://dungeon-master.helpmake-id.live), using the existing
+`SERVER_IP` and `SERVER_KEY` secrets. [Deployment operations](deploy/README.md)
+documents setup, manual reruns, failure handling and configuration.
+Use `make check-deploy`, `make vps-status` and `make vps-logs` to maintain it.

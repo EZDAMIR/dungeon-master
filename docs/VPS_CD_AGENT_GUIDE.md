@@ -1,9 +1,16 @@
 # Sprint 4A — инструкция агентам по VPS и CD
 
+Реализация CD и актуальные команды: [deployment operations](../deploy/README.md).
+Владелец разрешил автоматический deploy `main` после CI на
+`dungeon-master.helpmake-id.live` через `ssh backend-hr`. На общем VPS backend
+использует `127.0.0.1:8020`, чтобы не занимать порт существующего HR virtual host.
+GitHub secrets: `SERVER_IP` / `SERVER_KEY`; остальные SSH/HTTPS настройки — variables.
+Registry pull использует временный read-only job token. Ниже сохранены исходные
+требования; примеры с портом 8000 адаптировать к фактическому 8020.
+
 Целевое размещение Dungeon Master: собственный VPS, один домен, HTTPS,
 Nginx для frontend и reverse proxy, FastAPI в Docker, PostgreSQL в постоянном
-volume. Это руководство для будущей настройки. Оно само не подключает CD и не
-означает, что сервер уже настроен. Sprint 4B не входит в эту работу.
+volume. Sprint 4B не входит в эту работу.
 
 ## 1. Прочитать и проверить до изменений
 

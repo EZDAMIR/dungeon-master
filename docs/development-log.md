@@ -600,3 +600,35 @@ configuration during assigned deployment tasks without asking again solely
 because secrets are present. Added the authorization to root AGENTS.md and the
 VPS/CD guide, with server adaptation and private runtime file handling. No real
 .env was read, copied or deployed by this documentation change.
+
+## 2026-09-30 — Sprint 4A deployment follow-up: GitHub Actions CD
+
+The owner authorized automatic `main` deployments and isolated setup on
+`backend-hr` at `dungeon-master.helpmake-id.live`, preserving every existing
+project. Added a separate CD workflow, exact-SHA CI trust gate, matching
+GHCR digest/frontend bundle, verified SSH transport, backup/restore verification,
+forward migration/drift/readiness checks, atomic frontend publication, retained
+hashed assets and public HTTP/Chromium smoke. Success is recorded only after
+all checks; failures restore the previous frontend and require explicit schema
+compatibility review before a backend rollback.
+
+Root Make commands expose release/deploy checks and VPS status/logs. A server
+Makefile provides owned service status/logs/backups. Added production Compose,
+Nginx, private runtime example, additive setup and operator documentation.
+The backend/application architecture and dependencies remain unchanged.
+
+Prepared the VPS with a new Nginx virtual host, Let's Encrypt certificate,
+dedicated renewal timer and generated stable mode-600 runtime environment.
+Reserved localhost port 8020, Docker subnet 172.30.80.0/24 and a separate
+PostgreSQL volume. Existing project containers and both helpmake endpoints
+remain available. Configured GitHub's main-only production Environment and
+public SSH/origin variables, reusing SERVER_IP/SERVER_KEY and an ephemeral
+packages-read job token.
+
+Local verification: 14 deployment regression tests plus five existing HTTP
+asset tests; 144 frontend tests at 87.44% coverage; instruction/lint/type checks;
+root and prefixed production builds with model/WASM checks; backend style,
+architecture, actionlint and git diff checks. Full database/Docker checks and
+the first production release are verified by hosted CI/CD after publication.
+Actual webcam/phone and physical-distance testing remain manual. Backup copies
+and retained release files need an owner-selected long-term retention policy.
