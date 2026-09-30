@@ -5,6 +5,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { App } from "../App";
+import { GestureStore } from '../../features/gesture-navigation/gestureStore';
+import { inputPreferences } from '../../features/input-settings/preferences';
 import { RealVisionSource } from '../../features/workout/RealVisionSource';
 let root: Root, container: HTMLDivElement, time: number, backend: BackendStore;
 beforeEach(() => {
@@ -79,11 +81,21 @@ async function traverseHistory(direction: "back" | "forward") {
 }
 it('keeps the started camera and swipe instructions across planning routes, then disposes on unmount', () => {
   window.history.replaceState({}, '', '/context');
+  let store: GestureStore | null = null;
+  const connect = GestureStore.prototype.connect;
+  vi.spyOn(GestureStore.prototype, 'connect').mockImplementation(function (this: GestureStore, callback) {
+    store = this;
+    connect.call(this, callback);
+  });
+  const previousPreferences = inputPreferences.getSnapshot().preferences;
   const start = vi.spyOn(RealVisionSource.prototype, 'start').mockResolvedValue();
   const dispose = vi.spyOn(RealVisionSource.prototype, 'dispose');
   act(() => root.render(<App backend={backend} />));
   expect(start).not.toHaveBeenCalled();
-  click('Включить камеру', 0);
+  const modalButton = (name: string) => [...document.querySelectorAll<HTMLButtonElement>('[role=dialog] button')].find(button => button.textContent === name)!;
+  act(() => modalButton('Включить управление руками').click());
+  act(() => { store!.emit({type:'camera.ready', at:0}); store!.emit({type:'tracking.acquired', at:1, target:'hand'}); });
+  act(() => modalButton('Готово — управлять руками').click());
   const video = container.querySelector('video');
   expect(start).toHaveBeenCalledOnce();
   dispose.mockClear();
@@ -96,6 +108,7 @@ it('keeps the started camera and swipe instructions across planning routes, then
   act(() => root.unmount());
   expect(dispose).toHaveBeenCalledOnce();
   root = createRoot(container);
+  inputPreferences.set(previousPreferences);
 });
 it('scrolls planning screens through fake swipe events and shows recognized direction', () => {
   window.history.replaceState({}, '', '/plan?fakeVision=1');
