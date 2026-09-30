@@ -102,7 +102,9 @@ export class GestureStore {
         break
       }
     }
+    const targetMode=this.mode
     const state = this.onEvent(event,tutorial)
     if (state) this.setAppState(state)
+    if(event.type==='gesture.confirmed' && event.command==='select' && event.targetId && (['PROFILE','PLAN','PROGRESS'].includes(targetMode) || (targetMode==='RESULTS' && event.targetId==='results-sync')))this.registry.activate(event.targetId)
   }
 }

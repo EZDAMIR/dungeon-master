@@ -2,7 +2,7 @@ import type { CalibrationProfile, CalibrationIssue, PoseSide } from '../vision/p
 import type { RepResult, SquatPhase, TechniqueErrorCode, WorkoutResult } from '../vision/exercises/squat/types'
 import type { VisionEvent } from '../types/vision'
 export type { WorkoutResult } from '../vision/exercises/squat/types'
-export type AppMode = 'CAMERA_PERMISSION'|'TUTORIAL'|'MENU'|'CALIBRATION'|'COUNTDOWN'|'WORKOUT'|'PAUSED'|'RESULTS'
+export type AppMode = 'CAMERA_PERMISSION'|'TUTORIAL'|'MENU'|'CALIBRATION'|'COUNTDOWN'|'WORKOUT'|'PAUSED'|'RESULTS'|'PROFILE'|'PLAN'|'PROGRESS'
 export type WorkoutView = {
  profile:CalibrationProfile|null;progress:number;ready:boolean;issue:CalibrationIssue|null;activeSide:PoseSide|null
  positive:boolean;tracked:boolean;phase:SquatPhase;reps:readonly RepResult[];feedback:{code:TechniqueErrorCode;message:string}|null;countdown:number
@@ -13,14 +13,16 @@ export type AppAction =
  | {type:'CONFIRM_SELECTION'} | {type:'BACK'} | {type:'CALIBRATION_READY';profile:CalibrationProfile}
  | {type:'CALIBRATION_LOST'} | {type:'COUNTDOWN_DONE'} | {type:'PAUSE'} | {type:'RESUME'}
  | {type:'WORKOUT_DONE';result:WorkoutResult} | {type:'RESTART'} | {type:'REPEAT'} | {type:'MENU'}
+ | {type:'OPEN_PROFILE'} | {type:'OPEN_PLAN'} | {type:'OPEN_PROGRESS'}
  | {type:'POSE_EVENT';event:VisionEvent}
 export type AppState = {mode:AppMode;selectedWorkoutId:string|null;workoutResult:WorkoutResult|null;workout:WorkoutView}
 export const INITIAL_STATE:AppState = {mode:'CAMERA_PERMISSION',selectedWorkoutId:null,workoutResult:null,workout:emptyWorkout()}
 const TRANSITIONS:Record<AppMode,Partial<Record<AppAction['type'],AppMode>>>={
- CAMERA_PERMISSION:{CAMERA_READY:'TUTORIAL'},TUTORIAL:{TUTORIAL_DONE:'MENU'},MENU:{CONFIRM_SELECTION:'CALIBRATION',BACK:'TUTORIAL'},
+ CAMERA_PERMISSION:{CAMERA_READY:'TUTORIAL'},TUTORIAL:{TUTORIAL_DONE:'MENU'},MENU:{CONFIRM_SELECTION:'CALIBRATION',BACK:'TUTORIAL',OPEN_PROFILE:'PROFILE',OPEN_PLAN:'PLAN',OPEN_PROGRESS:'PROGRESS'},
  CALIBRATION:{CALIBRATION_READY:'COUNTDOWN',BACK:'MENU'},COUNTDOWN:{COUNTDOWN_DONE:'WORKOUT',CALIBRATION_LOST:'CALIBRATION'},
  WORKOUT:{PAUSE:'PAUSED',WORKOUT_DONE:'RESULTS',CALIBRATION_LOST:'CALIBRATION'},PAUSED:{RESUME:'WORKOUT',CALIBRATION_LOST:'CALIBRATION'},
  RESULTS:{RESTART:'TUTORIAL',REPEAT:'CALIBRATION',MENU:'MENU'},
+ PROFILE:{BACK:'MENU'},PLAN:{BACK:'MENU',OPEN_PROFILE:'PROFILE'},PROGRESS:{BACK:'MENU'},
 }
 export function transition(mode:AppMode,action:AppAction['type'],selectedWorkoutId:string|null=null):AppMode{
  if(action==='CAMERA_RETRY')return 'CAMERA_PERMISSION'
@@ -42,7 +44,7 @@ function poseEvent(view:WorkoutView,event:VisionEvent):WorkoutView{
  }
 }
 export function appReducer(state:AppState,action:AppAction):AppState{
- if(action.type==='SELECT_WORKOUT')return state.mode==='MENU' && action.workoutId==='bodyweight-squat' ? {...state,selectedWorkoutId:action.workoutId} : state
+ if(action.type==='SELECT_WORKOUT')return state.mode==='MENU' && ['bodyweight-squat','planned-squat'].includes(action.workoutId) ? {...state,selectedWorkoutId:action.workoutId} : state
  if(action.type==='POSE_EVENT'){
   if(!['CALIBRATION','COUNTDOWN','WORKOUT','PAUSED'].includes(state.mode))return state
   const workout=poseEvent(state.workout,action.event);return workout===state.workout ? state : {...state,workout}

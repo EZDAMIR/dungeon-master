@@ -1,12 +1,13 @@
 export class GestureTargetRegistry {
-  private targets = new Map<string, { element: HTMLButtonElement; rect: DOMRect }>()
-  register(id: string, element: HTMLButtonElement) {
+  private targets = new Map<string, { element: HTMLButtonElement; rect: DOMRect; onSelect?:()=>void }>()
+  register(id: string, element: HTMLButtonElement, onSelect?:()=>void) {
     if (this.targets.has(id)) throw new Error(`Duplicate gesture target: ${id}`)
-    this.targets.set(id,{element,rect:element.getBoundingClientRect()})
+    this.targets.set(id,{element,rect:element.getBoundingClientRect(),onSelect})
     const observer = new ResizeObserver(() => this.refresh())
     observer.observe(element)
     return () => { observer.disconnect(); this.targets.delete(id) }
   }
+  activate(id:string) {const target=this.targets.get(id);if(target?.element.isConnected && !target.element.disabled)target.onSelect?.()}
   refresh() { for (const target of this.targets.values()) target.rect = target.element.getBoundingClientRect() }
   resolve(x: number, y: number): string | null {
     // Current rects also cover scroll, fonts, animations and layout shifts without a DOM query.

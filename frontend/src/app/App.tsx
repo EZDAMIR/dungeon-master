@@ -1,3 +1,11 @@
+import { backendStore, type BackendStore } from '../store/backend'
+import { useBackend } from './useBackend'
+import type { SessionCreate } from '../api/types'
+import { meanMinKneeAngle } from '../features/results/sessionAggregate'
+import { BackendBadge } from '../shared/components/BackendBadge'
+import { ProfilePage } from '../pages/ProfilePage'
+import { PlanPage } from '../pages/PlanPage'
+import { ProgressPage } from '../pages/ProgressPage'
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
 import { appReducer, INITIAL_STATE, type AppAction } from './modes'
 import { mapVisionEvent } from './visionEventMapper'
@@ -48,13 +56,32 @@ function CameraExperience({fake,audio,state}:{fake:boolean;audio:WorkoutAudio;st
     {!poseStage(state.mode) && <><GestureHud /><GestureCursor /></>}
   </>
 }
-export function App() {
+export function App({backend=backendStore}:{backend?:BackendStore}) {
+  const remote=useBackend(backend)
+  const session=useRef<SessionCreate|null>(null)
+  const [sessionId,setSessionId]=useState<string|null>(null)
+  const pendingResult=useRef<{start:SessionCreate;result:NonNullable<AppState['workoutResult']>;angle:number}|null>(null)
   const [state,dispatch]=useReducer(appReducer,INITIAL_STATE)
   const current=useRef(state)
   const [audio]=useState(()=>new WorkoutAudio())
   const fake=fakeVisionEnabled(import.meta.env.DEV,window.location.search)
   useEffect(()=>()=>audio.close(),[audio])
-  const send=useCallback((action:AppAction)=>{current.current=appReducer(current.current,action);dispatch(action)},[])
+  const send=useCallback((action:AppAction)=>{
+    const before=current.current
+    if(action.type==='CONFIRM_SELECTION' && before.selectedWorkoutId==='planned-squat' && !backend.getSnapshot().plan)return
+    const next=appReducer(before,action)
+    current.current=next;dispatch(action)
+    if(next.mode==='WORKOUT' && before.mode==='COUNTDOWN' && !session.current){session.current=backend.startWorkout(before.selectedWorkoutId==='planned-squat' ? backend.getSnapshot().plan?.id ?? null : null);setSessionId(session.current.client_session_id)}
+    if(action.type==='WORKOUT_DONE' && before.mode==='WORKOUT'){
+      const start=session.current ?? backend.startWorkout(null)
+      setSessionId(start.client_session_id)
+      pendingResult.current={start,result:action.result,angle:meanMinKneeAngle(before.workout.reps)}
+    }
+    if(action.type==='REPEAT' || next.mode==='MENU' || next.mode==='TUTORIAL')session.current=null
+  },[backend])
+  useEffect(()=>{
+    if(state.mode==='RESULTS' && pendingResult.current){const result=pendingResult.current;pendingResult.current=null;backend.recordWorkout(result.start,result.result,result.angle)}
+  },[state.mode,state.workoutResult,backend])
   const onEvent=useCallback((event:VisionEvent,tutorial:TutorialState)=>{
     const action=mapVisionEvent(event,current.current,tutorial)
     if(action) send(action)
@@ -63,15 +90,18 @@ export function App() {
   },[send,audio])
   const storePause=(type:'workout.paused'|'workout.resumed')=>onEvent({type,at:performance.now()},{step:0,handFound:false,handSince:null})
   return <GestureNavigationProvider state={state} onEvent={onEvent}>
-    <div className="app-shell"><header><strong>Dungeon Master</strong><code>{state.mode}</code></header>
+    <div className="app-shell"><header><strong>Dungeon Master</strong><code>{state.mode}</code><BackendBadge status={remote.status} pending={remote.pendingCount}/></header>
       <div className="experience"><div className="camera-column"><CameraExperience fake={fake} audio={audio} state={state} /></div>
         <main>
           {state.mode==='TUTORIAL' && <TutorialPage onDone={()=>send({type:'TUTORIAL_DONE'})} />}
-          {state.mode==='MENU' && <MenuPage selectedWorkoutId={state.selectedWorkoutId} onSelect={()=>send({type:'SELECT_WORKOUT',workoutId:'bodyweight-squat'})} onConfirm={()=>send({type:'CONFIRM_SELECTION'})} onBack={()=>send({type:'BACK'})} />}
+          {state.mode==='MENU' && <MenuPage selectedWorkoutId={state.selectedWorkoutId} onSelect={()=>send({type:'SELECT_WORKOUT',workoutId:'bodyweight-squat'})} onConfirm={()=>send({type:'CONFIRM_SELECTION'})} onBack={()=>send({type:'BACK'})} onProfile={()=>send({type:'OPEN_PROFILE'})} onPlan={()=>send({type:'OPEN_PLAN'})} onProgress={()=>send({type:'OPEN_PROGRESS'})} plan={remote.plan} planMessage={remote.planMessage} onSelectPlan={()=>send({type:'SELECT_WORKOUT',workoutId:'planned-squat'})} timezone={remote.profile.timezone} />}
+          {state.mode==='PROFILE' && <ProfilePage profile={remote.profile} message={remote.profileMessage} onSave={profile=>backend.saveProfile(profile)} onBack={()=>send({type:'BACK'})}/>}
+          {state.mode==='PLAN' && <PlanPage plan={remote.plan} message={remote.planMessage} onGenerate={()=>backend.generate()} onProfile={()=>send({type:'OPEN_PROFILE'})} onBack={()=>send({type:'BACK'})}/>}
+          {state.mode==='PROGRESS' && <ProgressPage progress={remote.progress} cached={remote.cachedProgress} pending={remote.pendingCount} onRetry={()=>{void backend.retry()}} onBack={()=>send({type:'BACK'})}/>}
           {state.mode==='CALIBRATION' && <CalibrationPage view={state.workout} onBack={()=>send({type:'BACK'})} />}
           {state.mode==='COUNTDOWN' && <CountdownPage count={state.workout.countdown} />}
           {(state.mode==='WORKOUT'||state.mode==='PAUSED') && <WorkoutPage view={state.workout} paused={state.mode==='PAUSED'} onPause={()=>storePause('workout.paused')} onResume={()=>storePause('workout.resumed')} />}
-          {state.mode==='RESULTS' && state.workoutResult && <ResultsPage result={state.workoutResult} onRepeat={()=>send({type:'REPEAT'})} onMenu={()=>send({type:'MENU'})} />}
+          {state.mode==='RESULTS' && state.workoutResult && <ResultsPage result={state.workoutResult} onRepeat={()=>send({type:'REPEAT'})} onMenu={()=>send({type:'MENU'})} syncMessage={remote.syncMessage.startsWith('Результат') ? remote.syncMessage : remote.lastSavedClientId===sessionId ? 'Сохранено' : remote.pendingCount ? remote.status==='syncing' ? 'Прогресс сохраняется' : 'Ожидает синхронизации' : remote.syncMessage} onRetry={()=>{void backend.retry()}} />}
         </main>
       </div>
       <footer className="privacy-notice">Видео обрабатывается локально. Кадры не отправляются, запись камеры не ведётся. Общая fitness feedback не заменяет тренера или врача.</footer>

@@ -4,7 +4,7 @@ export function GestureTarget({id,selected=false,disabled=false,onSelect,childre
   const ref = useRef<HTMLButtonElement>(null)
   const store = useGestureStore()
   const snapshot = useGestureSnapshot()
-  useEffect(() => ref.current ? store.registry.register(id,ref.current) : undefined,[id,store])
+  useEffect(() => ref.current ? store.registry.register(id,ref.current,onSelect) : undefined,[id,store,onSelect])
   const focused = snapshot.focused === id
   const confirmed = selected && snapshot.lastCommand === 'confirm'
   const candidate = focused && snapshot.candidate === 'select' ? 'pinch-candidate' : selected && snapshot.candidate === 'confirm' ? 'confirm-candidate' : ''

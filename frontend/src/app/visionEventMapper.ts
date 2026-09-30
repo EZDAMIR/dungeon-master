@@ -14,8 +14,12 @@ export function mapVisionEvent(event: VisionEvent, state: AppState, tutorial: Tu
   if(event.type.startsWith('pose.') || event.type.startsWith('calibration.') || event.type.startsWith('workout.'))return {type:'POSE_EVENT',event}
   if (event.type !== 'gesture.confirmed') return null
   if (state.mode === 'TUTORIAL') return tutorial.step === 5 && event.command === 'confirm' ? { type: 'TUTORIAL_DONE' } : null
+  if (['PROFILE','PLAN','PROGRESS'].includes(state.mode) && event.command==='back') return {type:'BACK'}
   if (state.mode === 'MENU') {
-    if (event.command === 'select' && event.targetId === 'bodyweight-squat') return { type: 'SELECT_WORKOUT', workoutId: event.targetId }
+    if(event.command==='select' && event.targetId==='open-profile')return {type:'OPEN_PROFILE'}
+    if(event.command==='select' && event.targetId==='open-plan')return {type:'OPEN_PLAN'}
+    if(event.command==='select' && event.targetId==='open-progress')return {type:'OPEN_PROGRESS'}
+    if (event.command === 'select' && (event.targetId === 'bodyweight-squat' || event.targetId==='planned-squat')) return { type: 'SELECT_WORKOUT', workoutId: event.targetId }
     if (event.command === 'back') return { type: 'BACK' }
     if (event.command === 'confirm' && state.selectedWorkoutId) return { type: 'CONFIRM_SELECTION' }
   }

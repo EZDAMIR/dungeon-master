@@ -1,8 +1,8 @@
 import type { WorkoutResult } from '../app/modes'
 import { recommendation } from '../vision/exercises/squat/resultBuilder'
 import { GestureTarget } from '../features/gesture-navigation/GestureTarget'
-export function ResultsPage({result,onRepeat,onMenu}:{result:WorkoutResult;onRepeat:()=>void;onMenu:()=>void}){
- return <section><h2>Подход завершён</h2><table><tbody>
+export function ResultsPage({result,onRepeat,onMenu,syncMessage,onRetry}:{result:WorkoutResult;onRepeat:()=>void;onMenu:()=>void;syncMessage:string;onRetry:()=>void}){
+ return <section className="results-page"><h2>Подход завершён</h2><table><tbody>
   <tr><th>Всего повторений</th><td>{result.totalReps} / {result.targetReps}</td></tr>
   <tr><th>Корректные повторения</th><td>{result.acceptedReps}</td></tr>
   <tr><th>Повторения с ошибками</th><td>{result.rejectedReps}</td></tr>
@@ -12,7 +12,11 @@ export function ResultsPage({result,onRepeat,onMenu}:{result:WorkoutResult;onRep
   <tr><th>Неполное выпрямление</th><td>{result.errorCounts.incomplete_extension}</td></tr>
   <tr><th>Среднее время повторения</th><td>{(result.meanRepDurationMs/1000).toFixed(1)} с</td></tr>
  </tbody></table><p className="instruction">{recommendation(result)}</p>
+ <p role="status" aria-live="polite">{syncMessage}</p>
+ <div className="results-actions">
+ <GestureTarget id="results-sync" onSelect={onRetry}>Повторить синхронизацию</GestureTarget>
  <GestureTarget id="repeat-squat" onSelect={onRepeat}>Повторить подход</GestureTarget>
  <GestureTarget id="results-menu" onSelect={onMenu}>Вернуться в меню</GestureTarget>
+ </div>
  <p>👍 Повторить подход · ✊ Вернуться в меню · или выбери кнопку щипком.</p></section>
 }

@@ -166,3 +166,20 @@ table {width:100%;margin:1rem 0;border-collapse:collapse}th,td {padding:.5rem;te
 .feedback-error {background:#620d18;border-color:#ff9baa}
 @media(max-width:720px) {.workout-feedback-banner {top:.5rem;padding:.75rem;min-height:6rem}}
 @media(prefers-reduced-motion:reduce) {.workout-feedback-banner {animation:none;transition:none}}
+/* Sprint 3 durable data controls stay below workout and gesture overlays. */
+.backend-badge {font-size:.8rem;padding:.3rem .7rem;border:1px solid var(--border);border-radius:1rem;background:var(--code-bg)}
+.backend-offline,.backend-error {color:#a32d16}
+.menu-backend {display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.menu-backend .gesture-target,.backend-page .gesture-target {min-width:0;min-height:80px;margin:.5rem 0;padding:.65rem;font-size:1rem}
+.settings-grid {display:grid;grid-template-columns:1fr 1fr;gap:.75rem;align-items:center}
+.settings-grid .progress-number {font-size:2.5rem;text-align:center}
+.plan-days {padding-left:1.25rem;line-height:1.5}
+.plan-days li {margin:.5rem 0}
+.progress-totals {display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.progress-totals dd {font-size:clamp(2rem,4vw,3rem);font-weight:800;color:var(--text-h);margin:.3rem 0}
+.error-bar {height:.75rem;background:#243747;border-radius:.4rem;overflow:hidden;margin:.3rem 0 .7rem}
+.error-bar span {display:block;height:100%;background:#ffc65c}
+@media(max-width:420px) {.settings-grid,.menu-backend {gap:.4rem}.backend-page .gesture-target {font-size:.9rem;min-height:72px}}
+.menu-page > .gesture-target {min-height:90px;margin:.75rem 0}
+.results-actions {display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.results-actions .gesture-target {min-height:80px;min-width:0;margin:.4rem 0}
