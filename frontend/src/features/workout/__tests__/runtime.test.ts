@@ -53,3 +53,6 @@ it('dispose before queued initialization starts avoids creating a model or reque
  const s=setup();const pending=s.source.start();s.source.dispose();await pending
  expect(s.handFactory).not.toHaveBeenCalled();expect(s.track.stop).toHaveBeenCalledOnce();expect(frames.size).toBe(0)
 })
+it('repeat starts and live settings keep one camera, one recognizer and one inference loop',async()=>{
+ const s=setup();await Promise.all([s.source.start(),s.source.start()]);for(const sensitivity of [.5,1,1.5,2])s.source.configureInput({sensitivity,smoothingMs:80});s.source.requireNeutralRelease();expect(s.getUserMedia).toHaveBeenCalledOnce();expect(s.handFactory).toHaveBeenCalledOnce();expect(s.hands[0].initialize).toHaveBeenCalledOnce();expect(frames.size).toBe(1);s.source.dispose();s.source.dispose();expect(s.track.stop).toHaveBeenCalledOnce();expect(frames.size).toBe(0)
+})

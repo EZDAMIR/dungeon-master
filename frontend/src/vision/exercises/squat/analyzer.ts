@@ -13,7 +13,8 @@ export class SquatAnalyzer {
  private start:number|null=null
  private finished=false
  private profile:CalibrationProfile
- constructor(profile:CalibrationProfile){this.profile=profile;this.machine=new SquatStateMachine(profile)}
+ private target:number
+ constructor(profile:CalibrationProfile, target:number = c.targetReps){this.target=target;this.profile=profile;this.machine=new SquatStateMachine(profile)}
  get phase(){return this.machine.phase}
  update(sample:PoseRecognitionSample):VisionEvent[] {
   if(this.finished) return []
@@ -27,11 +28,11 @@ export class SquatAnalyzer {
    this.reps.push(rep)
    events.push({type:'workout.rep_completed',at:sample.at,repIndex:rep.index,accepted:rep.accepted,errors,metrics:rep.metrics})
    for(const code of errors)events.push({type:'workout.technique_error',at:sample.at,code,correction:corrections[code],severity:'warning'})
-   if(this.reps.length>=c.targetReps){this.finished=true;events.push({type:'workout.completed',at:sample.at,result:buildResult(this.reps,sample.at-this.start)})}
+   if(this.reps.length>=this.target){this.finished=true;events.push({type:'workout.completed',at:sample.at,result:buildResult(this.reps,sample.at-this.start,this.target)})}
   }
   return events
  }
  cancelPartial(at:number):VisionEvent[] {const changed=this.phase!=='not_ready';this.machine.reset();this.previous=undefined;return changed ? [{type:'workout.phase_changed',at,phase:'not_ready'}] : []}
  recalibrate(profile:CalibrationProfile){this.profile=profile;this.machine=new SquatStateMachine(profile);this.previous=undefined}
- result(at:number){return buildResult(this.reps,this.start===null ? 0 : at-this.start)}
+ result(at:number){return buildResult(this.reps,this.start===null ? 0 : at-this.start,this.target)}
 }

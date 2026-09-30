@@ -40,7 +40,7 @@ export class MediaPipeGestureRecognizer implements GestureRecognizerAdapter {
     const category = result.gestures[0]?.[0]
     const handedness = result.handedness[0]?.[0]?.categoryName
     return {
-      at, landmarks: landmarks.map(p => ({ x: p.x, y: p.y, z: p.z })),
+      at, aspectRatio: video.videoHeight > 0 ? video.videoWidth / video.videoHeight : 1, landmarks: landmarks.map(p => ({ x: p.x, y: p.y, z: p.z })),
       gesture: category ? { name: category.categoryName, confidence: clamp(category.score) } : null,
       handedness: handedness === 'Left' || handedness === 'Right' ? handedness : null,
     }
