@@ -1,10 +1,10 @@
-# Dungeon Master frontend — Sprint 3
+# Dungeon Master frontend — Sprint 4A
 
 The Sprint 2 local five-cycle scenario remains available in Sprint 3:
 
 `CAMERA_PERMISSION → TUTORIAL → MENU → CALIBRATION → COUNTDOWN → WORKOUT ↔ PAUSED → RESULTS`.
 
-The only implemented exercise profile is `bodyweight_squat_side_v1`. During squats the app analyzes a complete cycle and its depth, tempo and return to standing. It gives specific visual and local audio corrections for insufficient depth, too-fast motion and incomplete extension. Counting stops on missing body landmarks or a poor side view; partial repetitions are discarded. Five total cycles finish the demo even when some are rejected. Results appear immediately; Sprint 3 synchronizes bounded aggregate summaries in the background.
+The stable legacy exercise profile is `bodyweight_squat_side_v1`; Sprint 4A additionally interprets validated MovementSpec declarations with an experimental generic analyzer. During squats the app analyzes a complete cycle and its depth, tempo and return to standing. It gives specific visual and local audio corrections for insufficient depth, too-fast motion and incomplete extension. Counting stops on missing body landmarks or a poor side view; partial repetitions are discarded. Five total cycles finish the demo even when some are rejected. Results appear immediately; Sprint 3 synchronizes bounded aggregate summaries in the background.
 
 ## Requirements and start
 
@@ -19,7 +19,7 @@ npm ci
 npm run dev
 ```
 
-Click **Включить камеру** and grant the browser's camera permission. This is the initial conventional action. Complete the tutorial with your hand, select a workout by pinch, then hold Thumb Up. Camera access is not requested on page load. Normal semantic buttons remain available as an accessibility fallback, with tutorial skip and navigation controls under **Доступное управление**.
+The normal entry opens context without requesting a camera. Use `?juryDemo=1` for Maya/Arman/Dana, review sources, generate a plan and open exercise details. In camera setup, click **Включить камеру** and grant the browser's camera permission. This is the initial conventional action. Complete the tutorial with your hand, select a workout by pinch, then hold Thumb Up. Camera access is not requested on page load. Normal semantic buttons remain available as an accessibility fallback, with tutorial skip and navigation controls under **Доступное управление**.
 
 ## Checks
 
@@ -192,3 +192,13 @@ synthetic gesture/pose/camera lifecycle tests continue unchanged in purpose.
 See [Sprint 3 manual acceptance](../docs/SPRINT_3_MANUAL_CHECKLIST.md). Real camera,
 gesture operation of new screens and readability at 2–4 metres are **not performed**
 here. Run the checklist before accepting those hardware/UX criteria.
+
+## Sprint 4A personalization and design
+
+Context/document/fact review, source-linked plan, details sheet, camera shell, results and progress reuse the existing AppMode reducer and backend store. Figma styles are in `src/design-tokens.css`, with local licensed fonts and downloaded SVGs in `public/design`. Exact provenance, counterpart frames and screenshot deviations are in [the map](../docs/FIGMA_SPRINT_4A_MAP.md) and [visual QA](../docs/FIGMA_VISUAL_QA.md).
+
+The existing `RealVisionSource` and `PoseSession` host the generic interpreter; React contains presentation, not movement thresholds. RU/KK/EN messages are generated/validated before coaching. Tracking, repetition and correction areas remain separate. Local SpeechSynthesis starts muted and degrades to visual cues/local sounds when voices are unavailable. No microphone is captured.
+
+Development `?juryDemo=1&fakeVision=1` reuses FakePoseSource to replay synthetic calf/squat landmarks through the same interpreter. Start the fake camera, calibrate/count down, run a shallow attempt, recover tracking and run a correct attempt. Fake controls/debug output are removed in production. An actual webcam, human distance-readability check and live provider run still require manual verification.
+
+The synthetic persona plans are instant fixtures, not a claim of live AI. Swaps are disabled honestly. Manual exercises and separate routine timers do not report automatic technique assessment. Default API is `http://localhost:8000/api/v1`; set `VITE_API_BASE_URL` when serving another local backend. Both ordinary builds and `npm run build -- --base=/dungeon-master/` are verified.

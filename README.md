@@ -1,26 +1,18 @@
 # Dungeon Master
 
-Dungeon Master is a browser fitness application controlled through a webcam. Local
-hand and pose recognition navigate the UI, count five squat cycles and show
-technique corrections. Sprint 3 adds guest identity, saved preferences,
-deterministic plans and aggregate progress without putting the backend on the
-workout's critical path.
+Dungeon Master is a **hackathon prototype** for a local-camera fitness coach. Sprint 4A adds a personal AI profile, source-linked plans and an interpreter for AI-created camera-coaching declarations, while preserving the gesture-controlled legacy squat flow.
 
-## Current capabilities
+## Current capabilities — Sprint 4A
 
-- One supported exercise: **Bodyweight Squat**, side view, `squat-v1`.
-- Explicit camera permission, gesture tutorial, calibration, countdown,
-  workout, pause/resume and immediate results.
-- Persisted guest JWT, full-replacement fitness profile and explicitly confirmed
-  constraint codes. Restrictions are user preferences, not medical diagnoses.
-- Allowlisted server catalog and `deterministic-v1` weekly plan: one set of five
-  repetitions on each selected training day.
-- Gesture-accessible Profile, Plan and Progress screens with semantic buttons.
-- Background aggregate-only session synchronization and completed-session history.
-- Dense, high-contrast workout banner; browser speech is additional feedback.
+- Context, confirmed document facts and existing profile/progress personalize an editorial plan.
+- Text-layer PDF/TXT/Markdown extraction, PostgreSQL text/chunks/JSONB embeddings, top-5 cosine retrieval and lexical fallback.
+- Official OpenAI structured output creates an AI Profile, a plan and MovementSpec declarations. AI chooses exercise variants, volume, tempo, rest, angle and short multilingual messages; a generic pose engine executes the spec locally.
+- `?juryDemo=1` reveals instant **synthetic Maya / Arman / Dana fixtures**, explicitly labelled as fixtures. It adds no parallel dashboard or chatbot. Different schedules, exercise selections, volume, coaches and routines are visible on the plan.
+- Shared graphite/citron Camera Coach shell, experimental generated analyzers, manual fallback after one failed repair, local SpeechSynthesis with visual fallback.
+- Legacy Bodyweight Squat (`squat-v1`), gesture navigation, results sync and progress continue to work.
+- Existing [Motion Studio Figma](https://www.figma.com/design/vFIK97vQDk4xasLgDUdVdN?node-id=6-635) owns the UX, warm ivory planning system, typography and tokens. [Mapping](docs/FIGMA_SPRINT_4A_MAP.md) and [visual QA](docs/FIGMA_VISUAL_QA.md) record implementation evidence and deviations.
 
-No AI plan generation, Calendar integration, ElevenLabs, document processing or
-additional analyzed exercises are implemented.
+Use only synthetic demo profiles/documents. This prototype does not diagnose, recommend medicine or change treatment; it does not claim medical accuracy, real-patient suitability or production readiness. Custom camera coaching is experimental. No OCR, microphone capture, ElevenLabs or Calendar is implemented in Sprint 4A.
 
 ## Architecture and privacy
 
@@ -30,8 +22,7 @@ profile/catalog/plan/session data and progress queries using the existing
 FastAPI → schemas → controllers → SQLAlchemy Core models architecture.
 
 Video, images and raw landmarks remain local and are neither recorded nor sent
-to the API. Only identifiers, timestamps, aggregate repetitions, three controlled
-error counts, mean repetition duration and mean minimum knee angle are synced.
+to the API. Only identifiers, timestamps, aggregate repetitions/error counts and compact exercise metrics are synced. Context and confirmed text sources may be sent to the configured LLM; AI does not analyze video.
 There is no microphone, analytics provider or external inference service.
 
 ## Backend setup
@@ -190,3 +181,20 @@ Relevant first project-specific commit:
 Do not claim work was created during the event unless commit history supports it.
 Dungeon Master provides general fitness feedback, not diagnosis, treatment,
 rehabilitation or a replacement for a qualified trainer or medical professional.
+
+## Sprint 4A demo and optional AI setup
+
+Apply migrations with `cd backend && make migrate`. The model-first Sprint 4A revision is `041f28173bcc`, following `d14a8a94311f`. Copy the example environment locally; the AI feature defaults off. Enable a supplied key/model only when testing live generation:
+
+```dotenv
+AI_FEATURE_ENABLED=true
+OPENAI_API_KEY=<local key, never commit>
+OPENAI_MODEL=<structured-output compatible model>
+OPENAI_EMBEDDING_MODEL=<embedding model>
+```
+
+Keep `APP_ENV=development` or explicitly set `ENABLE_DEMO_PERSONAS=true` for synthetic jury endpoints. Start backend/frontend with their existing commands and open `/?juryDemo=1`. Select a persona, continue to documents, confirm/reject facts and build the plan. Open why/details, start coaching, finish and open progress. Select another persona through context. No account or medical input is required.
+
+Without a provider the deterministic Sprint 3 plan and stable squat analyzer remain available. Invalid generated declarations get one repair and then manual execution. Raw uploaded files are discarded after text extraction. Camera frames remain local, and no AI call runs during a workout.
+
+[Personalization contract](docs/AI_PERSONALIZATION.md), [MovementSpec](docs/MOVEMENT_SPEC_V1.md), [manual checklist](docs/SPRINT_4A_MANUAL_CHECKLIST.md) and [verification report](docs/SPRINT_4A_REPORT.md) explain the demo and known limits. Swap is unavailable; extra routines use manual timers; one demo set is completed per session. Sprint 4B integrations are intentionally left for later.

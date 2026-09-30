@@ -256,3 +256,7 @@ WorkoutFeedbackBanner is presentation-only: short corrections, dense contrast,
 large responsive text, stable height, live region and held visibility for transient
 errors. It does not own technique thresholds. Local speech remains supplementary.
 Live distance/camera verification is pending, as recorded in the manual checklist.
+
+## Sprint 4A extension
+
+The existing API/schema/controller/model boundaries remain. `controllers.ai_coach` orchestrates profile synthesis, retrieved confirmed sources, strict plan output and one spec repair via `ai.openai`; provider work never holds a model database session. Seven small AI/document tables extend existing plan/catalog/session storage. The browser interprets declarations in `vision/exercises/generic` inside the existing PoseSession/RealVisionSource. AI supplies data, not React/layout/code. Frames/landmarks stay local; existing sync persists aggregates and progress. Read [AI personalization](AI_PERSONALIZATION.md), [MovementSpec](MOVEMENT_SPEC_V1.md) and [Figma mapping](FIGMA_SPRINT_4A_MAP.md).

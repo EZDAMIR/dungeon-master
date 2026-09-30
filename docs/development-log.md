@@ -514,3 +514,7 @@ no application code or test assertions changed.
 Verification: Make target dry runs, `make check`, workflow validation and both
 frontend production smoke checks passed. Local Docker execution still requires
 a running daemon; hosted verification is triggered by the authorized push.
+
+## 2026-09-30 — Sprint 4A personalization and universal camera coaching
+
+Started from `40c72ab` on `sprint/core-backend-domains`, isolated work on `sprint/ai-personalized-coach`. Added owned context/documents/fact confirmation/RAG/AI profile/plan/spec tables and forward migration, official structured SDK adapter with mocked tests, explicit fallbacks and synthetic Maya/Arman/Dana. Reused the browser pose/camera/sync architecture and existing Figma tokens/components; added a generic interpreter and source-linked context-to-progress flow. Production screenshots and development-only landmark replay exposed and fixed strict context payload, denied-camera recovery, smoothing return hold, contrast and scroll issues. Verification and remaining visual/hardware limits are recorded in [Sprint 4A report](SPRINT_4A_REPORT.md).

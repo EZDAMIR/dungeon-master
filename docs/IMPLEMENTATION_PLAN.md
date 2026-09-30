@@ -177,3 +177,11 @@ Stop optional work and return to P0/P1 when:
 - squat counting is unstable;
 - the result screen depends on a network call;
 - provider integration consumes time needed for deployment or README.
+
+## Sprint 4A — Personal AI Coach delivered scope
+
+Context and confirmed document facts feed lightweight RAG and structured AI profiles/plans. Generated private exercises receive validated MovementSpecs, one repair and a manual fallback. The existing browser runtime executes generic coaching and saves aggregates through the current progress system. Figma retains the editorial planning and graphite/citron workout architecture; three synthetic jury personas compare without input or provider delay. [Report](SPRINT_4A_REPORT.md), [mapping](FIGMA_SPRINT_4A_MAP.md), [QA](FIGMA_VISUAL_QA.md) and [manual checklist](SPRINT_4A_MANUAL_CHECKLIST.md) provide evidence.
+
+Sprint 4A completion checks: implemented context/upload/chunking/RAG/profile/plan/spec validation, generic counting/correction, legacy squat, ownership, aggregate sync, deterministic/manual fallbacks, Maya/Arman/Dana, source-linked reasons, details, honest unavailable swaps, localized cues, voice fallback and responsive layouts. Screenshot review is recorded with deviations; physical distance readability, actual webcam execution and live provider latency are pending manual checks. A tablet camera counterpart is inferred because the existing tablet node is a plan. No Sprint 4B integration is implemented.
+
+The expanded [Sprint 4A Definition of Done](SPRINT_4A_DEFINITION_OF_DONE.md) tracks both the original implementation criteria and the Figma alignment patch. Hardware, exact visual parity and absent tablet camera source are explicitly unchecked.

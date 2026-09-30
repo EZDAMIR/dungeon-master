@@ -223,3 +223,9 @@ IDs/unauthorized responses. Stopping only that project's database must preserve
 health while readiness returns a flat 503. Cleanup removes only the test project's
 containers/network/volume on success or failure; existing development data is
 never reset by these targets.
+
+## Sprint 4A verification
+
+Mock all provider calls; no real key is required. Backend tests cover upload errors/limits, facts and owned sources, chunking/ranking, embeddings persistence and isolation, structured SDK output, persona profiles/plans, regenerated volume, one repair/manual fallback, aggregate generic results and deterministic fallback. The populated Sprint 3 migration regression reflects the deployed previous revision before upgrading; it checks original data/API/idempotency plus drift. The unchanged backend coverage gate is 90%.
+
+Frontend tests cover jury visibility, source review/upload, why/source chips/details/manual states, message bounds, held conditions, landmark repetitions/corrections, tracking loss, average reset and full shared-pose replay. Existing gesture/squat/sync tests remain. Production Chrome screenshots cover desktop, 390×844 and 834×1112; synthetic live correction screenshots are labelled development evidence. Functional test success does not imply visual parity. [Visual QA](FIGMA_VISUAL_QA.md) and [manual checklist](SPRINT_4A_MANUAL_CHECKLIST.md) record hardware/provider checks still outstanding.
