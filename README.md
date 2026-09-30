@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏋️ Dungeon Master
+#  Dungeon Master
 
 ### Gesture-controlled AI fitness coach powered by local computer vision
 
@@ -18,13 +18,13 @@ Control the application with hand gestures, receive real-time exercise feedback,
 
 <br>
 
-### [🚀 Live Demo](https://dungeon-master.helpmake-id.live) · [🎨 Figma](https://www.figma.com/design/vFIK97vQDk4xasLgDUdVdN?node-id=6-635)
+### [Live Demo](https://dungeon-master.helpmake-id.live) · [Figma](https://www.figma.com/design/vFIK97vQDk4xasLgDUdVdN?node-id=6-635)
 
 </div>
 
 ---
 
-## 🎬 Demo
+##  Demo
 
 ### Gesture-controlled interface
 
@@ -52,7 +52,7 @@ The camera detects body and hand landmarks locally and provides immediate workou
 
 ---
 
-## 💡 What is Dungeon Master?
+##  What is Dungeon Master?
 
 **Dungeon Master** is a hackathon prototype of a privacy-focused AI fitness coach.
 
@@ -60,22 +60,22 @@ Instead of requiring constant mouse, keyboard or touchscreen interaction, the ap
 
 The project combines:
 
-- 🖐️ gesture recognition;
-- 🧍 real-time pose analysis;
-- 🏋️ exercise coaching;
-- 🤖 AI-generated workout plans;
-- 📊 workout progress tracking;
-- 📚 document-based personalization;
-- 🔒 local camera processing;
-- 🌐 offline-friendly workout behavior.
+-  gesture recognition;
+-  real-time pose analysis;
+-  exercise coaching;
+-  AI-generated workout plans;
+-  workout progress tracking;
+-  document-based personalization;
+-  local camera processing;
+-  offline-friendly workout behavior.
 
 The goal is to create a fitness experience where the user can interact naturally while exercising without repeatedly touching another device.
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-### 🖐️ Gesture Control
+###  Gesture Control
 
 Dungeon Master recognizes hand gestures and allows the user to navigate the application while standing away from the computer.
 
@@ -88,7 +88,7 @@ Current controls include:
 
 ---
 
-### 🏋️ Local Camera Coach
+###  Local Camera Coach
 
 The frontend performs camera processing locally using pose and gesture recognition.
 
@@ -105,7 +105,7 @@ The existing **Bodyweight Squat** flow remains available as a stable demonstrati
 
 ---
 
-### 🤖 AI Personalization
+###  AI Personalization
 
 Dungeon Master can build a personalized fitness profile from:
 
@@ -132,7 +132,7 @@ AI functionality is optional and can be disabled completely.
 
 ---
 
-### 📚 Source-linked Knowledge
+###  Source-linked Knowledge
 
 Dungeon Master supports text extraction from:
 
@@ -152,7 +152,7 @@ This allows workout plans to use confirmed source information instead of relying
 
 ---
 
-### 📊 Progress Tracking
+### Progress Tracking
 
 Completed workouts can be synchronized with the backend.
 
@@ -169,7 +169,7 @@ Results are shown immediately without waiting for the server response.
 
 ---
 
-### 🌐 Offline-friendly Behavior
+###  Offline-friendly Behavior
 
 Core workout functionality can continue working even when the backend is temporarily unavailable.
 
@@ -186,7 +186,7 @@ Up to **20 pending workout sessions** can be stored locally before synchronizati
 
 ---
 
-## 🔒 Privacy by Design
+##  Privacy by Design
 
 Camera processing is designed to stay inside the browser.
 
@@ -214,7 +214,7 @@ The configured LLM may receive confirmed text context used for personalization, 
 
 ---
 
-## 🧠 How It Works
+##  How It Works
 
 ```mermaid
 flowchart LR
@@ -258,7 +258,7 @@ The webcam never needs to send frames to the backend or AI provider.
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 The repository is divided into two main applications:
 
@@ -353,7 +353,7 @@ architecture.
 
 ---
 
-# 🚀 Local Development
+#  Local Development
 
 ## Requirements
 
@@ -479,7 +479,7 @@ http://localhost:8000/api/v1
 
 ---
 
-# 🎭 Jury Demo
+#  Jury Demo
 
 Dungeon Master includes synthetic demo personas for presentations and hackathon demonstrations.
 
@@ -507,7 +507,7 @@ These profiles are synthetic fixtures and do not represent real users.
 
 ---
 
-## 🤖 Optional AI Setup
+##  Optional AI Setup
 
 AI features are disabled by default.
 
@@ -529,7 +529,7 @@ Without an AI provider, the deterministic workout plan and stable squat analyzer
 
 ---
 
-## ⚙️ Environment Variables
+##  Environment Variables
 
 | Variable                      | Location        | Purpose                         |
 | ----------------------------- | --------------- | ------------------------------- |
@@ -544,7 +544,7 @@ Without an AI provider, the deterministic workout plan and stable squat analyzer
 
 ---
 
-# 🧪 Testing & Verification
+#  Testing & Verification
 
 ### Backend
 
@@ -590,7 +590,7 @@ make ci
 
 ---
 
-## 🎨 Design
+##  Design
 
 Dungeon Master's visual system is based on the project's Motion Studio design.
 
@@ -602,7 +602,7 @@ The interface uses a minimal warm-ivory design system with a graphite / citron v
 
 ---
 
-## 🌍 Deployment
+##  Deployment
 
 Production deployment:
 
@@ -630,7 +630,7 @@ deploy/README.md
 
 ---
 
-## ⚠️ Prototype Scope
+##  Prototype Scope
 
 Dungeon Master is a **hackathon prototype**.
 
@@ -655,7 +655,7 @@ Use synthetic information when demonstrating the application.
 
 ---
 
-## 🔐 Security Notes
+##  Security Notes
 
 Never commit:
 
