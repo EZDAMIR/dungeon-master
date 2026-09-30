@@ -728,3 +728,31 @@ case IDs retain the exact payloads and assertions while bounding verbose output.
 Provider/configuration/instruction regressions: 47 passed; backend Ruff checks
 passed. All 285 tests collect with names shorter than 300 bytes. No runtime,
 workflow, deployment or coverage-gate settings changed.
+
+## 2026-09-30 — Sprint 4B deployment: local app and API-only VPS
+
+The owner superseded public frontend hosting with a localhost app and a remote
+API. Local dev/production-preview commands use a public cloud mode and proxy only
+`/api` to the HTTPS VPS; UI, verified model/WASM assets and inference stay local.
+Existing Sprint 4B OpenAI, selected ElevenLabs voices, audio cache/fallback and
+profile/plan/session APIs are reused. Provider settings were securely merged from
+the authorized `.env`, preserving database/signing settings with a private backup.
+
+Current CD ships only backend metadata/configuration, keeps exact-SHA/digest CI,
+backup/restore and migration verification, and atomically publishes an API release
+marker. API-only Nginx rejects public app/model routes. Regression checks cover
+API-only publication/rollback and retain recovery for historical web bundles.
+
+Integration preserved the other agent's committed palm-swipe navigation and
+newer remote provider/session changes. The lifecycle regression now completes the
+new portal-based hands introduction before checking camera reuse across routes.
+No thresholds or exercise rules changed. Large README demo GIFs are omitted only
+from this isolated sparse checkout, not from Git or the owner's repository.
+
+Verification: 285 backend tests, 96.09% coverage, using a dedicated temporary
+PostgreSQL instance/disposable migrated database; 219 frontend tests, 88.81%
+statement coverage; type checking, lint, folder instructions, cloud build and
+root asset-byte smoke pass. 25 automation/deployment regressions pass. Synthetic
+Chrome camera evidence confirms local hand startup and pose readiness feedback;
+real camera/Firefox/phone acceptance remains manual. Server release/provider
+results are recorded after applying the change below.
