@@ -451,3 +451,53 @@ Docker build/container checks remain unavailable because the configured Docker
 daemon is stopped. No unrelated Colima profile or persistent volume was changed.
 Hosted CI cannot be reported as passed when no workflow exists. Live browser and
 camera acceptance remains separate checklist work.
+
+## Sprint 3 maintenance — GitHub Actions and code-cleanup commands (2026-09-30)
+
+Acceptance: add real push/PR CI using the existing verification commands, provide
+Make commands to clean code and run checks, and commit/push the previously
+preserved Docker changes. No application logic or schema change is required.
+
+Added `.github/workflows/ci.yml` with Backend, Frontend and Docker jobs. Runs use
+Ubuntu 24.04, Python 3.12, Node 24 and PostgreSQL 17; official checkout/setup actions
+are pinned to verified release commits. Actions is enabled for this repository.
+The workflow uses read-only contents permission, cancels superseded branch runs,
+has job timeouts and requires no repository secrets or deployment credentials.
+
+The root Makefile exposes `fix`/`format`, `check`, `ci` and per-job CI targets.
+Backend `format` fixes imports/lint before formatting; `ci` runs the existing
+checks/tests. Root cleanup also covers Python automation scripts and frontend
+lint fixes without adding a new frontend formatter. One extra blank line in the
+architecture verifier was normalized; product source files remain unchanged.
+
+Added a production preview checker and five real-HTTP regression tests covering
+valid root/subdirectory delivery, HTML fallback model responses, stale WASM,
+incorrect base paths and leaked fake controls. Both production bases are checked
+for actual assets; preview process groups are stopped in teardown.
+
+`backend/docker-compose.ci.yml` and `scripts/check-docker.sh` build an isolated
+stack with no published host ports, verify migrations/drift, non-root execution,
+healthchecks, docs/OpenAPI, request IDs and unauthorized responses. A stopped
+database must yield readiness 503 while health remains 200. The exit trap removes
+only the unique CI project's containers/network/volume. The Dockerfile now
+includes curl for its existing healthcheck; `.dockerignore` excludes local
+configuration, virtual environments, caches and database/log artifacts.
+
+### Local verification before the first Actions push
+
+- `make fix`, `make check`: passed; backend/product frontend code needed no edits.
+- Fresh isolated Python 3.12 environment and `make ci-backend`: **222 passed**,
+  **97.42% coverage**, unchanged 90% gate. Complete fresh migrations and metadata
+  drift checks passed through disposable test database fixtures.
+- `make ci-frontend`: **116 passed**, coverage gates/configuration unchanged,
+  instruction checks, lint/types, both production builds and matching HTTP asset
+  verification passed. Five automation regression tests passed.
+- Verified published checksum for temporary actionlint 1.7.12; workflow validation
+  passed. Shell syntax, isolated Compose configuration and `git diff --check`
+  passed. Docker's pyproject-only editable-install layer was also verified in a
+  separate clean Python 3.12 environment.
+
+The local Docker daemon remains unavailable, so the shipped image/runtime checks
+are assigned to the new hosted Docker job. The previous absence of hosted CI is
+resolved by this workflow; its first run follows the authorized push. No existing
+Colima profile, environment file or application database was changed by this work.

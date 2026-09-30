@@ -189,3 +189,30 @@ Final refactor results: 222 passed, 99.22% backend coverage. Ruff formatting/lin
 architecture verification and instruction-source hash checks also pass. All
 thirteen API operations retain their request contracts and response fields;
 response validation bounds and custom error schemas are more explicit.
+
+## GitHub Actions and local Make targets
+
+`.github/workflows/ci.yml` runs the same root Make targets locally and on
+Ubuntu 24.04: `ci-backend` (Python 3.12/PostgreSQL 17), `ci-frontend` (Node 24)
+and `ci-docker` (isolated Compose stack). Pushes, pull requests and manual runs
+trigger the workflow; actions are pinned to verified release commits and the
+workflow has read-only repository permission. Test signing/database credentials
+are disposable values; repository secrets are not required.
+
+Use `make fix` to apply backend/script Ruff formatting and frontend lint fixes,
+then `make check`. `make ci` adds database-backed coverage, frontend coverage,
+both production builds and Docker checks. It never formats source. The backend
+fixture verifies a fresh migration chain and metadata drift, and Docker verifies
+the shipped runtime reaches the same schema without drift.
+
+The frontend build checker starts a bounded temporary preview for each base,
+compares served JS/CSS/model/WASM bytes and rejects development fake controls.
+Five HTTP regression tests exercise successful root/subdirectory delivery,
+HTML model fallbacks, stale WASM, incorrect base paths and fake controls.
+
+Docker checks use a unique Compose project, publish no host ports, verify both
+healthchecks/non-root runtime and exercise health/readiness/docs/OpenAPI/request
+IDs/unauthorized responses. Stopping only that project's database must preserve
+health while readiness returns a flat 503. Cleanup removes only the test project's
+containers/network/volume on success or failure; existing development data is
+never reset by these targets.

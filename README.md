@@ -126,6 +126,31 @@ Never commit `.env`, JWTs, database dumps, recordings or personal health data.
 
 ## Verification
 
+From the repository root, `make fix` formats Python in the backend and automation
+scripts and applies available frontend lint fixes. `make format` is an alias;
+these commands do not install a separate frontend formatter. Run `make check`
+afterward for architecture, script syntax/style, Python format/lint, frontend
+instruction checks, lint and type checking.
+
+`make ci` runs all automated gates. It requires installed backend/frontend
+dependencies, PostgreSQL client tools, configured local `TEST_DATABASE_URL` with
+CREATE DATABASE rights, and a running Docker daemon. The individual targets are:
+
+- `make ci-backend`: checks plus the full backend coverage suite; its fixtures
+  create, migrate, check and drop only owned disposable databases.
+- `make ci-frontend`: instruction checks, lint, types, coverage tests, automation
+  regression tests, root/subdirectory builds and matching production previews.
+  Preview checks verify actual model/WASM bytes and stop their temporary servers.
+- `make ci-docker`: builds a separate stack using `backend/docker-compose.ci.yml`,
+  verifies healthchecks, non-root runtime, migrations, readiness, docs and HTTP
+  metadata, then verifies readiness during a database outage. It publishes no
+  host ports and removes only its unique Compose project and test volume.
+
+[GitHub Actions CI](.github/workflows/ci.yml) runs these three targets on pushes,
+pull requests and manual dispatch. It uses Python 3.12, Node 24 and PostgreSQL 17,
+with pinned action commits, read-only repository permission and test-only
+credentials. It needs no repository secrets and does not deploy the application.
+
 Backend: `make check`, `make test`, `make migrate`, `.venv/bin/alembic check`.
 Frontend: `npm run lint`, `npm run type-check`, `npm run test`,
 `npm run test:coverage`, `npm run build` and

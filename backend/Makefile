@@ -7,7 +7,7 @@ ALEMBIC := .venv/bin/alembic
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev test lint format check migration migrate up down logs
+.PHONY: help install dev test lint format check ci migration migrate up down logs
 
 help:
 	@echo "Available commands:"
@@ -17,6 +17,7 @@ help:
 	@echo "  make lint             Run Ruff linter"
 	@echo "  make format           Format code with Ruff"
 	@echo "  make check            Lint + format check (no writes)"
+	@echo "  make ci               Run checks and database-backed tests"
 	@echo "  make migration M=... Generate a new Alembic migration"
 	@echo "  make migrate          Apply all pending migrations"
 	@echo "  make up               Start Docker services (postgres + backend)"
@@ -36,12 +37,14 @@ lint:
 	$(RUFF) check src/ tests/
 
 format:
-	$(RUFF) format src/ tests/
 	$(RUFF) check --fix src/ tests/
+	$(RUFF) format src/ tests/
 
 check:
 	$(RUFF) format --check src/ tests/
 	$(RUFF) check src/ tests/
+
+ci: check test
 
 migration:
 	@if [ -z "$(M)" ]; then echo "Usage: make migration M=\"description\""; exit 1; fi

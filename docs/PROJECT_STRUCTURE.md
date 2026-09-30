@@ -22,6 +22,13 @@ before editing that layer. Services and webhooks remain reserved packages.
 all nine exact copies, the map and local links. The root architecture verifier
 requires the guides. Dungeon Master context stays in the backend overview.
 
+The root `Makefile` provides `fix`/`format`, `check`, `ci` and per-job CI targets.
+`.github/workflows/ci.yml` runs backend, frontend and isolated Docker checks on
+pushes and pull requests. `scripts/check_frontend_build.py` validates real HTTP
+asset delivery; its regression tests cover SPA fallbacks and incorrect builds.
+`scripts/check-docker.sh` owns the ephemeral stack described by
+`backend/docker-compose.ci.yml` and always cleans up its own project/volume.
+
 The shared camera view is `frontend/src/features/workout/CameraStage.tsx`: it
 composes gesture state and the pose overlay. `shared/components/` keeps the
 callback-driven permission/error views and progress presentation.
