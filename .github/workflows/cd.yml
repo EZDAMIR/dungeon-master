@@ -7,10 +7,19 @@ on:
         description: Full commit SHA with successful CI on the deployment branch
         required: true
         type: string
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  workflow_call:
+    inputs:
+      sha:
+        required: true
+        type: string
+      ci_run_id:
+        required: true
+        type: string
+    secrets:
+      SERVER_IP:
+        required: true
+      SERVER_KEY:
+        required: true
 
 permissions:
   contents: read
@@ -25,13 +34,7 @@ env:
 
 jobs:
   verify:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (vars.DEPLOY_AUTOMATIC != 'false' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_repository.full_name == github.repository &&
-       github.event.workflow_run.head_branch == 'main')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -47,8 +50,8 @@ jobs:
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_SHA: ${{ inputs.sha || github.event.workflow_run.head_sha }}
-          CI_RUN_ID: ${{ github.event.workflow_run.id }}
+          RELEASE_SHA: ${{ inputs.sha }}
+          CI_RUN_ID: ${{ inputs.ci_run_id }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && "$GITHUB_REF" != "refs/heads/$DEPLOY_BRANCH" ]]; then
             echo 'Run manual CD from the configured deployment branch.' >&2

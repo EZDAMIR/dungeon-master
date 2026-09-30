@@ -1,12 +1,21 @@
 # Dungeon Master continuous deployment
 
-After successful **CI** on `main`, [CD](../.github/workflows/cd.yml) verifies
-the exact SHA and all three required jobs, builds both applications from that
-SHA, publishes the backend to GHCR and deploys to
-**https://dungeon-master.helpmake-id.live**. PR CI cannot deploy.
+The [pipeline](../.github/workflows/ci.yml) has three separate jobs:
+**CI → Smoke tests → CD**. CI runs backend/frontend checks and unit tests through
+[checks.yml](../.github/workflows/checks.yml). Smoke tests then verify both
+frontend production builds and an isolated Docker stack. If either stage fails
+or is cancelled, GitHub skips downstream jobs and CD cannot start.
+
+On `main`, [CD](../.github/workflows/cd.yml) verifies the exact SHA and successful
+CI/smoke jobs, builds both applications from that SHA, publishes the backend to
+GHCR and deploys to **https://dungeon-master.helpmake-id.live**.
+PR runs receive no deployment secrets and cannot deploy. The API gate checks
+completed prerequisite jobs in the current pipeline; it does not wait for the
+whole pipeline to finish while CD itself is still running. Manual CD requires
+a completed successful pipeline for its requested SHA.
 
 The production Environment allows only `main`. Actions are pinned to verified
-commit hashes. Deployments queue without cancelling migrations; a VPS `flock`
+commit hashes. Main pipelines and deployments queue without cancelling migrations; a VPS `flock`
 and pending-release marker also protect against overlapping manual deployments.
 If several releases queue, GitHub can replace an older pending run with a newer
 one. In-flight deployments finish.

@@ -647,3 +647,25 @@ and `/release.txt` agrees with the manifest. Previous release: none on this firs
 deployment. No existing project was stopped/restarted/deleted; existing container
 uptimes remain 2–7 days and both helpmake frontend/API still return HTTP 200.
 Certificate renewal dry-run passed; the dedicated renewal timer is active.
+
+## 2026-09-30 — Sprint 4A pipeline follow-up: separate CI, smoke and CD jobs
+
+Replaced the separate workflow-run deployment trigger with an explicit
+`CI → Smoke tests → CD` dependency graph in `ci.yml`. Reusable `checks.yml`
+contains backend/frontend CI; `ci-frontend-checks` separates unit checks from
+production smoke builds while preserving the existing full local target.
+The smoke job checks both frontend bases/assets and the isolated Docker stack.
+CD's reusable workflow runs only after both prerequisites succeed on `main`;
+failed/cancelled CI or smoke skips downstream jobs. PRs receive no deploy secrets.
+Main pipeline concurrency preserves in-flight migrations.
+
+The exact-SHA release gate now checks namespaced CI jobs and the completed smoke
+job within its own still-running pipeline, avoiding a wait for CD to finish
+itself. Unrelated running workflows cannot authorize deployment. Manual CD still
+requires a completed successful pipeline for the requested SHA.
+
+Verification: actionlint, script syntax/style, Make dry runs and focused trust
+tests passed. Deployment regressions cover all prerequisite jobs being failed,
+cancelled, skipped or incomplete. Broader automation and hosted pipeline checks
+accompany the explicitly requested commit/push. Operator and testing docs now
+describe the shared pipeline and GitHub's skipped-job behavior on failures.

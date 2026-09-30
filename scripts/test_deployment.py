@@ -167,9 +167,32 @@ class ReleaseTrustTests(unittest.TestCase):
                 self.run[field] = original
 
     def test_successful_workflow_with_skipped_required_job_is_rejected(self):
-        self.jobs[0]["conclusion"] = "skipped"
-        with self.assertRaises(ValueError):
-            check_release_ci.verify(SHA, "main")
+        for job in self.jobs:
+            for conclusion in ["failure", "cancelled", "skipped", None]:
+                with self.subTest(job=job["name"], conclusion=conclusion):
+                    job["conclusion"] = conclusion
+                    with self.assertRaises(ValueError):
+                        check_release_ci.verify(SHA, "main")
+                    job["conclusion"] = "success"
+
+    def test_current_pipeline_requires_successful_ci_and_smoke_before_cd(self):
+        self.run.update(status="in_progress", conclusion=None)
+        with patch.dict(os.environ, {"GITHUB_RUN_ID": "123"}):
+            self.assertEqual(check_release_ci.verify(SHA, "main", "123"), SHA)
+            for job in self.jobs:
+                with self.subTest(job=job["name"]):
+                    job["conclusion"] = "failure"
+                    with self.assertRaises(ValueError):
+                        check_release_ci.verify(SHA, "main", "123")
+                    job["conclusion"] = "success"
+
+    def test_other_running_workflow_cannot_authorize_cd(self):
+        self.run.update(status="in_progress", conclusion=None)
+        with patch.dict(os.environ, {"GITHUB_RUN_ID": "456"}):
+            with self.assertRaises(ValueError):
+                check_release_ci.verify(SHA, "main", "123")
+            with self.assertRaises(ValueError):
+                check_release_ci.verify(SHA, "main")
 
     def test_commit_outside_trusted_branch_is_rejected(self):
         self.status = "diverged"

@@ -312,10 +312,13 @@ WASM/MediaPipe. Документация FastAPI `/docs` не проксируе
 
 ## 7. CD через GitHub Actions
 
-CI проверяет код; отдельный `.github/workflows/cd.yml` публикует приложение через
-серверный deploy script. Поддерживаются `workflow_dispatch` и автоматический
-trigger после успешного CI на разрешённой владельцем ветке `main`. Не считать
-это разрешением публикации на другой сервер.
+`.github/workflows/ci.yml` выполняет отдельные jobs CI → Smoke tests → CD.
+Reusable `checks.yml` проверяет backend/frontend, затем smoke job проверяет
+production frontend и изолированный Docker stack. Только после их успеха
+reusable `.github/workflows/cd.yml` публикует тот же SHA через серверный script.
+Failed/cancelled CI или smoke блокирует CD. Поддерживается manual CD через
+`workflow_dispatch` с проверенным SHA. Автоматическая ветка — `main`; это не
+разрешение публикации на другой сервер.
 
 Требования к реализации CD:
 

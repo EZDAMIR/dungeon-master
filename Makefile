@@ -4,7 +4,7 @@ RUFF ?= backend/.venv/bin/ruff
 VPS_SSH ?= backend-hr
 
 .DEFAULT_GOAL := help
-.PHONY: help fix format check check-architecture check-automation check-backend check-frontend ci ci-backend ci-frontend ci-docker
+.PHONY: help fix format check check-architecture check-automation check-backend check-frontend ci ci-backend ci-frontend ci-frontend-checks ci-docker
 .PHONY: smoke-tests smoke-tests-frontend smoke-tests-docker
 .PHONY: release deploy check-deploy vps-status vps-logs
 
@@ -15,6 +15,7 @@ help:
 	@echo 'make ci           Run backend, frontend and Docker verification'
 	@echo 'make ci-backend   Run backend checks and database-backed tests'
 	@echo 'make ci-frontend  Run frontend checks, tests and both production builds'
+	@echo 'make ci-frontend-checks Run frontend CI checks and unit tests'
 	@echo 'make ci-docker    Build and smoke-test an isolated Docker stack'
 	@echo 'make smoke-tests  Run frontend and Docker smoke tests'
 	@echo 'make release      Build and publish a SHA-pinned VPS release (CD)'
@@ -58,10 +59,12 @@ ci: ci-backend ci-frontend ci-docker
 ci-backend: check-architecture check-automation
 	$(MAKE) -C backend ci
 
-ci-frontend: check-frontend
+ci-frontend: ci-frontend-checks
+	$(MAKE) smoke-tests-frontend
+
+ci-frontend-checks: check-frontend
 	$(PYTHON) -m unittest discover -s scripts -p 'test_*.py'
 	$(NPM) --prefix frontend run test:coverage
-	$(MAKE) smoke-tests-frontend
 
 smoke-tests: smoke-tests-frontend smoke-tests-docker
 
