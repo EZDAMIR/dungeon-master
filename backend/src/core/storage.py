@@ -19,7 +19,10 @@ class StorageError(Exception):
 class StorageBackend(abc.ABC):
     @abc.abstractmethod
     async def save(
-        self, key: str, data: bytes, content_type: str = ''
+        self,
+        key: str,
+        data: bytes,
+        content_type: str = '',
     ) -> str:  # pragma: no cover
         """Persist data under key and return a reference URI."""
         raise NotImplementedError
@@ -98,5 +101,5 @@ ALLOWED_CONTENT_TYPES: typing.Final[frozenset[str]] = frozenset(
         'text/csv',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    }
+    },
 )

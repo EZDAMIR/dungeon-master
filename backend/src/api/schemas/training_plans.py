@@ -28,12 +28,14 @@ class PlanItemGet(pydantic.BaseModel):
     id: uuid.UUID
     exercise_id: uuid.UUID
     exercise: ExerciseGet
-    day_index: typing.Annotated[int, pydantic.Field(ge=0, le=6)]
-    position: typing.Annotated[int, pydantic.Field(ge=0)]
-    sets: typing.Annotated[int, pydantic.Field(ge=1, le=10)]
-    target_reps: typing.Annotated[int, pydantic.Field(ge=1, le=100)]
-    rest_seconds: typing.Annotated[int, pydantic.Field(ge=0, le=600)]
-    tempo_hint: str | None
+    day_index: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=6)]
+    position: typing.Annotated[int, pydantic.Field(strict=True, ge=0)]
+    sets: typing.Annotated[int, pydantic.Field(strict=True, ge=1, le=10)]
+    target_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=1, le=100)]
+    rest_seconds: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=600)]
+    tempo_hint: (
+        typing.Annotated[pydantic.StrictStr, pydantic.StringConstraints(max_length=80)] | None
+    )
     scheduled_at: datetime.datetime | None
 
 
@@ -42,8 +44,10 @@ class TrainingPlanGet(pydantic.BaseModel):
     status: PlanStatusEnum
     source: PlanSourceEnum
     starts_on: datetime.date
-    rationale: typing.Annotated[str, pydantic.StringConstraints(max_length=500)]
-    generator_version: str
+    rationale: typing.Annotated[pydantic.StrictStr, pydantic.StringConstraints(max_length=500)]
+    generator_version: typing.Annotated[
+        pydantic.StrictStr, pydantic.StringConstraints(min_length=1, max_length=50)
+    ]
     created_at: datetime.datetime
     updated_at: datetime.datetime
     items: list[PlanItemGet]

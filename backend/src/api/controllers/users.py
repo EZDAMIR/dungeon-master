@@ -1,10 +1,14 @@
-from ...core import config, security
-from .. import exceptions, models, permission, schemas
+from ...core import config
+from ...core import security
+from .. import exceptions
+from .. import models
+from .. import permission
+from .. import schemas
 
 
 async def guest_create() -> dict:
     user = await models.users.user_create(
-        {'email': None, 'display_name': None, 'is_guest': True}
+        {'email': None, 'display_name': None, 'is_guest': True},
     )
     claims = {
         'id': str(user['id']),

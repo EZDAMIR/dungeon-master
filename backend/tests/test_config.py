@@ -2,7 +2,9 @@
 
 import pytest
 
-from src.core.config import Settings, clear_settings_cache, get_settings
+from src.core.config import Settings
+from src.core.config import clear_settings_cache
+from src.core.config import get_settings
 
 
 def test_get_settings_returns_settings_instance():

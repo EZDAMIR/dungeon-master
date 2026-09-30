@@ -41,6 +41,9 @@ target-version = 'py312'
 select = ['E', 'F', 'I', 'UP', 'B', 'SIM']
 ignore = ['E501']
 
+[tool.ruff.lint.isort]
+force-single-line = true
+
 [tool.ruff.format]
 quote-style = 'single'
 indent-style = 'space'

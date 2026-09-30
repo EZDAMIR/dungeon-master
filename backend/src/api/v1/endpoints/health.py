@@ -1,7 +1,10 @@
 import fastapi
 
 from ....core import postgres
-from ... import permission, responses, schemas
+from ... import exceptions
+from ... import permission
+from ... import responses
+from ... import schemas
 
 router = fastapi.APIRouter()
 
@@ -25,14 +28,14 @@ async def health() -> dict:
     dependencies=[permission.NoPermsRequired()],
     response_model=schemas.ReadyResponse,
     response_description='Application is ready to serve traffic',
-    responses=responses.gen_responses([responses.APIResponseInternalServerError]),
+    responses=responses.gen_responses([responses.APIResponseDatabaseUnavailable]),
 )
 async def ready() -> dict:
     """Return 200 when PostgreSQL is reachable, 503 otherwise."""
     ok = await postgres.check_connection()
     if not ok:
-        raise fastapi.HTTPException(
-            status_code=503,
-            detail={'detail': 'Database not reachable', 'database': 'unreachable'},
+        raise exceptions.HTTPServiceUnavailableException(
+            detail='Database not reachable',
+            database='unreachable',
         )
     return {'status': 'ok', 'database': 'reachable'}

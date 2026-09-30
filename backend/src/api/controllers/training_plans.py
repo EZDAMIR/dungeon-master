@@ -1,7 +1,11 @@
 import datetime
 import zoneinfo
 
-from .. import controllers, exceptions, models, responses, schemas
+from .. import controllers
+from .. import exceptions
+from .. import models
+from .. import responses
+from .. import schemas
 
 DAY_SCHEDULES = {
     1: [0],
@@ -20,6 +24,8 @@ class PlanConflictStatus(responses.Status):
 
 
 class PlanConflictResponse(responses.APIResponseConflict):
+    """409 No eligible exercises or a concurrent plan-generation conflict."""
+
     status: PlanConflictStatus
 
 
@@ -51,7 +57,8 @@ def build_weekly_plan(profile: dict, eligible: list[dict], starts_on: datetime.d
 async def generate(current_user: schemas.UserCurrent) -> dict:
     profile = await controllers.profiles.get_profile(current_user)
     eligible = controllers.exercises.eligible_exercises(
-        await models.exercises.exercise_list(), profile
+        await models.exercises.exercise_list(),
+        profile,
     )
     if not eligible:
         raise exceptions.HTTPConflictException(
@@ -60,11 +67,15 @@ async def generate(current_user: schemas.UserCurrent) -> dict:
         )
     today = datetime.datetime.now(zoneinfo.ZoneInfo(profile['timezone'])).date()
     data = build_weekly_plan(
-        profile, eligible, today - datetime.timedelta(days=today.weekday())
+        profile,
+        eligible,
+        today - datetime.timedelta(days=today.weekday()),
     )
     try:
         return await models.training_plans.plan_create_active(
-            current_user.id, data['plan'], data['items']
+            current_user.id,
+            data['plan'],
+            data['items'],
         )
     except models.PlanGenerationConflict as exc:
         raise exceptions.HTTPConflictException(

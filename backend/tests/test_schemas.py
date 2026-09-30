@@ -5,8 +5,10 @@ import uuid
 import pydantic
 import pytest
 
+from src.api import responses
 from src.api import schemas
-from src.api.pagination import DEFAULT_LIMIT, Paginator
+from src.api.pagination import DEFAULT_LIMIT
+from src.api.pagination import Paginator
 from src.api.schemas import fields
 
 # ── fields ────────────────────────────────────────────────────────────────────
@@ -26,6 +28,15 @@ def test_int_field_rejects_zero():
 
     with pytest.raises(pydantic.ValidationError):
         M(v=0)
+
+
+@pytest.mark.parametrize('value', ['1', 1.0, True, None, -1, 2_147_483_648])
+def test_int_field_rejects_coercion_and_invalid_values(value):
+    class M(pydantic.BaseModel):
+        v: fields.Int
+
+    with pytest.raises(pydantic.ValidationError):
+        M(v=value)
 
 
 def test_string_field_accepts_valid():
@@ -65,12 +76,39 @@ def test_user_current_ignores_extra_fields():
     assert u.email == 'user@example.com'
 
 
+@pytest.mark.parametrize(
+    'field,value', [('permissions', [b'profile:read']), ('organization_id', '1')]
+)
+def test_user_current_rejects_coerced_claim_types(field, value):
+    with pytest.raises(pydantic.ValidationError):
+        schemas.UserCurrent.model_validate({'id': uuid.uuid4(), 'email': None, field: value})
+
+
 # ── Pagination schema ─────────────────────────────────────────────────────────
 
 
 def test_pagination_schema_valid():
     p = schemas.Pagination(total=100, limit=20, offset=0)
     assert p.total == 100
+
+
+@pytest.mark.parametrize(
+    'field,value',
+    [
+        ('total', '1'),
+        ('total', True),
+        ('total', -1),
+        ('limit', 0),
+        ('limit', 1.0),
+        ('offset', '0'),
+        ('offset', -1),
+    ],
+)
+def test_pagination_rejects_invalid_counts(field, value):
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Pagination.model_validate(
+            {'total': 10, 'limit': 20, 'offset': 0, field: value}
+        )
 
 
 # ── Paginator dependency ──────────────────────────────────────────────────────
@@ -110,6 +148,24 @@ def test_health_response_default():
 def test_ready_response():
     r = schemas.ReadyResponse(status='ok', database='reachable')
     assert r.database == 'reachable'
+
+
+@pytest.mark.parametrize(
+    'schema,field,value',
+    [
+        (schemas.HealthResponse, 'status', b'ok'),
+        (schemas.ReadyResponse, 'status', b'ok'),
+        (schemas.ReadyResponse, 'database', b'reachable'),
+        (schemas.ErrorResponse, 'detail', b'error'),
+        (schemas.ErrorResponse, 'status', b'conflict'),
+        (responses.APIResponse, 'detail', b'error'),
+        (responses.APIResponseBadRequest, 'status', b'invalid'),
+    ],
+)
+def test_shared_responses_reject_coerced_strings(schema, field, value):
+    data = {'status': 'ok', 'database': 'reachable', 'detail': 'error', field: value}
+    with pytest.raises(pydantic.ValidationError):
+        schema.model_validate(data)
 
 
 # ── DateRangeValidatorMixin ───────────────────────────────────────────────────

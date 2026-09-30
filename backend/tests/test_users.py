@@ -3,7 +3,10 @@ import uuid
 
 import pytest
 
-from src.api import auth, models, permission, schemas
+from src.api import auth
+from src.api import models
+from src.api import permission
+from src.api import schemas
 from src.core import security
 
 pytestmark = [pytest.mark.usefixtures('database'), pytest.mark.xdist_group('domains')]

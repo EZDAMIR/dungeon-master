@@ -73,14 +73,16 @@ async def test_get_current_user_no_token(client):
 
 async def test_get_current_user_missing_token_on_protected_route():
     """A protected endpoint (if one existed) would return 401."""
-    from src.api import auth, exceptions
+    from src.api import auth
+    from src.api import exceptions
 
     with pytest.raises(exceptions.HTTPUnauthorizedException):
         await auth.get_current_user(token=None)
 
 
 async def test_get_current_user_invalid_token():
-    from src.api import auth, exceptions
+    from src.api import auth
+    from src.api import exceptions
 
     with pytest.raises(exceptions.HTTPUnauthorizedException):
         await auth.get_current_user(token='bad.token.here')
@@ -104,7 +106,8 @@ async def test_get_current_user_valid_token():
 
 
 async def test_get_current_user_expired_token():
-    from src.api import auth, exceptions
+    from src.api import auth
+    from src.api import exceptions
     from src.core import security
 
     token = security.create_access_token(

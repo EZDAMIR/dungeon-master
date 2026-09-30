@@ -1,6 +1,8 @@
 import pydantic
 
-from .. import controllers, models, schemas
+from .. import controllers
+from .. import models
+from .. import schemas
 
 
 def eligible_exercises(exercises: list[dict], profile: dict) -> list[dict]:

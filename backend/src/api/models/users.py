@@ -13,16 +13,30 @@ Users = sa.Table(
     'users',
     postgres.metadata,
     sa.Column('id', sa.UUID, primary_key=True, default=uuid.uuid4),
-    sa.Column('email', sa.String(254), nullable=True),
-    sa.Column('display_name', sa.String(100), nullable=True),
+    sa.Column('email', sa.Text, nullable=True),
+    sa.Column('display_name', sa.Text, nullable=True),
     sa.Column('is_guest', sa.Boolean, nullable=False, server_default=sa.true()),
     sa.Column(
-        'created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        'created_at',
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now(),
     ),
     sa.Column(
-        'updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        'updated_at',
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now(),
     ),
     sa.UniqueConstraint('email', name='uq_users_email'),
+    sa.CheckConstraint(
+        sa.func.length(sa.column('email')) <= 254,
+        name='ck_users_email_length',
+    ),
+    sa.CheckConstraint(
+        sa.func.length(sa.column('display_name')) <= 100,
+        name='ck_users_display_name_length',
+    ),
 )
 
 

@@ -69,3 +69,8 @@ class HTTPUnprocessableException(AppException):
 class HTTPInternalServerException(AppException):
     status_code = 500
     default_detail = 'Internal server error'
+
+
+class HTTPServiceUnavailableException(AppException):
+    status_code = 503
+    default_detail = 'Service unavailable'

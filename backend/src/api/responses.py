@@ -19,7 +19,7 @@ class Status(enum.StrEnum):
 class APIResponse(pydantic.BaseModel):
     """Base class for documented API response schemas."""
 
-    detail: str
+    detail: pydantic.StrictStr
 
     model_config = pydantic.ConfigDict(extra='ignore')
 
@@ -35,7 +35,7 @@ class APIResponse(pydantic.BaseModel):
 class APIResponseBadRequest(APIResponse):
     """400 Bad Request."""
 
-    status: str
+    status: pydantic.StrictStr
 
     @classmethod
     def status_code(cls) -> int:
@@ -84,6 +84,16 @@ class APIResponseInternalServerError(APIResponse):
     @classmethod
     def status_code(cls) -> int:
         return 500
+
+
+class APIResponseDatabaseUnavailable(APIResponse):
+    """503 Database not reachable."""
+
+    database: typing.Literal['unreachable']
+
+    @classmethod
+    def status_code(cls) -> int:
+        return 503
 
 
 ResponseClass = typing.TypeVar('ResponseClass', bound=type[APIResponse])

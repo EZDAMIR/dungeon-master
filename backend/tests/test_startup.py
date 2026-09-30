@@ -58,7 +58,9 @@ async def test_http_client_not_initialized_raises():
 async def test_storage_set_and_get():
     import tempfile
 
-    from src.core.storage import LocalStorage, get_storage, set_storage
+    from src.core.storage import LocalStorage
+    from src.core.storage import get_storage
+    from src.core.storage import set_storage
 
     with tempfile.TemporaryDirectory() as tmp:
         backend = LocalStorage(tmp)
@@ -70,7 +72,8 @@ async def test_storage_set_and_get():
 async def test_local_storage_save_get_delete():
     import tempfile
 
-    from src.core.storage import LocalStorage, StorageError
+    from src.core.storage import LocalStorage
+    from src.core.storage import StorageError
 
     with tempfile.TemporaryDirectory() as tmp:
         storage = LocalStorage(tmp)

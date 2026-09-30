@@ -74,6 +74,12 @@ def test_internal_server_exception():
     assert exc.status_code == 500
 
 
+def test_service_unavailable_exception():
+    exc = exceptions.HTTPServiceUnavailableException()
+    assert exc.status_code == 503
+    assert exc.response_body() == {'detail': 'Service unavailable'}
+
+
 async def test_app_exception_handler_returns_json(client):
     """Unhandled AppException -> flat JSON, no stack trace."""
 

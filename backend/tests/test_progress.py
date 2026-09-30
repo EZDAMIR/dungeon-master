@@ -2,7 +2,8 @@ import uuid
 
 import pytest
 
-from src.api import controllers, models
+from src.api import controllers
+from src.api import models
 
 pytestmark = [pytest.mark.xdist_group('domains')]
 

@@ -38,13 +38,27 @@ TrainingPlans = sa.Table(
         nullable=False,
     ),
     sa.Column('starts_on', sa.Date, nullable=False),
-    sa.Column('rationale', sa.String(500), nullable=False),
-    sa.Column('generator_version', sa.String(50), nullable=False),
+    sa.Column('rationale', sa.Text, nullable=False),
+    sa.Column('generator_version', sa.Text, nullable=False),
     sa.Column(
-        'created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        'created_at',
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now(),
     ),
     sa.Column(
-        'updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        'updated_at',
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now(),
+    ),
+    sa.CheckConstraint(
+        sa.func.length(sa.column('rationale')) <= 500,
+        name='ck_training_plans_rationale_length',
+    ),
+    sa.CheckConstraint(
+        sa.func.length(sa.column('generator_version')) <= 50,
+        name='ck_training_plans_generator_version_length',
     ),
 )
 sa.Index(
@@ -65,17 +79,24 @@ TrainingPlanItems = sa.Table(
         index=True,
     ),
     sa.Column(
-        'exercise_id', sa.UUID, sa.ForeignKey('exercises.id'), nullable=False, index=True
+        'exercise_id',
+        sa.UUID,
+        sa.ForeignKey('exercises.id'),
+        nullable=False,
+        index=True,
     ),
     sa.Column('day_index', sa.Integer, nullable=False),
     sa.Column('position', sa.Integer, nullable=False),
     sa.Column('sets', sa.Integer, nullable=False),
     sa.Column('target_reps', sa.Integer, nullable=False),
     sa.Column('rest_seconds', sa.Integer, nullable=False),
-    sa.Column('tempo_hint', sa.String(80), nullable=True),
+    sa.Column('tempo_hint', sa.Text, nullable=True),
     sa.Column('scheduled_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column(
-        'created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        'created_at',
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now(),
     ),
     sa.CheckConstraint(sa.column('day_index').between(0, 6), name='ck_plan_items_day'),
     sa.CheckConstraint(sa.column('position') >= 0, name='ck_plan_items_position'),
@@ -83,6 +104,10 @@ TrainingPlanItems = sa.Table(
     sa.CheckConstraint(sa.column('target_reps').between(1, 100), name='ck_plan_items_reps'),
     sa.CheckConstraint(sa.column('rest_seconds').between(0, 600), name='ck_plan_items_rest'),
     sa.UniqueConstraint('plan_id', 'day_index', 'position', name='uq_plan_items_position'),
+    sa.CheckConstraint(
+        sa.func.length(sa.column('tempo_hint')) <= 80,
+        name='ck_training_plan_items_tempo_hint_length',
+    ),
 )
 
 
@@ -101,12 +126,15 @@ async def plan_get(session, user_id: uuid.UUID, plan_id: uuid.UUID | None = None
         sa.select(TrainingPlanItems, models.exercises.Exercises.c.key)
         .join(models.exercises.Exercises)
         .where(TrainingPlanItems.c.plan_id == plan['id'])
-        .order_by(TrainingPlanItems.c.day_index, TrainingPlanItems.c.position)
+        .order_by(
+            TrainingPlanItems.c.day_index,
+            TrainingPlanItems.c.position,
+        ),
     )
     exercises = await session.fetch_all(
         models.exercises.Exercises.select().where(
-            models.exercises.Exercises.c.id.in_([row['exercise_id'] for row in rows])
-        )
+            models.exercises.Exercises.c.id.in_([row['exercise_id'] for row in rows]),
+        ),
     )
     catalog = {row['id']: row for row in exercises}
     plan['items'] = [{**row, 'exercise': catalog[row['exercise_id']]} for row in rows]
@@ -115,7 +143,10 @@ async def plan_get(session, user_id: uuid.UUID, plan_id: uuid.UUID | None = None
 
 @postgres.session
 async def plan_create_active(
-    session, user_id: uuid.UUID, data: dict, items: list[dict]
+    session,
+    user_id: uuid.UUID,
+    data: dict,
+    items: list[dict],
 ) -> dict:
     try:
         async with session.transaction():
@@ -123,12 +154,20 @@ async def plan_create_active(
             await session.execute(
                 models.users.Users.update()
                 .where(models.users.Users.c.id == user_id)
-                .values(updated_at=sa.func.now())
+                .values(
+                    updated_at=sa.func.now(),
+                ),
             )
             await session.execute(
                 TrainingPlans.update()
-                .where(TrainingPlans.c.user_id == user_id, TrainingPlans.c.status == 'active')
-                .values(status='archived', updated_at=sa.func.now())
+                .where(
+                    TrainingPlans.c.user_id == user_id,
+                    TrainingPlans.c.status == 'active',
+                )
+                .values(
+                    status='archived',
+                    updated_at=sa.func.now(),
+                ),
             )
             plan = await session.fetch_one(
                 TrainingPlans.insert()
@@ -137,7 +176,7 @@ async def plan_create_active(
                     user_id=user_id,
                     status='active',
                 )
-                .returning(TrainingPlans)
+                .returning(TrainingPlans),
             )
             await session.execute(
                 TrainingPlanItems.insert().values(
@@ -148,8 +187,8 @@ async def plan_create_active(
                             'exercise_id': uuid.UUID(str(item['exercise_id'])),
                         }
                         for item in items
-                    ]
-                )
+                    ],
+                ),
             )
             return await plan_get(session, user_id, plan['id'])
     except sa.exc.IntegrityError as exc:

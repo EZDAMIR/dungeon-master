@@ -4,7 +4,8 @@ import uuid
 
 import pytest
 
-from src.api import exceptions, permission
+from src.api import exceptions
+from src.api import permission
 from src.core import security
 
 

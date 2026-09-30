@@ -6,17 +6,17 @@ import pydantic
 
 
 class HealthResponse(pydantic.BaseModel):
-    status: str = 'ok'
+    status: pydantic.StrictStr = 'ok'
 
 
 class ReadyResponse(pydantic.BaseModel):
-    status: str
-    database: str
+    status: pydantic.StrictStr
+    database: pydantic.StrictStr
 
 
 class ErrorResponse(pydantic.BaseModel):
-    detail: str
-    status: str | None = None
+    detail: pydantic.StrictStr
+    status: pydantic.StrictStr | None = None
 
     model_config = pydantic.ConfigDict(extra='allow')
 
@@ -31,9 +31,9 @@ class UserCurrent(pydantic.BaseModel):
     id: uuid.UUID
     email: pydantic.EmailStr | None
     is_superuser: bool = False
-    permissions: list[str] = pydantic.Field(default_factory=list)
+    permissions: list[pydantic.StrictStr] = pydantic.Field(default_factory=list)
 
     # Optional: set when your application uses organisations / tenants
-    organization_id: int | None = None
+    organization_id: pydantic.StrictInt | None = None
 
     model_config = pydantic.ConfigDict(extra='ignore')

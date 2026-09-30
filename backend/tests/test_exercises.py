@@ -5,7 +5,9 @@ from pathlib import Path
 import pytest
 import sqlalchemy as sa
 
-from src.api import controllers, models, schemas
+from src.api import controllers
+from src.api import models
+from src.api import schemas
 
 pytestmark = [pytest.mark.xdist_group('domains')]
 

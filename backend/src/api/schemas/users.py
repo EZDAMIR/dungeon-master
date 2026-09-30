@@ -12,13 +12,15 @@ class GuestCreate(pydantic.BaseModel):
 class UserGet(pydantic.BaseModel):
     id: uuid.UUID
     email: pydantic.EmailStr | None
-    display_name: typing.Annotated[str, pydantic.StringConstraints(max_length=100)] | None
+    display_name: (
+        typing.Annotated[pydantic.StrictStr, pydantic.StringConstraints(max_length=100)] | None
+    )
     is_guest: bool
     created_at: datetime.datetime
 
 
 class GuestToken(pydantic.BaseModel):
-    access_token: str
+    access_token: pydantic.StrictStr
     token_type: typing.Literal['bearer']
-    expires_in: int
+    expires_in: typing.Annotated[int, pydantic.Field(strict=True, ge=1)]
     user: UserGet

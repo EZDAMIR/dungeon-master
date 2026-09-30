@@ -5,7 +5,8 @@ import pydantic
 import pytest
 import sqlalchemy as sa
 
-from src.api import models, schemas
+from src.api import models
+from src.api import schemas
 
 pytestmark = [pytest.mark.xdist_group('domains')]
 
@@ -210,10 +211,19 @@ async def test_concurrent_duplicate_and_inactive_exercise(
         async with database.begin() as conn:
             await conn.execute(models.exercises.Exercises.update().values(is_active=True))
     data = schemas.workout_sessions.WorkoutSetCreate(**set_payload).model_dump(
-        mode='json', by_alias=True
+        mode='json', by_alias=True, exclude={'exercise_key', 'engine_version'}
     )
     results = await asyncio.gather(
-        *[models.workout_sessions.set_create(uuid.UUID(user_id), sid, data) for _ in range(3)]
+        *[
+            models.workout_sessions.set_create(
+                uuid.UUID(user_id),
+                sid,
+                data,
+                exercise_key=set_payload['exercise_key'],
+                engine_version=set_payload['engine_version'],
+            )
+            for _ in range(3)
+        ]
     )
     assert all(type(row) is dict for row in results)
     assert len({row['id'] for row in results}) == 1
@@ -245,12 +255,16 @@ async def test_persisted_check_constraints_and_historical_duplicate(
     sid = uuid.UUID(created['id'])
     path = '/api/v1/workout-sessions/' + str(sid)
     data = schemas.workout_sessions.WorkoutSetCreate(**set_payload).model_dump(
-        mode='json', by_alias=True
+        mode='json', by_alias=True, exclude={'exercise_key', 'engine_version'}
     )
     for changes in [{'accepted_reps': 6}, {'duration_ms': -1}, {'set_index': 0}]:
         with pytest.raises(sa.exc.IntegrityError):
             await models.workout_sessions.set_create(
-                uuid.UUID(user_id), sid, {**data, **changes}
+                uuid.UUID(user_id),
+                sid,
+                {**data, **changes},
+                exercise_key=set_payload['exercise_key'],
+                engine_version=set_payload['engine_version'],
             )
     saved = await client.post(path + '/sets', headers=headers, json=set_payload)
     await client.post(path + '/complete', headers=headers, json=completion_payload)

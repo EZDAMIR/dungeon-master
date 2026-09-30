@@ -3,7 +3,11 @@ from typing import Annotated
 
 import fastapi
 
-from ... import auth, controllers, permission, responses, schemas
+from ... import auth
+from ... import controllers
+from ... import permission
+from ... import responses
+from ... import schemas
 
 router = fastapi.APIRouter(prefix='/workout-sessions')
 
@@ -19,14 +23,15 @@ router = fastapi.APIRouter(prefix='/workout-sessions')
             responses.APIResponseUnauthorized,
             responses.APIResponseForbidden,
             responses.APIResponseNotFound,
-            responses.APIResponseConflict,
-        ]
+            controllers.workout_sessions.SessionConflictResponse,
+        ],
     ),
 )
 async def create_session(
     body: schemas.workout_sessions.WorkoutSessionCreate,
     current_user: Annotated[schemas.UserCurrent, fastapi.Security(auth.get_current_user)],
 ) -> dict:
+    """Persist an owned session; a foreign plan returns 404 and conflicting retry 409 session_conflict."""
     return await controllers.workout_sessions.create(current_user, body)
 
 
@@ -41,8 +46,8 @@ async def create_session(
             responses.APIResponseUnauthorized,
             responses.APIResponseForbidden,
             responses.APIResponseNotFound,
-            responses.APIResponseConflict,
-        ]
+            controllers.workout_sessions.SessionConflictResponse,
+        ],
     ),
 )
 async def add_set(
@@ -50,6 +55,11 @@ async def add_set(
     session_id: uuid.UUID,
     current_user: Annotated[schemas.UserCurrent, fastapi.Security(auth.get_current_user)],
 ) -> dict:
+    """Persist aggregate set data.
+
+    Returns 404 for a missing owned session/active exercise, or 409
+    session_conflict for a conflicting retry or a new immutable-session write.
+    """
     return await controllers.workout_sessions.add_set(current_user, session_id, body)
 
 
@@ -64,8 +74,8 @@ async def add_set(
             responses.APIResponseUnauthorized,
             responses.APIResponseForbidden,
             responses.APIResponseNotFound,
-            responses.APIResponseConflict,
-        ]
+            controllers.workout_sessions.SessionConflictResponse,
+        ],
     ),
 )
 async def complete_session(
@@ -73,4 +83,9 @@ async def complete_session(
     session_id: uuid.UUID,
     current_user: Annotated[schemas.UserCurrent, fastapi.Security(auth.get_current_user)],
 ) -> dict:
+    """Complete an owned session atomically.
+
+    Returns 404 for a missing owned session, or 409 session_conflict when the
+    submitted aggregates, timestamps or retry differ from persisted facts.
+    """
     return await controllers.workout_sessions.complete(current_user, session_id, body)

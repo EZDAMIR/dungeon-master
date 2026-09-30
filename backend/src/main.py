@@ -16,8 +16,10 @@ import fastapi.responses
 
 from src.api import exceptions as app_exceptions
 from src.api.v1 import routers
-from src.core import config, http_client, postgres
+from src.core import config
+from src.core import http_client
 from src.core import logging as app_logging
+from src.core import postgres
 
 logger = logging.getLogger(__name__)
 

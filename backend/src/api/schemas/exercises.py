@@ -4,7 +4,9 @@ import uuid
 
 import pydantic
 
-from .profiles import ConstraintCodeEnum, EquipmentEnum, ExperienceEnum
+from .profiles import ConstraintCodeEnum
+from .profiles import EquipmentEnum
+from .profiles import ExperienceEnum
 
 
 class ImpactEnum(str, enum.Enum):  # noqa: UP042 — architecture enum contract
@@ -31,7 +33,7 @@ class AnalysisProfile(pydantic.BaseModel):
 class ExerciseGet(pydantic.BaseModel):
     id: uuid.UUID
     key: typing.Literal['bodyweight_squat']
-    name: typing.Annotated[str, pydantic.StringConstraints(max_length=100)]
+    name: typing.Annotated[pydantic.StrictStr, pydantic.StringConstraints(max_length=100)]
     difficulty: ExperienceEnum
     equipment_codes: typing.Annotated[
         list[EquipmentEnum], pydantic.Field(min_length=1, max_length=4)

@@ -1,8 +1,14 @@
 """Tests for the postgres infrastructure module (no real DB required)."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-from src.core.postgres import Session, get_engine, on_shutdown, on_startup, session
+from src.core.postgres import Session
+from src.core.postgres import get_engine
+from src.core.postgres import on_shutdown
+from src.core.postgres import on_startup
+from src.core.postgres import session
 
 
 async def test_get_engine_returns_engine():

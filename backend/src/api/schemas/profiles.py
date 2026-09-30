@@ -42,7 +42,7 @@ class ConstraintStatusEnum(str, enum.Enum):  # noqa: UP042 — architecture enum
     rejected = 'rejected'
 
 
-class ProfileUpdate(pydantic.BaseModel):
+class ProfileBase(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='forbid')
     goal: GoalEnum
     experience_level: ExperienceEnum
@@ -54,7 +54,9 @@ class ProfileUpdate(pydantic.BaseModel):
     locale: typing.Annotated[
         str,
         pydantic.StringConstraints(
-            strict=True, max_length=35, pattern=r'^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$'
+            strict=True,
+            max_length=35,
+            pattern=r'^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$',
         ),
     ]
     timezone: typing.Annotated[
@@ -83,7 +85,11 @@ class ProfileUpdate(pydantic.BaseModel):
         return value
 
 
-class ProfileGet(ProfileUpdate):
+class ProfileUpdate(ProfileBase):
+    """Complete replacement of the mutable profile fields."""
+
+
+class ProfileGet(ProfileBase):
     model_config = pydantic.ConfigDict(extra='ignore')
     created_at: datetime.datetime
     updated_at: datetime.datetime

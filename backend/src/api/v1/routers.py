@@ -1,14 +1,12 @@
 import fastapi
 
-from .endpoints import (
-    auth,
-    exercises,
-    health,
-    profile,
-    progress,
-    training_plans,
-    workout_sessions,
-)
+from .endpoints import auth
+from .endpoints import exercises
+from .endpoints import health
+from .endpoints import profile
+from .endpoints import progress
+from .endpoints import training_plans
+from .endpoints import workout_sessions
 
 
 def get_router() -> fastapi.APIRouter:

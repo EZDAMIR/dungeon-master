@@ -11,7 +11,8 @@ import fastapi
 import fastapi.security
 import jwt as pyjwt
 
-from . import exceptions, schemas
+from . import exceptions
+from . import schemas
 
 _oauth2 = fastapi.security.OAuth2PasswordBearer(
     tokenUrl='/api/v1/auth/token',
@@ -37,7 +38,7 @@ async def get_current_user(
         raise exceptions.HTTPUnauthorizedException(detail='Token has expired') from exc
     except pyjwt.PyJWTError as exc:
         raise exceptions.HTTPUnauthorizedException(
-            detail='Invalid authentication token'
+            detail='Invalid authentication token',
         ) from exc
 
     try:

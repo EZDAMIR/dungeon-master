@@ -4,7 +4,8 @@ import pydantic
 import pytest
 import sqlalchemy as sa
 
-from src.api import models, schemas
+from src.api import models
+from src.api import schemas
 from src.core import security
 
 pytestmark = [pytest.mark.xdist_group('domains')]

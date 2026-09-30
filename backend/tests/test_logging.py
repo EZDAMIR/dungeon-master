@@ -142,7 +142,8 @@ def test_configure_logging_production():
     import unittest.mock
 
     from src.core.config import Settings
-    from src.core.logging import JSONFormatter, configure_logging
+    from src.core.logging import JSONFormatter
+    from src.core.logging import configure_logging
 
     mock_settings = Settings(
         SECRET_KEY='test-secret-key-at-least-16-chars',

@@ -3,6 +3,7 @@
 Import via: from . import fields
 """
 
+import json
 import typing
 
 import pydantic
@@ -10,7 +11,7 @@ import pydantic
 # Positive integer within PostgreSQL int4 range
 Int = typing.Annotated[
     int,
-    pydantic.Field(ge=1, le=2_147_483_647),
+    pydantic.Field(strict=True, ge=1, le=2_147_483_647),
 ]
 
 # Non-empty string with a sensible max length
@@ -27,15 +28,17 @@ String = typing.Annotated[
 _MAX_DICT_CHARS = 65_536
 
 
-def _dict_max_size(v: dict) -> dict:  # pragma: no cover
-    import json
-
-    if len(json.dumps(v)) > _MAX_DICT_CHARS:
+def _dict_max_size(v: dict) -> dict:
+    try:
+        serialized = json.dumps(v, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise ValueError('Dict must contain finite JSON-serializable values') from exc
+    if len(serialized) > _MAX_DICT_CHARS:
         raise ValueError(f'Dict serialised size exceeds {_MAX_DICT_CHARS} characters')
     return v
 
 
 Dict = typing.Annotated[
     dict,
-    pydantic.BeforeValidator(_dict_max_size),
+    pydantic.AfterValidator(_dict_max_size),
 ]

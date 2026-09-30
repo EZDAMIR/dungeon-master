@@ -18,7 +18,7 @@ class JSONFormatter(logging.Formatter):
             'api_key',
             'access_token',
             'refresh_token',
-        }
+        },
     )
 
     def format(self, record: logging.LogRecord) -> str:

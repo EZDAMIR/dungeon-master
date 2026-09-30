@@ -18,17 +18,21 @@ async def progress_summary(session, user_id: uuid.UUID, recent_limit: int) -> di
             sa.func.count().label('completed_sessions'),
             *[
                 sa.func.coalesce(sa.func.sum(sessions.c.summary[key].as_integer()), 0).label(
-                    key
+                    key,
                 )
                 for key in counters
             ],
             *[
                 sa.func.coalesce(
-                    sa.func.sum(sessions.c.summary['error_counts'][key].as_integer()), 0
+                    sa.func.sum(sessions.c.summary['error_counts'][key].as_integer()),
+                    0,
                 ).label(key)
                 for key in errors
             ],
-        ).where(sessions.c.user_id == user_id, sessions.c.status == 'completed')
+        ).where(
+            sessions.c.user_id == user_id,
+            sessions.c.status == 'completed',
+        ),
     )
     exercise_key = (
         sa.select(exercises.c.key)
@@ -46,9 +50,15 @@ async def progress_summary(session, user_id: uuid.UUID, recent_limit: int) -> di
             *[sessions.c.summary[key].as_integer().label(key) for key in counters],
             sessions.c.summary['error_counts'].label('error_counts'),
         )
-        .where(sessions.c.user_id == user_id, sessions.c.status == 'completed')
-        .order_by(sessions.c.completed_at.desc(), sessions.c.id.desc())
-        .limit(recent_limit)
+        .where(
+            sessions.c.user_id == user_id,
+            sessions.c.status == 'completed',
+        )
+        .order_by(
+            sessions.c.completed_at.desc(),
+            sessions.c.id.desc(),
+        )
+        .limit(recent_limit),
     )
     totals['error_counts'] = {key: totals.pop(key) for key in errors}
     totals['recent_sessions'] = recent

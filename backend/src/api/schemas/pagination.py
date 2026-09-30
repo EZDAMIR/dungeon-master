@@ -10,8 +10,10 @@ import pydantic
 
 
 class Pagination(pydantic.BaseModel):
-    total: int = pydantic.Field(ge=0, description='Total number of matching records')
-    limit: int = pydantic.Field(ge=1, description='Page size')
-    offset: int = pydantic.Field(ge=0, description='Number of records skipped')
+    total: pydantic.StrictInt = pydantic.Field(
+        ge=0, description='Total number of matching records'
+    )
+    limit: pydantic.StrictInt = pydantic.Field(ge=1, description='Page size')
+    offset: pydantic.StrictInt = pydantic.Field(ge=0, description='Number of records skipped')
 
     model_config = pydantic.ConfigDict(extra='ignore')

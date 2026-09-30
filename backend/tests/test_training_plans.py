@@ -6,7 +6,10 @@ from unittest.mock import AsyncMock
 import pytest
 import sqlalchemy as sa
 
-from src.api import controllers, exceptions, models, schemas
+from src.api import controllers
+from src.api import exceptions
+from src.api import models
+from src.api import schemas
 
 pytestmark = [pytest.mark.xdist_group('domains')]
 

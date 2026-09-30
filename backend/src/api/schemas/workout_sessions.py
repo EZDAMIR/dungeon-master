@@ -44,7 +44,7 @@ class WorkoutSessionCreate(pydantic.BaseModel):
     client_engine_version: EngineVersion
 
 
-class WorkoutSetCreate(pydantic.BaseModel):
+class WorkoutSetBase(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='forbid')
     client_set_id: uuid.UUID
     exercise_key: typing.Literal['bodyweight_squat']
@@ -61,6 +61,10 @@ class WorkoutSetCreate(pydantic.BaseModel):
         if self.accepted_reps > self.total_reps:
             raise ValueError('accepted_reps must not exceed total_reps')
         return self
+
+
+class WorkoutSetCreate(WorkoutSetBase):
+    """Aggregate set command; raw visual data is not accepted."""
 
 
 class SessionSummary(pydantic.BaseModel):
@@ -100,7 +104,7 @@ class WorkoutSessionGet(pydantic.BaseModel):
     updated_at: datetime.datetime
 
 
-class WorkoutSetGet(WorkoutSetCreate):
+class WorkoutSetGet(WorkoutSetBase):
     model_config = pydantic.ConfigDict(extra='ignore')
     id: uuid.UUID
     session_id: uuid.UUID

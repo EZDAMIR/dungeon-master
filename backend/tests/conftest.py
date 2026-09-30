@@ -61,7 +61,12 @@ def disposable_database_url():
     name = 'dungeon_sprint3_' + uuid.uuid4().hex + '_test'
     env = dict(os.environ, PGPASSWORD=url.password or '')
     args = ['-h', url.host, '-p', str(url.port or 5432), '-U', url.username]
-    subprocess.run(['createdb', *args, name], env=env, check=True, capture_output=True)
+    subprocess.run(
+        ['createdb', *args, '--template=template0', '--encoding=UTF8', name],
+        env=env,
+        check=True,
+        capture_output=True,
+    )
     try:
         env['DATABASE_URL'] = url.set(database=name).render_as_string(hide_password=False)
         env['DEBUG'] = 'false'

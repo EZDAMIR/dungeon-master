@@ -24,7 +24,9 @@ import enum
 
 import fastapi
 
-from . import auth, exceptions, schemas
+from . import auth
+from . import exceptions
+from . import schemas
 
 
 class Perm(enum.StrEnum):

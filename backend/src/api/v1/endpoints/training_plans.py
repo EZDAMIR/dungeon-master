@@ -2,7 +2,11 @@ from typing import Annotated
 
 import fastapi
 
-from ... import auth, controllers, permission, responses, schemas
+from ... import auth
+from ... import controllers
+from ... import permission
+from ... import responses
+from ... import schemas
 
 router = fastapi.APIRouter(prefix='/training-plans')
 
@@ -17,15 +21,21 @@ router = fastapi.APIRouter(prefix='/training-plans')
         [
             responses.APIResponseUnauthorized,
             responses.APIResponseForbidden,
-            responses.APIResponseNotFound,
+            controllers.profiles.ProfileRequiredResponse,
             controllers.training_plans.PlanConflictResponse,
-        ]
+        ],
     ),
 )
 async def generate_plan(
-    current_user: Annotated[schemas.UserCurrent, fastapi.Security(auth.get_current_user)],
+    *,
     body: Annotated[schemas.training_plans.PlanGenerate | None, fastapi.Body()] = None,
+    current_user: Annotated[schemas.UserCurrent, fastapi.Security(auth.get_current_user)],
 ) -> dict:
+    """Generate an eligible deterministic plan.
+
+    Returns 404 profile_required for a missing profile, or 409 with
+    no_eligible_exercises / plan_generation_conflict for generation failures.
+    """
     return await controllers.training_plans.generate(current_user)
 
 
@@ -40,10 +50,11 @@ async def generate_plan(
             responses.APIResponseUnauthorized,
             responses.APIResponseForbidden,
             responses.APIResponseNotFound,
-        ]
+        ],
     ),
 )
 async def current_plan(
     current_user: Annotated[schemas.UserCurrent, fastapi.Security(auth.get_current_user)],
 ) -> dict:
+    """Read the caller's active plan; no active plan returns 404."""
     return await controllers.training_plans.current(current_user)
