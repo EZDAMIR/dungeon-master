@@ -13,7 +13,7 @@ router = fastapi.APIRouter(prefix='/training-plans')
 
 @router.post(
     '/generate',
-    summary='Generate deterministic active plan',
+    summary='Generate active deterministic or Sprint 4A personalized plan',
     dependencies=[permission.PermsRequired([permission.Perm.PLAN_GENERATE])],
     response_model=schemas.training_plans.TrainingPlanGet,
     response_description='New active plan with nested items',
@@ -36,7 +36,7 @@ async def generate_plan(
     Returns 404 profile_required for a missing profile, or 409 with
     no_eligible_exercises / plan_generation_conflict for generation failures.
     """
-    return await controllers.training_plans.generate(current_user)
+    return await controllers.training_plans.generate_requested(current_user, body)
 
 
 @router.get(

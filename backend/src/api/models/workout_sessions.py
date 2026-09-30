@@ -106,6 +106,12 @@ WorkoutSetResults = sa.Table(
     sa.Column('accepted_reps', sa.Integer, nullable=False),
     sa.Column('duration_ms', sa.Integer, nullable=False),
     sa.Column('error_counts', pg.JSONB, nullable=False),
+    sa.Column(
+        'generic_error_counts',
+        pg.JSONB,
+        nullable=False,
+        server_default=sa.literal_column("'{}'::jsonb"),
+    ),
     sa.Column('metrics', pg.JSONB, nullable=False),
     sa.Column(
         'created_at',
@@ -221,6 +227,10 @@ async def set_create(
         exercise = await session.fetch_one(
             models.exercises.Exercises.select().where(
                 models.exercises.Exercises.c.key == exercise_key,
+                sa.or_(
+                    models.exercises.Exercises.c.owner_user_id.is_(None),
+                    models.exercises.Exercises.c.owner_user_id == user_id,
+                ),
             ),
         )
         if exercise is None:
@@ -308,6 +318,12 @@ async def session_complete(
             key: sum(row['error_counts'][key] for row in rows)
             for key in ['depth_insufficient', 'too_fast', 'incomplete_extension']
         }
+        totals['generic_error_counts'] = {}
+        for row in rows:
+            for code, count in row['generic_error_counts'].items():
+                totals['generic_error_counts'][code] = (
+                    totals['generic_error_counts'].get(code, 0) + count
+                )
         if not rows or totals != data['summary']:
             raise SessionConflict
         return updated

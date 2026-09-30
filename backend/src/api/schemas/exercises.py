@@ -30,9 +30,20 @@ class AnalysisProfile(pydantic.BaseModel):
     supported_client: typing.Literal['web']
 
 
+class GenericAnalysisProfile(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(extra='forbid')
+    version: typing.Literal[1]
+    engine_key: typing.Literal['generic_v1']
+    engine_version: typing.Literal['generic-v1']
+    target_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=3, le=20)]
+    supported_client: typing.Literal['web']
+
+
 class ExerciseGet(pydantic.BaseModel):
     id: uuid.UUID
-    key: typing.Literal['bodyweight_squat']
+    key: typing.Annotated[
+        pydantic.StrictStr, pydantic.StringConstraints(min_length=1, max_length=80)
+    ]
     name: typing.Annotated[pydantic.StrictStr, pydantic.StringConstraints(max_length=100)]
     difficulty: ExperienceEnum
     equipment_codes: typing.Annotated[
@@ -43,4 +54,4 @@ class ExerciseGet(pydantic.BaseModel):
     contraindication_tags: typing.Annotated[
         list[ConstraintCodeEnum], pydantic.Field(max_length=3)
     ]
-    analysis_profile: AnalysisProfile
+    analysis_profile: AnalysisProfile | GenericAnalysisProfile

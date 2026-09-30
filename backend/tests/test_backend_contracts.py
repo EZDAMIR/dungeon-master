@@ -155,6 +155,7 @@ async def test_set_controller_sends_only_persistence_fields(monkeypatch, set_pay
         for key, value in set_payload.items()
         if key not in {'exercise_key', 'engine_version'}
     }
+    expected['generic_error_counts'] = {}
     persist.assert_awaited_once_with(
         user.id,
         session_id,

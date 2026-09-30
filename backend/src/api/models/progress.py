@@ -49,6 +49,7 @@ async def progress_summary(session, user_id: uuid.UUID, recent_limit: int) -> di
             exercise_key.label('exercise_key'),
             *[sessions.c.summary[key].as_integer().label(key) for key in counters],
             sessions.c.summary['error_counts'].label('error_counts'),
+            sessions.c.summary['generic_error_counts'].label('generic_error_counts'),
         )
         .where(
             sessions.c.user_id == user_id,

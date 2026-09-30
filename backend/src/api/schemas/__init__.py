@@ -12,7 +12,9 @@ Schema files may use direct sibling imports (from . import fields, pagination)
 because Pydantic resolves types at class definition time.
 """
 
+from . import ai_coach  # noqa: F401
 from . import exercises  # noqa: F401
+from . import movement_spec  # noqa: F401
 from . import profiles  # noqa: F401
 from . import progress  # noqa: F401
 from . import training_plans  # noqa: F401

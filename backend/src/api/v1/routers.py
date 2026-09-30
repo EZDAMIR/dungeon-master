@@ -1,5 +1,6 @@
 import fastapi
 
+from .endpoints import ai_coach
 from .endpoints import auth
 from .endpoints import exercises
 from .endpoints import health
@@ -21,6 +22,7 @@ def get_router() -> fastapi.APIRouter:
     router.include_router(training_plans.router, tags=['Plans'])
     router.include_router(workout_sessions.router, tags=['Sessions'])
     router.include_router(progress.router, tags=['Progress'])
+    router.include_router(ai_coach.router, tags=['Sprint 4A Coach'])
 
     # Register domain routers here as they are created:
     # router.include_router(entities.router, tags=['Entities'])

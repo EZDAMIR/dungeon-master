@@ -5,6 +5,7 @@ import uuid
 
 import pydantic
 
+from . import fields
 from .exercises import ExerciseGet
 
 
@@ -22,6 +23,7 @@ class PlanSourceEnum(str, enum.Enum):  # noqa: UP042 — architecture enum contr
 
 class PlanGenerate(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='forbid')
+    mode: typing.Literal['deterministic', 'ai_assisted'] = 'deterministic'
 
 
 class PlanItemGet(pydantic.BaseModel):
@@ -51,3 +53,4 @@ class TrainingPlanGet(pydantic.BaseModel):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     items: list[PlanItemGet]
+    ai_metadata: fields.Dict | None = None

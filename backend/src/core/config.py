@@ -34,6 +34,28 @@ class Settings(pydantic_settings.BaseSettings):
 
     MAX_UPLOAD_SIZE_MB: int = 10
 
+    AI_FEATURE_ENABLED: bool = False
+    OPENAI_API_KEY: pydantic.SecretStr = pydantic.Field(default='')
+    OPENAI_MODEL: str = ''
+    OPENAI_EMBEDDING_MODEL: str = ''
+    OPENAI_TIMEOUT_SECONDS: float = pydantic.Field(default=30, gt=0, le=60)
+    OPENAI_MAX_RETRIES: int = pydantic.Field(default=1, ge=0, le=1)
+    ENABLE_DEMO_PERSONAS: bool = False
+    RAG_TOP_K: int = pydantic.Field(default=5, ge=1, le=5)
+    RAG_CHUNK_SIZE: int = pydantic.Field(default=1600, ge=1200, le=1800)
+    RAG_CHUNK_OVERLAP: int = pydantic.Field(default=200, ge=150, le=250)
+    MAX_DOCUMENTS_PER_USER: int = pydantic.Field(default=5, ge=1, le=5)
+    MAX_DOCUMENT_SIZE_MB: int = pydantic.Field(default=5, ge=1, le=5)
+    MAX_EXTRACTED_CHARS: int = pydantic.Field(default=50000, ge=1, le=50000)
+
+    @property
+    def ai_available(self) -> bool:
+        return bool(
+            self.AI_FEATURE_ENABLED
+            and self.OPENAI_API_KEY.get_secret_value()
+            and self.OPENAI_MODEL
+        )
+
     @pydantic.field_validator('SECRET_KEY')
     @classmethod
     def secret_key_must_not_be_empty(cls, v: str) -> str:
