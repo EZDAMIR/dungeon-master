@@ -10,6 +10,7 @@ import time
 import uuid
 
 import fastapi
+import fastapi.exceptions
 import fastapi.middleware.cors
 import fastapi.responses
 
@@ -56,6 +57,7 @@ def create_app() -> fastapi.FastAPI:
         allow_credentials=True,
         allow_methods=['*'],
         allow_headers=['*'],
+        expose_headers=['X-Request-ID'],
     )
 
     @app.middleware('http')
@@ -70,7 +72,9 @@ def create_app() -> fastapi.FastAPI:
         except Exception as exc:
             # Starlette's BaseHTTPMiddleware re-raises unhandled exceptions
             # even after inner exception handlers have processed them.
-            logger.exception('Unhandled exception propagated to middleware: %s', exc)
+            logger.error(
+                'Unhandled exception propagated to middleware (%s)', type(exc).__name__
+            )
             return fastapi.responses.JSONResponse(
                 status_code=500,
                 content={'detail': 'Internal server error'},
@@ -109,6 +113,18 @@ def create_app() -> fastapi.FastAPI:
 
     # ── Exception handlers ────────────────────────────────────────────────────
 
+    @app.exception_handler(fastapi.exceptions.RequestValidationError)
+    async def validation_exception_handler(request, exc):
+        # Never echo submitted profile/vision data or validator context.
+        errors = [
+            {key: error[key] for key in ('loc', 'msg', 'type')} for error in exc.errors()
+        ]
+        return fastapi.responses.JSONResponse(
+            status_code=422,
+            content={'detail': 'Validation error', 'errors': errors},
+            headers={'X-Request-ID': getattr(request.state, 'request_id', '')},
+        )
+
     @app.exception_handler(app_exceptions.AppException)
     async def app_exception_handler(
         request: fastapi.Request,
@@ -125,7 +141,7 @@ def create_app() -> fastapi.FastAPI:
         request: fastapi.Request,
         exc: Exception,
     ) -> fastapi.responses.JSONResponse:
-        logger.exception('Unhandled exception: %s', exc)
+        logger.error('Unhandled exception (%s)', type(exc).__name__)
         return fastapi.responses.JSONResponse(
             status_code=500,
             content={'detail': 'Internal server error'},

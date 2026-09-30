@@ -17,4 +17,5 @@ from . import (
     profiles,  # noqa: F401
     training_plans,  # noqa: F401
     users,  # noqa: F401
+    workout_sessions,  # noqa: F401
 )

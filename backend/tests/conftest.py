@@ -124,3 +124,46 @@ def profile_payload():
         'timezone': 'Asia/Almaty',
         'confirmed_constraints': [],
     }
+
+
+@pytest.fixture
+def session_payload():
+    import uuid
+
+    return {
+        'client_session_id': str(uuid.uuid4()),
+        'plan_id': None,
+        'started_at': '2026-09-30T00:00:00Z',
+        'client_engine_version': 'squat-v1',
+    }
+
+
+@pytest.fixture
+def set_payload():
+    import uuid
+
+    return {
+        'client_set_id': str(uuid.uuid4()),
+        'exercise_key': 'bodyweight_squat',
+        'set_index': 1,
+        'total_reps': 5,
+        'accepted_reps': 3,
+        'duration_ms': 27000,
+        'error_counts': {'depth_insufficient': 1, 'too_fast': 1, 'incomplete_extension': 0},
+        'metrics': {'mean_rep_duration_ms': 5400, 'mean_min_knee_angle': 108.4},
+        'engine_version': 'squat-v1',
+    }
+
+
+@pytest.fixture
+def completion_payload(set_payload):
+    return {
+        'completed_at': '2026-09-30T00:00:27Z',
+        'summary': {
+            **{
+                key: set_payload[key]
+                for key in ['total_reps', 'accepted_reps', 'duration_ms', 'error_counts']
+            },
+            'rejected_reps': 2,
+        },
+    }
