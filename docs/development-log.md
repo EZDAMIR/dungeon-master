@@ -632,3 +632,51 @@ architecture, actionlint and git diff checks. Full database/Docker checks and
 the first production release are verified by hosted CI/CD after publication.
 Actual webcam/phone and physical-distance testing remain manual. Backup copies
 and retained release files need an owner-selected long-term retention policy.
+
+Hosted verification completed: [CI run 36725352585](https://github.com/EZDAMIR/dungeon-master/actions/runs/36725352585)
+passed all three jobs, including 239 backend tests with 94.14% coverage and
+isolated Docker migrations/readiness/failure checks.
+[Automatic CD run 36725596192](https://github.com/EZDAMIR/dungeon-master/actions/runs/36725596192)
+successfully deployed `9c0ef5fd26be2b1e608e7cdde2027a66659da4a8` with backend digest
+`sha256:d2319536245501d9248b294db1bb08f02d7091a797197d6a7f62a07d68c1f84c`.
+The new PostgreSQL database was backed up before its first schema upgrade and
+the dump restored successfully into a disposable verification database.
+Public routes/API/asset bytes and Chromium rendering/reload/guard smoke passed.
+Both owned containers are healthy, API readiness reports `database: reachable`,
+and `/release.txt` agrees with the manifest. Previous release: none on this first
+deployment. No existing project was stopped/restarted/deleted; existing container
+uptimes remain 2–7 days and both helpmake frontend/API still return HTTP 200.
+Certificate renewal dry-run passed; the dedicated renewal timer is active.
+
+## 2026-09-30 — Sprint 4A pipeline follow-up: separate CI, smoke and CD jobs
+
+Replaced the separate workflow-run deployment trigger with an explicit
+`CI → Smoke tests → CD` dependency graph in `ci.yml`. Separate backend/frontend
+jobs run CI; `ci-frontend-checks` separates unit checks from
+production smoke builds while preserving the existing full local target.
+The smoke job checks both frontend bases/assets and the isolated Docker stack.
+CD runs only after both prerequisites succeed on `main`;
+failed/cancelled CI or smoke skips downstream jobs. PRs receive no deploy secrets.
+Main pipeline concurrency preserves in-flight migrations.
+
+The exact-SHA release gate now checks CI jobs and the completed smoke
+job within its own still-running pipeline, avoiding a wait for CD to finish
+itself. Unrelated running workflows cannot authorize deployment. Manual runs
+execute their own CI and smoke tests before publishing their exact tested SHA.
+
+Verification: actionlint, script syntax/style, Make dry runs and focused trust
+tests passed. Deployment regressions cover all prerequisite jobs being failed,
+cancelled, skipped or incomplete. Broader automation and hosted pipeline checks
+accompany the explicitly requested commit/push. Operator and testing docs now
+describe the shared pipeline and GitHub's skipped-job behavior on failures.
+
+Flattened the workflow at the owner's request to display `CI (Back)`,
+`CI (Front)`, `Smoke tests`, `Verify release`, `Build release`, and `CD` without
+reusable-workflow name prefixes. Updated the trust gate and added a regression
+rejecting old namespaced job results. The build and deployment jobs retain
+separate registry token permissions. The preceding pipeline
+[36728238134](https://github.com/EZDAMIR/dungeon-master/actions/runs/36728238134)
+passed all CI, smoke, release and deployment jobs.
+Local naming-change verification passed actionlint, eight release-trust tests,
+17 deployment regressions and all 22 automation tests, plus script syntax/style
+and `git diff --check`.

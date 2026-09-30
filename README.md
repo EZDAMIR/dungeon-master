@@ -140,12 +140,15 @@ CREATE DATABASE rights, and a running Docker daemon. The individual targets are:
 Run the smoke tests directly with `make smoke-tests`, or select
 `make smoke-tests-frontend` / `make smoke-tests-docker`. These targets reuse the
 same production-asset and container checks included in CI. GitHub Actions labels
-the container job **Smoke tests (Docker)** and the corresponding steps explicitly.
+the separate pre-deployment job **Smoke tests**, covering frontend and Docker checks.
 
-[GitHub Actions CI](.github/workflows/ci.yml) runs these three targets on pushes,
-pull requests and manual dispatch. It uses Python 3.12, Node 24 and PostgreSQL 17,
-with pinned action commits, read-only repository permission and test-only
-credentials. It needs no repository secrets and does not deploy the application.
+[GitHub Actions](.github/workflows/ci.yml) runs **CI → Smoke tests → CD** on pushes
+and manual dispatch; pull requests run only CI and smoke tests. CI uses Python
+3.12, Node 24 and PostgreSQL 17 with pinned actions, read-only permissions and
+test-only credentials. CI/smoke failures skip CD. Only the main deployment job
+receives the VPS secrets and package permissions. `make ci-frontend-checks`
+runs frontend checks/unit tests separately; `make ci-frontend` keeps its full
+local checks-and-builds behavior.
 
 Backend: `make check`, `make test`, `make migrate`, `.venv/bin/alembic check`.
 Frontend: `npm run lint`, `npm run type-check`, `npm run test`,

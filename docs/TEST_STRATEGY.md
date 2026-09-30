@@ -192,12 +192,14 @@ response validation bounds and custom error schemas are more explicit.
 
 ## GitHub Actions and local Make targets
 
-`.github/workflows/ci.yml` runs the same root Make targets locally and on
-Ubuntu 24.04: `ci-backend` (Python 3.12/PostgreSQL 17), `ci-frontend` (Node 24)
-and `ci-docker` (isolated Compose stack). Pushes, pull requests and manual runs
-trigger the workflow; actions are pinned to verified release commits and the
-workflow has read-only repository permission. Test signing/database credentials
-are disposable values; repository secrets are not required.
+`.github/workflows/ci.yml` runs separate **CI (Back)** and **CI (Front)** jobs,
+calling `ci-backend` (Python 3.12/PostgreSQL 17) and `ci-frontend-checks` (Node 24).
+After both pass, **Smoke tests** verifies frontend production builds and an
+isolated Compose stack. **Verify release** and **Build release** then prepare
+the exact tested SHA for **CD**. Failed/cancelled prerequisites skip CD.
+Pushes, pull requests and manual runs trigger the pipeline; PRs cannot deploy.
+Actions are pinned; CI/smoke permissions remain read-only and credentials are
+disposable. Deployment secrets and package access are scoped to main CD.
 
 Use `make fix` to apply backend/script Ruff formatting and frontend lint fixes,
 then `make check`. `make ci` adds database-backed coverage, frontend coverage,
@@ -209,8 +211,8 @@ the shipped runtime reaches the same schema without drift.
 
 `make smoke-tests` runs the existing frontend and Docker checks together.
 `make smoke-tests-frontend` and `make smoke-tests-docker` select either suite.
-The CI frontend target delegates to the named frontend smoke target; the Docker
-job is labeled **Smoke tests (Docker)** and calls the named Docker smoke target.
+The separate **Smoke tests** job calls `make smoke-tests` after CI succeeds.
+The full local `ci-frontend` target still includes frontend smoke verification.
 
 The frontend build checker starts a bounded temporary preview for each base,
 compares served JS/CSS/model/WASM bytes and rejects development fake controls.

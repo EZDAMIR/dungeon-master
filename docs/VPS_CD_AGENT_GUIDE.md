@@ -29,9 +29,8 @@ volume. Sprint 4B не входит в эту работу.
 - [проверку frontend assets](../scripts/check_frontend_build.py) и
   [Docker smoke test](../scripts/check-docker.sh).
 
-Снять `git status`, текущую ветку и SHA. Сохранить чужие изменения. Для этой
-работы текущая разрешённая ветка — `sprint/ai-personalized-coach`; другую ветку
-для публикации определяет владелец. Не переключать CD на `main` автоматически.
+Снять `git status`, текущую ветку и SHA. Сохранить чужие изменения. Владелец
+разрешил автоматический CD ветки `main`; другую ветку определяет владелец.
 
 Перед работой на сервере выяснить домен, IP, ОС, SSH-пользователя/порт, текущие
 сервисы на 80/443, каталог приложения, registry и выбранную ветку/SHA релиза.
@@ -122,7 +121,7 @@ Docker даёт широкие права на хосте — учитывать
 ## 4. Backend и PostgreSQL
 
 Создать отдельный `deploy/docker-compose.vps.yml` и скопировать его в серверный
-`backend/compose.yml`. Эти файлы пока **не существуют**. Не использовать текущий
+`backend/compose.yml`. Реализация находится в `deploy/`. Не использовать текущий
 development Compose без адаптации: в нём опубликован порт БД, включён DEBUG и
 заданы development-пароли. Не предполагать, что обычный Compose override удалит
 унаследованные `ports`: проверить итоговую конфигурацию.
@@ -313,11 +312,13 @@ WASM/MediaPipe. Документация FastAPI `/docs` не проксируе
 
 ## 7. CD через GitHub Actions
 
-Существующий CI только проверяет код; он не публикует приложение. Создать отдельный
-`.github/workflows/cd.yml` и серверный deploy script при задаче настройки CD.
-Начать с `workflow_dispatch`; автоматический trigger включать для выбранной
-владельцем ветки. Не считать push текущего Sprint автоматическим разрешением
-публикации на произвольный сервер.
+`.github/workflows/ci.yml` выполняет отдельные jobs `CI (Back)` / `CI (Front)` →
+`Smoke tests` → `Verify release` → `Build release` → `CD`, без вложенных workflow.
+Smoke job проверяет production frontend и изолированный Docker stack. Только
+после успеха CI/smoke проверяется и публикуется тот же SHA через серверный script.
+Failed/cancelled CI или smoke блокирует CD. Manual `workflow_dispatch` на `main`
+заново выполняет все проверки перед CD. Автоматическая ветка — `main`; это не
+разрешение публикации на другой сервер.
 
 Требования к реализации CD:
 
@@ -331,7 +332,7 @@ WASM/MediaPipe. Документация FastAPI `/docs` не проксируе
 4. Не передавать deploy secrets в PR jobs и не выполнять произвольный PR-код
    в привилегированном deploy job. Ограничить token permissions нужными
    `contents: read` / `packages: write` в соответствующих jobs.
-5. Использовать отдельную concurrency group для VPS с `cancel-in-progress: false`
+5. Сериализовать main pipeline для VPS с `cancel-in-progress: false`
    и серверный `flock`, чтобы SSH/manual deploy не пересекались. Не обрывать
    выполняющуюся миграцию из-за нового push. Для очереди релизов фиксировать SHA;
    В default режиме новая pending job заменяет прежнюю; если нужны все релизы,

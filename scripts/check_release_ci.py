@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-REQUIRED_JOBS = {"Backend", "Frontend", "Smoke tests (Docker)"}
+REQUIRED_JOBS = {"CI (Back)", "CI (Front)", "Smoke tests"}
 
 
 def github(path):
@@ -43,7 +43,13 @@ def verify(sha, branch, run_id=""):
             or run["head_repository"]["full_name"] != os.environ["GITHUB_REPOSITORY"]
             or run["path"] != ".github/workflows/ci.yml"
             or run["event"] not in {"push", "workflow_dispatch"}
-            or run["conclusion"] != "success"
+        ):
+            continue
+        # In the shared pipeline, CI and smoke have completed but CD is still
+        # running. Only that exact current run may bypass whole-run completion.
+        current_run = str(run["id"]) == run_id == os.getenv("GITHUB_RUN_ID")
+        if run["conclusion"] != "success" and not (
+            current_run and run.get("status") == "in_progress" and run["conclusion"] is None
         ):
             continue
         jobs = github(f"actions/runs/{run['id']}/jobs?filter=latest&per_page=100")["jobs"]
