@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-30",
+  "mode": "explicit_live",
+  "environment_fix": {
+    "canonical_names": true,
+    "legacy_entries_preserved": true,
+    "permissions": "0600",
+    "database_secret_cors_preserved": true,
+    "source_env_committed_or_copied": false
+  },
+  "openai": {
+    "model": "gpt-5.4",
+    "status": "VERIFIED",
+    "structured_response": true,
+    "input_tokens": 39,
+    "output_tokens": 12,
+    "latency_ms": 3796,
+    "sdk_retries": 0
+  },
+  "elevenlabs": {
+    "model": "eleven_flash_v2_5",
+    "status": "LIVE_BLOCKED",
+    "reason": "invalid_api_key",
+    "models_http_status": 401,
+    "voices_http_status": 401,
+    "preview_generated": false,
+    "language_capabilities_verified": false
+  },
+  "transcription": {
+    "status": "UNVERIFIED"
+  },
+  "google": {
+    "status": "BLOCKED",
+    "reason": "oauth_and_test_calendar_required",
+    "calendar_touched": false
+  },
+  "application_end_to_end_live": {
+    "status": "UNVERIFIED",
+    "reason": "elevenlabs_key_rejected"
+  },
+  "focused_config_tests": 11,
+  "source_database_used": false
+}
