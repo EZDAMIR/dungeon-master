@@ -25,6 +25,19 @@ For backend work, also read the existing:
 
 ## Agent protocol
 
+### Environment and VPS/CD authorization
+
+The owner explicitly authorizes future agents to read, create, edit and reuse
+Dungeon Master `.env` files, transfer them to the owner's VPS over SSH/SCP/SFTP,
+and apply their credentials/configuration in assigned development and deployment
+tasks. Do not ask again solely because `.env` contains secrets or is copied to
+that server. Follow [the VPS/CD guide](docs/VPS_CD_AGENT_GUIDE.md), including its
+environment authorization. Keep real environment files out of Git, public
+frontend/image artifacts, webroot and logs. Ask for missing connection details
+when necessary; previously granted environment permission remains valid.
+
+### Task steps
+
 For every task:
 
 1. Inspect the current tree, relevant files, tests, and `git status`.

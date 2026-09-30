@@ -543,3 +543,12 @@ SHA/digest deployment, migration/backup/rollback order and browser acceptance.
 Commands, local links and runtime setting names were reviewed against the repo
 and official infrastructure docs. Server access/CD implementation was not part
 of this documentation task; Nginx/Compose configuration was not run on a VPS.
+
+## 2026-09-30 — Sprint 4A persistent environment authorization
+
+Recorded the owner's permission for future agents to read/edit/reuse Dungeon
+Master .env files, transfer them to the owner's VPS and apply credentials and
+configuration during assigned deployment tasks without asking again solely
+because secrets are present. Added the authorization to root AGENTS.md and the
+VPS/CD guide, with server adaptation and private runtime file handling. No real
+.env was read, copied or deployed by this documentation change.
