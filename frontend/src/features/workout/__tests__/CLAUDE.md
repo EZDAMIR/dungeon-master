@@ -22,3 +22,21 @@ Tests may import their subject and pure fixture/support contracts across layers;
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/features/workout src/features/gesture-navigation/__tests__/overlays.test.tsx`, then `npm run type-check` and the broader frontend suite.
+
+## Code example — late startup cleanup
+
+Use the file’s mocked runtime setup. Disposing during startup must stop the arriving track and leave no model or animation loop.
+
+From [runtime.test.ts](runtime.test.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+it('dispose before queued initialization starts avoids creating a model or requesting again', async () => {
+    const s = setup();
+    const pending = s.source.start();
+    s.source.dispose();
+    await pending;
+    expect(s.handFactory).not.toHaveBeenCalled();
+    expect(s.track.stop).toHaveBeenCalledOnce();
+    expect(frames.size).toBe(0);
+})
+```

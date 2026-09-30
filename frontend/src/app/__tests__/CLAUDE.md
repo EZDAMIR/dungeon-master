@@ -22,3 +22,20 @@ Tests may import their subject and pure fixture/support contracts across layers;
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/app`, then `npm run type-check` and the broader frontend suite.
+
+## Code example — selection before confirmation
+
+Assert observable reducer state: confirmation cannot navigate until a valid workout is selected.
+
+From [modes.test.ts](modes.test.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+it('selects without navigation and confirms only a valid selection', () => {
+    const menu = { ...INITIAL_STATE, mode: 'MENU' as const };
+    expect(appReducer(menu, { type: 'CONFIRM_SELECTION' })).toBe(menu);
+    expect(appReducer(menu, { type: 'SELECT_WORKOUT', workoutId: 'invalid' })).toBe(menu);
+    const selected = appReducer(menu, { type: 'SELECT_WORKOUT', workoutId: 'bodyweight-squat' });
+    expect(selected.mode).toBe('MENU');
+    expect(appReducer(selected, { type: 'CONFIRM_SELECTION' }).mode).toBe('CALIBRATION');
+})
+```

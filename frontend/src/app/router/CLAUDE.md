@@ -21,3 +21,16 @@ Routing may compose pages and app setup; pages/features must not import runtime 
 
 Commands run from `frontend/` unless specified otherwise.
 Test direct links, browser Back/Forward, context steps, base prefixes and guarded workout recovery; run the app flow tests.
+
+## Code example — current mode guard
+
+This directory remains reserved; modes.ts currently owns navigation. Keep guarded transitions when introducing a router for an authorized requirement. This existing test demonstrates the invariant.
+
+```ts
+import { expect, it } from 'vitest'
+import { transition } from '../modes'
+
+it('keeps an unselected menu in MENU', () => {
+  expect(transition('MENU', 'CONFIRM_SELECTION')).toBe('MENU')
+})
+```

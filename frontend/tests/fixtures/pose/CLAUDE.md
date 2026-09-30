@@ -23,3 +23,13 @@ Use pure pose contracts, landmark helpers and fixture-local code; no camera/mode
 
 Commands run from `frontend/` unless specified otherwise.
 To regenerate synthetic JSON, run `npx --no-install vite-node tests/fixtures/pose/generate.ts` from frontend and review the diff. Run `npm run test -- src/vision/pose src/vision/exercises/squat src/app/__tests__/poseFlow.test.ts`.
+
+## Code example — typed fixture baseline
+
+Keep the baseline provider-neutral and versioned. Generate motion frames with builder.ts and regenerate JSON through generate.ts; do not encode expected rep counts into input landmarks.
+
+From [profile.ts](profile.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export const profile: CalibrationProfile = { version: 'squat-calibration-v1', activeSide: 'left', standingKneeAngle: 178, standingHipAngle: 178, baselineTorsoTilt: 0, bodyScale: .8, sideViewScore: .95, createdAt: 0 };
+```

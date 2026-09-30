@@ -21,3 +21,14 @@ Audio adapters in src/audio consume clips; assets contain no recognition or tech
 
 Commands run from `frontend/` unless specified otherwise.
 When clips are added, test playback failure in src/audio/__tests__ and run `npm run build`.
+
+## Code example — candidate clip URL (reserved)
+
+Illustrative URL pattern only; this clip does not exist and must not be referenced by production code until an authorized asset is added with provenance. Audio adapters own loading, playback failure and fallback; visual correction remains complete.
+
+```ts
+const completionClipUrl = new URL(
+  'audio/workout-complete.ogg',
+  new URL(import.meta.env.BASE_URL, window.location.origin),
+).href
+```

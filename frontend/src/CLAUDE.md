@@ -23,3 +23,15 @@ Vision processing modules must not import React, app, pages or features. Current
 
 Commands run from `frontend/` unless specified otherwise.
 Run checks from frontend: `npm run check:instructions`, `npm run test:instructions`, `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build`.
+
+## Code example — minimal bootstrap
+
+Mount the application with its existing root setup. Camera permission remains an explicit user action.
+
+From [main.tsx](main.tsx). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```tsx
+createRoot(document.getElementById('root')!).render(<StrictMode>
+    <App />
+  </StrictMode>);
+```

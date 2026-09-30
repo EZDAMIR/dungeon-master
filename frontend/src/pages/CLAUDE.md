@@ -22,3 +22,17 @@ Pages may import feature/shared UI, vision presentation/config helpers and type-
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/app/__tests__/App.test.tsx` and type checking; confirm recovery/error feedback and results appear through semantic events.
+
+## Code example — render a semantic snapshot
+
+Render the supplied count and accessible status. The pose session decides countdown readiness and emits completion; a page must not infer either from a timer.
+
+From [CountdownPage.tsx](CountdownPage.tsx). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```tsx
+export function CountdownPage({ count }: {
+    count: number;
+}) {
+    return <section className="countdown"><h2>Приготовься</h2><p className="rep-counter" role="status">{count || 'START'}</p><p>Стой спокойно боком к камере. Дождись команды START.</p></section>;
+}
+```

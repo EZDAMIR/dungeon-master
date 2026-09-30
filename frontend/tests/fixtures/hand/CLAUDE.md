@@ -22,3 +22,26 @@ Fixtures feed vision/gestures tests; they do not depend on UI navigation or prov
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/vision/gestures src/features/gesture-navigation`; verify the fixture establishes the intended trigger and nontrigger behavior.
+
+## Code example — pinch enter, hold, release and reenter
+
+The real pinch fixture stores normalized ratios, not full landmark frames. The consuming sample builder converts them into coordinates at explicit test timestamps. Repeated 0.25 entries exercise stability; 0.46 releases the pinch.
+
+From [pinch.json](pinch.json). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```json
+{
+  "version": 1,
+  "frames": [
+    0.6,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.46,
+    0.25,
+    0.25,
+    0.25
+  ]
+}
+```

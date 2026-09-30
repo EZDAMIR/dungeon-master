@@ -22,3 +22,19 @@ Tests may import their subject and pure fixture/support contracts across layers;
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/vision/gestures`, then `npm run type-check` and the broader frontend suite.
+
+## Code example — one confirmation per stable pinch
+
+Replay the normalized pinch fixture through the detector; assert entry stability and the number of confirmed events rather than private fields.
+
+From [gestures.test.ts](gestures.test.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+it('requires three samples, fires once, releases and re-arms', () => {
+    const p = new PinchDetector();
+    const hits = pinch.frames.map((ratio) => p.update(sample(0, ratio).landmarks).confirmed);
+    expect(hits.filter(Boolean)).toHaveLength(2);
+    expect(hits[1]).toBe(false);
+    expect(hits[3]).toBe(true);
+})
+```

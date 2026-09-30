@@ -1,5 +1,53 @@
 # Dungeon Master development log
 
+## Sprint 3 maintenance — Frontend rules with code examples (2026-09-30)
+
+Acceptance: enrich the frontend CLAUDE.md rules with concrete code examples from
+the reference frontend guide style, while preserving the existing Dungeon Master
+architecture. No later-sprint capability is implemented. Git status was clean at
+the start.
+
+The requested `Documents/webstorm-project/1was-frontend` path was not present under
+the current user's Documents, WebstormProjects or project directories. A path
+clarification was requested; meanwhile, the existing guide and development log
+identified `Ya-Sabyr/1wash-front` as the original reference. Read all seven source
+CLAUDE.md guides through authenticated, read-only GitHub CLI requests at commit
+`6e0c35d9f033a8cfb5f8c8840c34c5ae0d0e5021`. The source repository was not edited.
+
+Updated all 43 frontend guides. The entry guide now gives good/bad examples for
+imports, props, accessibility, semantic events, typed cancellable requests and
+deterministic tests. Folder guides show source-linked examples of their actual
+responsibilities, including camera teardown, pinch hysteresis, pose adapters,
+completed squat cycles, storage fallback, audio failure, aggregate projection and
+synthetic fixtures. Excerpts are labeled with their module context. Reserved
+providers/router/workers/calendar/audio folders remain reserved and explicitly
+label illustrative future patterns. Source-specific FSD layers, barrel exports,
+aliases and query/form libraries were not imposed on this repository.
+
+The instruction checker now rejects guides containing only prose/folder trees,
+empty code fences or an unterminated example. Added a regression test which failed
+before implementation, then passed; the existing coverage/link tests retain their
+assertions with valid sample guides. Updated project-structure documentation.
+
+Verification:
+
+- `cd frontend && npm run test:instructions`: 3 Node tests passed.
+- `npm run check:instructions`: all 43 authored folders passed.
+- `npm run lint`, `npm run type-check`: passed.
+- `npm test`: 116 tests in 20 files passed.
+- `npm run build`: passed; both official model checksums verified and local WASM
+  prepared from installed dependencies.
+- `python3 scripts/verify_architecture.py`, `git diff --check`: passed.
+
+Limitations: the missing local source could differ from the recorded GitHub source.
+The checker validates code-example presence and links, not snippet compilation or
+the meaning of every rule. Linked snippets come from currently tested modules;
+illustrative reserved snippets are documentation only. No backend or application
+runtime code changed, so backend and live-camera checks were not repeated.
+
+Next safe task: use the updated guides for the existing Sprint 1–3 manual browser
+checklists; reconcile the reference rules if a different local source is supplied.
+
 ## 2026-09-30 — Sprint 0 architecture follow-up: frontend folder instructions
 
 Acceptance for this task: every authored frontend folder has guidance tied to its

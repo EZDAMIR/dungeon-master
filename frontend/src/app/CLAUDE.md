@@ -25,3 +25,17 @@ App may compose pages, features, shared components, audio and contract types. Th
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/app` and `npm run type-check`; verify tutorial → menu → calibration → workout → results, pause/recovery and repeat reset.
+
+## Code example — subscribe and clean up
+
+Subscribe to the existing backend store at the application boundary. Return its detach callback from the effect so listeners and cancellable work have an owner.
+
+From [useBackend.ts](useBackend.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export function useBackend(store: BackendStore) {
+    const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot);
+    useEffect(() => store.attach(), [store]);
+    return snapshot;
+}
+```

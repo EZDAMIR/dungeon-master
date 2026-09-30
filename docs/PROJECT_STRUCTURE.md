@@ -12,7 +12,15 @@ responsibilities, code rules, dependencies and verification. This includes
 colocated tests, scripts, assets, fixtures and reserved folders. The tree below
 shows capability locations rather than repeating all folder guides. Generated
 dependencies, model/WASM directories and build output do not receive guides.
-Run `cd frontend && npm run check:instructions` to verify coverage and guide links.
+All 43 frontend guides include concrete code examples adapted from the
+`Ya-Sabyr/1wash-front` instruction style at revision
+`6e0c35d9f033a8cfb5f8c8840c34c5ae0d0e5021`. The main guide explains good/bad
+patterns; nested guides link excerpts to current implementation, and reserved
+folders label candidate patterns as unimplemented. Existing Dungeon Master layers,
+direct imports and dependencies remain authoritative.
+Run `cd frontend && npm run check:instructions` to verify coverage, nonempty code
+examples and guide links. The checker does not compile documentation snippets or
+establish semantic compliance with the rules.
 
 All nine backend guides are complete copies of `EZDAMIR/fastapi-backend-starter`
 at revision `304fc54210ccf2b59b11f88916678643e7e704f8`, including the concrete

@@ -24,3 +24,28 @@ Use camera/recognizer/pose modules, VisionEvent, gesture-navigation presentation
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/features/workout src/features/gesture-navigation/__tests__/overlays.test.tsx src/app/__tests__/poseFlow.test.ts src/app/__tests__/App.test.tsx`; build and verify fake controls are absent in production.
+
+## Code example — dispose the shared camera runtime
+
+This method belongs to RealVisionSource. Invalidate pending callbacks before closing models and tracks, remove document listeners and clear mutable presentation. Keep teardown idempotent across unmount, camera failure and cancelled startup.
+
+From [RealVisionSource.ts](RealVisionSource.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+dispose() {
+    if (this.disposed)
+        return;
+    this.disposed = true;
+    this.ready = false;
+    this.generation++;
+    this.cancelFrame();
+    document.removeEventListener('visibilitychange', this.visibility);
+    this.engine.reset();
+    this.session.reset();
+    this.adapter?.close();
+    this.adapter = null;
+    this.camera.dispose();
+    this.raw(null, 0, 0);
+    this.poseRaw({ sample: null, activeSide: null, fps: 0, inferenceMs: 0 });
+}
+```

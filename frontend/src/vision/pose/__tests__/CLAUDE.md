@@ -22,3 +22,21 @@ Tests may import their subject and pure fixture/support contracts across layers;
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/vision/pose`, then `npm run type-check` and the broader frontend suite.
+
+## Code example — readiness cancels countdown
+
+Replay a synthetic standing baseline, then check that missing tracking, wrong angle and early descent each require calibration.
+
+From [session.test.ts](session.test.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+it('cancels countdown on lost tracking, wrong angle and early descent', () => {
+    for (const bad of [null, pose(5000, 178, { front: true }), pose(5000, 130)]) {
+        const session = new PoseSession();
+        const events = sequence('standing-side').flatMap(s => session.update(s, s.at));
+        expect(events.some(e => e.type === 'calibration.completed')).toBe(true);
+        session.setStage('countdown');
+        expect(session.update(bad, 5000).some(e => e.type === 'calibration.required')).toBe(true);
+    }
+})
+```
