@@ -684,3 +684,13 @@ and `git diff --check`.
 ## Sprint4B integrated working point
 
 Merged the three assigned local implementations and existing owner main. Delivered hands-first/voice/coach/schedule, full frozen multi-set runner and every-set persistence; refined360/390mobile and768/834tablet layouts. Recorded199frontend/283backend tests and54browser layout cases, actual four-set and offline partial/reconnect persistence. Both bounded OpenAI and Russian ElevenLabs preview checks verified. Stopped additional broad reruns at the owner's explicit request to finish this working point; hardware/Safari/STT/Google remain manual. Deployment configuration was preserved. See [release report](SPRINT_4B_RELEASE_REPORT.md).
+
+### Sprint 4B CI formatting correction
+
+GitHub run 36755913656 passed frontend CI but stopped backend CI at the root
+automation format check: the two new provider helper scripts used the backend's
+format settings instead of the root Makefile's 95-character line length. Applied
+the exact root formatter settings to `provider_doctor.py` and `smoke_live_coach.py`;
+their Python ASTs are unchanged. Local `make check-automation`, all 22 script
+regression tests and `git diff --check` pass. Workflow, deployment configuration,
+application behavior and verification gates are unchanged.

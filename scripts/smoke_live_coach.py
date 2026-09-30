@@ -27,9 +27,7 @@ async def run(base, live, max_requests):
         return 2
     parsed = urllib.parse.urlsplit(base)
     if parsed.hostname not in {"127.0.0.1", "localhost"} or parsed.scheme != "http":
-        report(
-            "application", None, "BLOCKED", reason="disposable_local_backend_required"
-        )
+        report("application", None, "BLOCKED", reason="disposable_local_backend_required")
         return 2
     started = time.monotonic()
     calls = 0
@@ -57,9 +55,7 @@ async def run(base, live, max_requests):
                 )
                 for row in plan["items"]
             ]
-            return hashlib.sha256(
-                json.dumps(items, ensure_ascii=False).encode()
-            ).hexdigest()
+            return hashlib.sha256(json.dumps(items, ensure_ascii=False).encode()).hexdigest()
 
         async def generate():
             # Synchronous compatibility path keeps the smoke bounded; UI uses durable jobs.
@@ -67,9 +63,7 @@ async def run(base, live, max_requests):
             if profile.get("provenance", {}).get("execution_mode") != "live":
                 raise SmokeBlocked("profile_not_live")
             plan = (
-                await request(
-                    "POST", "training-plans/generate", json={"mode": "ai_assisted"}
-                )
+                await request("POST", "training-plans/generate", json={"mode": "ai_assisted"})
             ).json()
             if plan.get("ai_metadata", {}).get("execution_mode") != "live":
                 raise SmokeBlocked("plan_not_live")
@@ -112,9 +106,7 @@ async def run(base, live, max_requests):
                     break
             if not spec_found:
                 raise SmokeBlocked("live_spec_not_observed")
-            voices = (await request("GET", "voices?language=ru&page_size=6")).json()[
-                "voices"
-            ]
+            voices = (await request("GET", "voices?language=ru&page_size=6")).json()["voices"]
             if not voices:
                 raise SmokeBlocked("voice_unavailable")
             voice = voices[0]["voice_id"]
@@ -133,9 +125,9 @@ async def run(base, live, max_requests):
                 "voices/" + voice + "/preview",
                 json={"language": "ru", "style": "calm"},
             )
-            if not preview.content or not preview.headers.get(
-                "content-type", ""
-            ).startswith("audio/"):
+            if not preview.content or not preview.headers.get("content-type", "").startswith(
+                "audio/"
+            ):
                 raise SmokeBlocked("preview_not_audio")
             prefs = (await request("GET", "schedule/preferences")).json()
             await request(
@@ -196,9 +188,9 @@ async def run(base, live, max_requests):
                     "spec_revision": None,
                 },
             )
-            if not audio.content or not audio.headers.get(
-                "content-type", ""
-            ).startswith("audio/"):
+            if not audio.content or not audio.headers.get("content-type", "").startswith(
+                "audio/"
+            ):
                 raise SmokeBlocked("message_not_audio")
             report(
                 "application",

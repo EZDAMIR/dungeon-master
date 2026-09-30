@@ -62,9 +62,7 @@ async def run(live=False, language="ru"):
                 provider,
                 model,
                 "CONFIGURED_UNVERIFIED" if available else "BLOCKED",
-                reason="explicit_live_required"
-                if available
-                else "missing_configuration",
+                reason="explicit_live_required" if available else "missing_configuration",
             )
         return 0
     ok = True
