@@ -694,3 +694,12 @@ the exact root formatter settings to `provider_doctor.py` and `smoke_live_coach.
 their Python ASTs are unchanged. Local `make check-automation`, all 22 script
 regression tests and `git diff --check` pass. Workflow, deployment configuration,
 application behavior and verification gates are unchanged.
+### Sprint 4B CI oversized test-name correction
+
+The follow-up GitHub backend run stopped displaying progress immediately before
+the oversized audio test. Pytest's generated parameter ID embedded the entire
+5 MiB payload: collection confirmed a 5,242,984-byte test name. Explicit short
+case IDs retain the exact payloads and assertions while bounding verbose output.
+Provider/configuration/instruction regressions: 47 passed; backend Ruff checks
+passed. All 285 tests collect with names shorter than 300 bytes. No runtime,
+workflow, deployment or coverage-gate settings changed.
