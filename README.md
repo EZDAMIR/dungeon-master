@@ -1,65 +1,7 @@
-# Dungeon Master
+<div align="center">
 
-Dungeon Master is a **hackathon prototype** for a local-camera fitness coach. Sprint 4A adds a personal AI profile, source-linked plans and an interpreter for AI-created camera-coaching declarations, while preserving the gesture-controlled legacy squat flow.
-
-## Current capabilities — Sprint 4A
-
-- Context, confirmed document facts and existing profile/progress personalize an editorial plan.
-- Text-layer PDF/TXT/Markdown extraction, PostgreSQL text/chunks/JSONB embeddings, top-5 cosine retrieval and lexical fallback.
-- Official OpenAI structured output creates an AI Profile, a plan and MovementSpec declarations. AI chooses exercise variants, volume, tempo, rest, angle and short multilingual messages; a generic pose engine executes the spec locally.
-- `?juryDemo=1` reveals instant **synthetic Maya / Arman / Dana fixtures**, explicitly labelled as fixtures. It adds no parallel dashboard or chatbot. Different schedules, exercise selections, volume, coaches and routines are visible on the plan.
-- Shared graphite/citron Camera Coach shell, experimental generated analyzers, manual fallback after one failed repair, local SpeechSynthesis with visual fallback.
-- Legacy Bodyweight Squat (`squat-v1`), gesture navigation, results sync and progress continue to work.
-- Existing [Motion Studio Figma](https://www.figma.com/design/vFIK97vQDk4xasLgDUdVdN?node-id=6-635) owns the UX, warm ivory planning system, typography and tokens. [Mapping](docs/FIGMA_SPRINT_4A_MAP.md) and [visual QA](docs/FIGMA_VISUAL_QA.md) record implementation evidence and deviations.
-
-Use only synthetic demo profiles/documents. This prototype does not diagnose, recommend medicine or change treatment; it does not claim medical accuracy, real-patient suitability or production readiness. Custom camera coaching is experimental. No OCR, microphone capture, ElevenLabs or Calendar is implemented in Sprint 4A.
-
-## Architecture and privacy
-
-`frontend/` owns camera access, MediaPipe, gesture recognition, pose analysis,
-exercise rules and immediate results. `backend/` owns guest identity, durable
-profile/catalog/plan/session data and progress queries using the existing
-FastAPI → schemas → controllers → SQLAlchemy Core models architecture.
-
-Video, images and raw landmarks remain local and are neither recorded nor sent
-to the API. Only identifiers, timestamps, aggregate repetitions/error counts and compact exercise metrics are synced. Context and confirmed text sources may be sent to the configured LLM; AI does not analyze video.
-There is no microphone, analytics provider or external inference service.
-
-## Backend setup
-
-Requirements: Python 3.12+, Docker Compose and PostgreSQL client tools
-(`createdb` / `dropdb` on PATH). First create the local environment:
-
-```bash
-cd backend
-python3 -m venv .venv
-cp .env.example .env
-```
-
-Set a random `SECRET_KEY` of at least 32 characters in `.env`; do not commit it.
-Review `DATABASE_URL`, separate local `TEST_DATABASE_URL` and `CORS_ORIGINS`.
-Then use the existing commands:
-
-```bash
-make install
-make up
-make migrate
-make test
-```
-
-`make up` starts PostgreSQL and the backend. The API runs on port 8000, with
-OpenAPI at `/docs`. `make dev` is available for a host development server; stop
-its Docker backend counterpart first if they would share a port.
-
-Tests require a confirmed local `*_test` URL and CREATE DATABASE permission.
-They create a separate UUID-named database, apply the complete Alembic chain,
-check metadata drift and drop only that disposable database. They do not erase
-or migrate the configured application database. Production configuration and
-unsafe/nonlocal test URLs are rejected. See [test strategy](docs/TEST_STRATEGY.md).
-
-## Frontend setup
-
-Use Node.js 22.12+ and a webcam on localhost or HTTPS:
+Current hosting: run the app and visual recognition locally. The VPS serves the
+OpenAI/ElevenLabs and persistence APIs only; public app routes return 404.
 
 ```bash
 cd frontend
@@ -67,159 +9,701 @@ npm ci
 npm run dev:cloud
 ```
 
-`dev:cloud` opens http://localhost:5173 and proxies `/api/v1` to the VPS. The app,
-vision models and camera inference run locally; OpenAI and ElevenLabs run behind
-the authenticated backend API. No local backend is required. The first dev/build
-prepares pinned official models and installed MediaPipe WASM automatically; the
-build host needs Internet access on the first preparation. The browser receives
-these assets from your local frontend server. See [local app setup](frontend/README.md)
-for the production preview and optional local backend workflow.
+Open **http://localhost:5173**. No local backend/database is needed. The first run
+prepares verified model assets; camera frames stay on your computer. For a local
+production preview use `npm run build:cloud` and `npm run preview:cloud`.
+See [local app setup](frontend/README.md) and [API deployment](deploy/README.md).
+The backend setup below is optional for full local development.
 
-Click «Включить камеру», then use pointer/pinch, Fist for Back and Thumb Up to
-confirm. Profile setup needs no typing. Menu distinguishes the saved plan from
-«Демонстрационный присед», which remains available when the backend is offline
-or the profile has no eligible exercise.
 
-## Persistence and offline behavior
+#  Dungeon Master
 
-Startup restores the stored token through `/auth/me`, creates a guest only when
-missing/401, creates the default profile only on 404, and retrieves the existing
-active plan before generating one. Guest tokens expire after the configured
-60 minutes by default. There is no refresh/recovery credential in this sprint:
-a 401 creates a new guest. Earlier history remains attached to its original
-identity; pending entries belonging to that guest are never reassigned. Clearing
-localStorage also starts a new identity.
+### Gesture-controlled AI fitness coach powered by local computer vision
 
-Camera permission, tutorial, calibration, workout feedback and Results work
-without a backend. Results appear before requests complete. Up to **20** aggregate
-sessions persist under `dungeon-master.pending-sessions.v1`; retry runs at startup,
-browser `online`, guest bootstrap or explicit user action, never per frame or
-on a repeating timer. Identical retries use the same UUIDs and are idempotent.
-Successfully synced entries are removed. If all 20 entries remain pending, the
-next result stays visible but cannot be added until capacity is available.
+Dungeon Master turns your webcam into an interactive fitness coach.  
+Control the application with hand gestures, receive real-time exercise feedback, build personalized workout plans and track your progress — while camera processing stays on your device.
 
-Profile edits can remain a local draft and sync after reconnection. Progress
-shows only saved data, with cached data clearly marked. If browser storage is
-blocked or full, the app falls back to memory and reports that reload persistence
-is unavailable. Guest JWTs are stored in localStorage; this is guest demo auth,
-not a claim of production account security.
+<br>
 
-## Environment
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![MediaPipe](https://img.shields.io/badge/MediaPipe-Computer_Vision-00A4EF)](https://ai.google.dev/edge/mediapipe)
 
-| Variable | Location | Purpose |
-|---|---|---|
-| `VITE_API_BASE_URL` | Frontend `.env` | API prefix; no secrets |
-| `CORS_ORIGINS` | Backend `.env` | Allowed frontend origins, comma separated |
-| `DATABASE_URL` | Backend `.env` | Development PostgreSQL |
-| `TEST_DATABASE_URL` | Backend `.env` or process env | Separate local test configuration |
-| `SECRET_KEY` | Backend `.env` | JWT signing secret, at least 32 characters |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Backend `.env` | Guest token lifetime, default 60 |
+<br>
 
-Never commit `.env`, JWTs, database dumps, recordings or personal health data.
+### [Live Demo](https://dungeon-master.helpmake-id.live) · [Figma](https://www.figma.com/design/vFIK97vQDk4xasLgDUdVdN?node-id=6-635)
 
-## Verification
+</div>
 
-From the repository root, `make fix` formats Python in the backend and automation
-scripts and applies available frontend lint fixes. `make format` is an alias;
-these commands do not install a separate frontend formatter. Run `make check`
-afterward for architecture, script syntax/style, Python format/lint, frontend
-instruction checks, lint and type checking.
+---
 
-`make ci` runs all automated gates. It requires installed backend/frontend
-dependencies, PostgreSQL client tools, configured local `TEST_DATABASE_URL` with
-CREATE DATABASE rights, and a running Docker daemon. The individual targets are:
+##  Demo
 
-- `make ci-backend`: checks plus the full backend coverage suite; its fixtures
-  create, migrate, check and drop only owned disposable databases.
-- `make ci-frontend`: instruction checks, lint, types, coverage tests, automation
-  regression tests, root/subdirectory builds and matching production previews.
-  Preview checks verify actual model/WASM bytes and stop their temporary servers.
-- `make ci-docker`: builds a separate stack using `backend/docker-compose.ci.yml`,
-  verifies healthchecks, non-root runtime, migrations, readiness, docs and HTTP
-  metadata, then verifies readiness during a database outage. It publishes no
-  host ports and removes only its unique Compose project and test volume.
+### Gesture-controlled interface
 
-Run the smoke tests directly with `make smoke-tests`, or select
-`make smoke-tests-frontend` / `make smoke-tests-docker`. These targets reuse the
-same production-asset and container checks included in CI. GitHub Actions labels
-the separate pre-deployment job **Smoke tests**, covering frontend and Docker checks.
+Navigate through Dungeon Master without touching your keyboard.
 
-[GitHub Actions](.github/workflows/ci.yml) runs **CI → Smoke tests → CD** on pushes
-and manual dispatch; pull requests run only CI and smoke tests. CI uses Python
-3.12, Node 24 and PostgreSQL 17 with pinned actions, read-only permissions and
-test-only credentials. CI/smoke failures skip CD. Only the main deployment job
-receives the VPS secrets and package permissions. `make ci-frontend-checks`
-runs frontend checks/unit tests separately; `make ci-frontend` keeps its full
-local checks-and-builds behavior.
+<p align="center">
+  <img
+    src="docs/readme-assets/gesture-control-demo.gif"
+    alt="Dungeon Master gesture control demo"
+    width="900"
+  />
+</p>
 
-Backend: `make check`, `make test`, `make migrate`, `.venv/bin/alembic check`.
-Frontend: `npm run lint`, `npm run type-check`, `npm run test`,
-`npm run test:coverage`, `npm run build` and
-`npm run build -- --base=/dungeon-master/`. Preview must use the matching base:
-`npm run preview -- --base=/dungeon-master/`.
-Root: `python3 scripts/verify_architecture.py`.
+### Real-time workout experience
 
-See [frontend instructions](frontend/README.md), [API contract](docs/API_CONTRACT.md)
-and [Sprint 3 manual checklist](docs/SPRINT_3_MANUAL_CHECKLIST.md).
-Automated tests use synthetic motion and mocked HTTP. Live camera acceptance and
-feedback readability at 2–4 metres are **not performed** in this environment.
-The [Sprint 2 camera checklist](docs/SPRINT_2_MANUAL_CHECKLIST.md) remains relevant.
+The camera detects body and hand landmarks locally and provides immediate workout feedback.
 
-## Pre-existing scaffold disclosure
+<p align="center">
+  <img
+    src="docs/readme-assets/workout-demo.gif"
+    alt="Dungeon Master workout demo"
+    width="900"
+  />
+</p>
 
-Complete this section truthfully before submission.
+---
 
-```text
-The general-purpose FastAPI infrastructure under backend/ existed before the
-official hackathon start. It includes application startup, configuration,
-database infrastructure, authentication foundations, permissions, logging,
-storage abstractions, health endpoints, Docker setup and baseline tests.
+##  What is Dungeon Master?
 
-Dungeon Master-specific frontend visual recognition, exercise logic, domain models,
-APIs, integrations and user experience were implemented after:
-<OFFICIAL START TIME>.
+**Dungeon Master** is a hackathon prototype of a privacy-focused AI fitness coach.
 
-Relevant first project-specific commit:
-<COMMIT SHA AND TIMESTAMP>
+Instead of requiring constant mouse, keyboard or touchscreen interaction, the application uses your webcam and hand gestures to control the interface.
+
+The project combines:
+
+-  gesture recognition;
+-  real-time pose analysis;
+-  exercise coaching;
+-  AI-generated workout plans;
+-  workout progress tracking;
+-  document-based personalization;
+-  local camera processing;
+-  offline-friendly workout behavior.
+
+The goal is to create a fitness experience where the user can interact naturally while exercising without repeatedly touching another device.
+
+---
+
+##  Key Features
+
+###  Gesture Control
+
+Dungeon Master recognizes hand gestures and allows the user to navigate the application while standing away from the computer.
+
+Current controls include:
+
+- pointer / pinch interaction;
+- **Fist** — go back;
+- **Thumb Up** — confirm;
+- camera-based menu navigation.
+
+---
+
+###  Local Camera Coach
+
+The frontend performs camera processing locally using pose and gesture recognition.
+
+The system can:
+
+- detect body landmarks;
+- detect hand landmarks;
+- count repetitions;
+- analyze exercise execution;
+- provide immediate feedback;
+- run exercise-specific coaching rules.
+
+The existing **Bodyweight Squat** flow remains available as a stable demonstration exercise.
+
+---
+
+###  AI Personalization
+
+Dungeon Master can build a personalized fitness profile from:
+
+- user context;
+- confirmed document facts;
+- existing profile information;
+- previous progress.
+
+The AI layer can generate:
+
+- personal AI profiles;
+- workout plans;
+- exercise variants;
+- training volume;
+- tempo;
+- rest periods;
+- camera angles;
+- coaching messages;
+- `MovementSpec` declarations.
+
+Generated exercise declarations are interpreted by the generic pose engine on the client.
+
+AI functionality is optional and can be disabled completely.
+
+---
+
+###  Source-linked Knowledge
+
+Dungeon Master supports text extraction from:
+
+- PDF;
+- TXT;
+- Markdown.
+
+Processed information can be stored and retrieved using:
+
+- PostgreSQL;
+- document chunks;
+- JSONB embeddings;
+- cosine similarity retrieval;
+- lexical fallback.
+
+This allows workout plans to use confirmed source information instead of relying only on a generic prompt.
+
+---
+
+### Progress Tracking
+
+Completed workouts can be synchronized with the backend.
+
+The application stores:
+
+- workout sessions;
+- repetition counts;
+- exercise metrics;
+- error counts;
+- timestamps;
+- progress history.
+
+Results are shown immediately without waiting for the server response.
+
+---
+
+###  Offline-friendly Behavior
+
+Core workout functionality can continue working even when the backend is temporarily unavailable.
+
+Dungeon Master supports:
+
+- local workout execution;
+- local camera feedback;
+- temporary session queue;
+- automatic retry after reconnecting;
+- locally saved profile drafts;
+- cached progress.
+
+Up to **20 pending workout sessions** can be stored locally before synchronization.
+
+---
+
+##  Privacy by Design
+
+Camera processing is designed to stay inside the browser.
+
+### What stays local
+
+- camera frames;
+- images;
+- raw pose landmarks;
+- raw hand landmarks;
+- live exercise analysis.
+
+### What can be synchronized
+
+Only compact workout information such as:
+
+- identifiers;
+- timestamps;
+- repetition counts;
+- error counts;
+- exercise metrics.
+
+Camera recordings are not uploaded to the backend.
+
+The configured LLM may receive confirmed text context used for personalization, but **AI does not analyze the camera feed or workout video**.
+
+---
+
+##  How It Works
+
+```mermaid
+flowchart LR
+
+    U[User + Webcam]
+
+    F[Frontend]
+
+    CV[MediaPipe<br/>Pose + Hand Tracking]
+
+    C[Local Camera Coach]
+
+    API[FastAPI Backend]
+
+    DB[(PostgreSQL)]
+
+    AI[Optional AI Provider]
+
+    U --> F
+
+    F --> CV
+
+    CV --> C
+
+    C --> F
+
+    F -->|Workout metrics| API
+
+    API --> DB
+
+    F -->|Confirmed context / text| API
+
+    API -->|Optional request| AI
+
+    AI --> API
+
+    API --> F
 ```
 
-Do not claim work was created during the event unless commit history supports it.
-Dungeon Master provides general fitness feedback, not diagnosis, treatment,
-rehabilitation or a replacement for a qualified trainer or medical professional.
+The webcam never needs to send frames to the backend or AI provider.
 
-## Sprint 4A demo and optional AI setup
+---
 
-Apply migrations with `cd backend && make migrate`. The model-first Sprint 4A revision is `041f28173bcc`, following `d14a8a94311f`. Copy the example environment locally; the AI feature defaults off. Enable a supplied key/model only when testing live generation:
+##  Architecture
+
+The repository is divided into two main applications:
+
+```text
+dungeon-master/
+│
+├── backend/
+│   ├── src/
+│   ├── tests/
+│   ├── docs/
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── alembic.ini
+│   └── pyproject.toml
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── tests/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── vitest.config.ts
+│
+├── docs/
+│   └── readme-assets/
+│
+├── deploy/
+├── scripts/
+├── Makefile
+└── README.md
+```
+
+### Frontend responsibilities
+
+The frontend owns:
+
+- camera access;
+- MediaPipe;
+- gesture recognition;
+- pose analysis;
+- exercise rules;
+- immediate workout results;
+- offline session handling.
+
+### Backend responsibilities
+
+The backend owns:
+
+- guest identity;
+- user profile;
+- workout catalog;
+- workout plans;
+- sessions;
+- progress queries;
+- persistence;
+- AI orchestration.
+
+The API follows the existing:
+
+```text
+FastAPI
+   ↓
+Schemas
+   ↓
+Controllers
+   ↓
+SQLAlchemy Core
+   ↓
+PostgreSQL
+```
+
+architecture.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer            | Technology                     |
+| ---------------- | ------------------------------ |
+| Frontend         | TypeScript, Vite               |
+| Computer Vision  | MediaPipe                      |
+| Backend          | Python 3.12+, FastAPI          |
+| Database         | PostgreSQL                     |
+| Database Access  | SQLAlchemy Core                |
+| Migrations       | Alembic                        |
+| AI               | OpenAI Structured Outputs      |
+| Embeddings       | Vector / JSONB based retrieval |
+| Containerization | Docker, Docker Compose         |
+| Testing          | Pytest / Vitest                |
+| Deployment       | Docker-based VPS deployment    |
+| CI/CD            | GitHub Actions                 |
+
+---
+
+#  Local Development
+
+## Requirements
+
+Before running the project, install:
+
+- Python **3.12+**
+- Node.js **22.12+**
+- Docker Desktop / Docker Compose
+- PostgreSQL client tools for the complete backend development workflow
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/EZDAMIR/dungeon-master.git
+cd dungeon-master
+```
+
+---
+
+## 2. Start Backend
+
+Enter the backend directory:
+
+```bash
+cd backend
+```
+
+Create the Python environment:
+
+```bash
+python3 -m venv .venv
+```
+
+Create local environment configuration:
+
+```bash
+cp .env.example .env
+```
+
+Set a random `SECRET_KEY` of at least **32 characters** inside:
+
+```text
+backend/.env
+```
+
+Example:
+
+```dotenv
+SECRET_KEY=replace-this-with-your-own-random-development-secret
+```
+
+### Using the project Makefile
+
+```bash
+make install
+make up
+make migrate
+```
+
+`make up` starts PostgreSQL and the backend application.
+
+The API will be available at:
+
+```text
+http://localhost:8000
+```
+
+Swagger / OpenAPI:
+
+```text
+http://localhost:8000/docs
+```
+
+### Docker Compose
+
+Docker users can also start the backend stack from the `backend` directory:
+
+```bash
+docker compose up --build
+```
+
+---
+
+## 3. Start Frontend
+
+Open another terminal:
+
+```bash
+cd frontend
+```
+
+Install dependencies:
+
+```bash
+npm ci
+```
+
+Create frontend environment configuration:
+
+```bash
+cp .env.example .env
+```
+
+Start Vite:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:5173
+```
+
+The frontend API URL defaults to:
+
+```text
+http://localhost:8000/api/v1
+```
+
+---
+
+#  Jury Demo
+
+Dungeon Master includes synthetic demo personas for presentations and hackathon demonstrations.
+
+Start the frontend and open:
+
+```text
+http://localhost:5173/?juryDemo=1
+```
+
+The demo provides synthetic profiles such as:
+
+- Maya;
+- Arman;
+- Dana.
+
+Different profiles demonstrate different:
+
+- schedules;
+- exercises;
+- workout volumes;
+- coaches;
+- routines.
+
+These profiles are synthetic fixtures and do not represent real users.
+
+---
+
+##  Optional AI Setup
+
+AI features are disabled by default.
+
+To test live generation, configure:
 
 ```dotenv
 AI_FEATURE_ENABLED=true
-OPENAI_API_KEY=<local key, never commit>
-OPENAI_MODEL=<structured-output compatible model>
-OPENAI_EMBEDDING_MODEL=<embedding model>
+
+OPENAI_API_KEY=<your-local-api-key>
+
+OPENAI_MODEL=<structured-output-compatible-model>
+
+OPENAI_EMBEDDING_MODEL=<embedding-model>
 ```
 
-Keep `APP_ENV=development` or explicitly set `ENABLE_DEMO_PERSONAS=true` for synthetic jury endpoints. Start backend/frontend with their existing commands and open `/?juryDemo=1`. Select a persona, continue to documents, confirm/reject facts and build the plan. Open why/details, start coaching, finish and open progress. Select another persona through context. No account or medical input is required.
+Never commit API keys or `.env` files to GitHub.
 
-Without a provider the deterministic Sprint 3 plan and stable squat analyzer remain available. Invalid generated declarations get one repair and then manual execution. Raw uploaded files are discarded after text extraction. Camera frames remain local, and no AI call runs during a workout.
+Without an AI provider, the deterministic workout plan and stable squat analyzer remain available.
 
-[Personalization contract](docs/AI_PERSONALIZATION.md), [MovementSpec](docs/MOVEMENT_SPEC_V1.md), [manual checklist](docs/SPRINT_4A_MANUAL_CHECKLIST.md) and [verification report](docs/SPRINT_4A_REPORT.md) explain the demo and known limits. Extra routines remain separate manual timers. Sprint 4B adds full planned sessions, confirmed coach/schedule actions and optional voice; see the integrated release below.
+---
 
-For VPS setup and continuous delivery, agents should follow the
-[Sprint 4A VPS/CD guide](docs/VPS_CD_AGENT_GUIDE.md): same-origin API, HTTPS,
-SPA routes, model/WASM delivery, migrations, release artifacts and rollback.
+##  Environment Variables
 
-GitHub Actions now deploys successful `main` CI releases to
-[Dungeon Master](https://dungeon-master.helpmake-id.live), using the existing
-`SERVER_IP` and `SERVER_KEY` secrets. [Deployment operations](deploy/README.md)
-documents setup, manual reruns, failure handling and configuration.
-Use `make check-deploy`, `make vps-status` and `make vps-logs` to maintain it.
+| Variable                      | Location        | Purpose                         |
+| ----------------------------- | --------------- | ------------------------------- |
+| `VITE_API_BASE_URL`           | Frontend `.env` | Backend API prefix              |
+| `CORS_ORIGINS`                | Backend `.env`  | Allowed frontend origins        |
+| `DATABASE_URL`                | Backend `.env`  | Development PostgreSQL database |
+| `TEST_DATABASE_URL`           | Backend `.env`  | Separate test database          |
+| `SECRET_KEY`                  | Backend `.env`  | JWT signing secret              |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Backend `.env`  | Guest token lifetime            |
+| `AI_FEATURE_ENABLED`          | Backend `.env`  | Enable AI features              |
+| `OPENAI_API_KEY`              | Backend `.env`  | Optional OpenAI API key         |
 
-## Sprint 4B product release
+---
 
-The first visit offers hand control and sensitivity practice before voice selection. Mouse fallback keeps the rest of the flow available. Camera processing stays local; a single stable camera owner serves hands and workouts. Full-day and per-exercise sessions preserve every planned set, rest and next exercise; quick demo explicitly uses one set of five reps. Results show actual assessed/manual totals and sync status.
+#  Testing & Verification
 
-Coach chat can explain a plan and propose actions; changes require confirmation. Weekly schedule includes availability, timezone, open-tab reminders and private ICS export. Google connection and ElevenLabs voice preview show actual provider status. Speech input requires a separate physical microphone action and is capped at30seconds.
+### Backend
 
-Apply migrations through `ae1078bb4679` with the existing backend command. Configure local providers using [environment delta](docs/SPRINT_4B_ENV_DELTA.md); secrets remain outside Git. Development jury personas are explicitly labelled fixtures and require their server flags; ordinary live generation never silently uses fixture provenance.
+```bash
+cd backend
 
-[Integrated checks and responsive evidence](docs/SPRINT_4B_INTEGRATION_REPORT.md), [demo runbook](docs/SPRINT_4B_DEMO_RUNBOOK.md), [live/manual checklist](docs/SPRINT_4B_LIVE_PROVIDER_CHECKLIST.md) and [actual API schema](docs/contracts/release-api.openapi.json) describe completion and limits. Existing deployment configuration and publication process remain owned by the repository's current release setup.
+make check
+
+make test
+
+make migrate
+```
+
+### Frontend
+
+```bash
+cd frontend
+
+npm run lint
+
+npm run type-check
+
+npm run test
+
+npm run test:coverage
+
+npm run build
+```
+
+### Full project checks
+
+From the repository root:
+
+```bash
+make check
+```
+
+Full CI verification:
+
+```bash
+make ci
+```
+
+---
+
+##  Design
+
+Dungeon Master's visual system is based on the project's Motion Studio design.
+
+### Figma
+
+[Open Dungeon Master in Figma](https://www.figma.com/design/vFIK97vQDk4xasLgDUdVdN?node-id=6-635)
+
+The interface uses a minimal warm-ivory design system with a graphite / citron visual identity.
+
+---
+
+##  Deployment
+
+Production deployment:
+
+### https://dungeon-master.helpmake-id.live
+
+GitHub Actions runs automated verification before deployment.
+
+The deployment pipeline includes:
+
+```text
+CI
+ ↓
+Smoke Tests
+ ↓
+CD
+ ↓
+VPS
+```
+
+Deployment documentation is available in:
+
+```text
+deploy/README.md
+```
+
+---
+
+##  Prototype Scope
+
+Dungeon Master is a **hackathon prototype**.
+
+It provides general fitness feedback and does **not** provide:
+
+- medical diagnosis;
+- medical treatment;
+- rehabilitation;
+- medical recommendations;
+- replacement for a qualified trainer or medical professional.
+
+Custom AI camera coaching is experimental.
+
+The current prototype does not include:
+
+- microphone capture;
+- OCR;
+- ElevenLabs;
+- calendar integration.
+
+Use synthetic information when demonstrating the application.
+
+---
+
+##  Security Notes
+
+Never commit:
+
+```text
+.env
+API keys
+JWT tokens
+database dumps
+camera recordings
+personal health information
+```
+
+Guest JWTs are used for demo authentication and should not be treated as production account security.
+
+---
+
+<div align="center">
+
+## Dungeon Master
+
+### Train. Move. Control.
+
+Gesture-driven fitness coaching powered by local computer vision.
+
+<br>
+
+**Built as a hackathon prototype.**
+
+<br>
+
+[Live Demo](https://dungeon-master.helpmake-id.live) ·
+[Figma](https://www.figma.com/design/vFIK97vQDk4xasLgDUdVdN) ·
+[Repository](https://github.com/EZDAMIR/dungeon-master)
+
+</div>
