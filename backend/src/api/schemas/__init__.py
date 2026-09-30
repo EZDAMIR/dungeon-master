@@ -32,6 +32,7 @@ __all__ = [
 from . import (
     exercises,  # noqa: F401
     profiles,  # noqa: F401
+    progress,  # noqa: F401
     training_plans,  # noqa: F401
     users,  # noqa: F401
     workout_sessions,  # noqa: F401
