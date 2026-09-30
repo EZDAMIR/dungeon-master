@@ -1,0 +1,25 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="780" height="490" viewBox="0 0 780 490" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Pose geometry / standing">
+<g id="Group">
+<path id="Vector" d="M48 82V36H96M684 36H732V82M48 384V430H96M684 430H732V384" stroke="#3A4C40" stroke-width="2"/>
+<path id="Vector_2" d="M60 462H720M390 28V466" stroke="#3A4C40" stroke-dasharray="5 7"/>
+<path id="Vector_3" d="M385 476C471.709 476 542 469.284 542 461C542 452.716 471.709 446 385 446C298.291 446 228 452.716 228 461C228 469.284 298.291 476 385 476Z" stroke="#3A4C40"/>
+</g>
+<path id="Vector_4" d="M148 318V450M283 318V450M140 298H291V318H140V298Z" stroke="#708775" stroke-width="6"/>
+<g id="Group_2">
+<path id="Vector_5" d="M370 137L352 282M352 282L369 362L374 442M352 282L337 360L326 442M368 155L414 226L413 278" stroke="#536E5A" stroke-width="47" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<path id="Vector_6" d="M378 107C396.225 107 411 92.2254 411 74C411 55.7746 396.225 41 378 41C359.775 41 345 55.7746 345 74C345 92.2254 359.775 107 378 107Z" fill="#8A9F8D"/>
+<path id="Vector_7" d="M370 137L352 282M352 282L369 362L374 442M352 282L337 360L326 442M368 155L414 226L413 278" stroke="#D9F36F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_8" d="M370 144C373.866 144 377 140.866 377 137C377 133.134 373.866 130 370 130C366.134 130 363 133.134 363 137C363 140.866 366.134 144 370 144Z" fill="#111A17" stroke="#D9F36F" stroke-width="3"/>
+<path id="Vector_9" d="M352 289C355.866 289 359 285.866 359 282C359 278.134 355.866 275 352 275C348.134 275 345 278.134 345 282C345 285.866 348.134 289 352 289Z" fill="#111A17" stroke="#D9F36F" stroke-width="3"/>
+<path id="Vector_10" d="M369 369C372.866 369 376 365.866 376 362C376 358.134 372.866 355 369 355C365.134 355 362 358.134 362 362C362 365.866 365.134 369 369 369Z" fill="#111A17" stroke="#D9F36F" stroke-width="3"/>
+<path id="Vector_11" d="M374 449C377.866 449 381 445.866 381 442C381 438.134 377.866 435 374 435C370.134 435 367 438.134 367 442C367 445.866 370.134 449 374 449Z" fill="#111A17" stroke="#D9F36F" stroke-width="3"/>
+<path id="Vector_12" d="M414 233C417.866 233 421 229.866 421 226C421 222.134 417.866 219 414 219C410.134 219 407 222.134 407 226C407 229.866 410.134 233 414 233Z" fill="#111A17" stroke="#D9F36F" stroke-width="3"/>
+<path id="Vector_13" d="M413 285C416.866 285 420 281.866 420 278C420 274.134 416.866 271 413 271C409.134 271 406 274.134 406 278C406 281.866 409.134 285 413 285Z" fill="#111A17" stroke="#D9F36F" stroke-width="3"/>
+<g id="Vector_14">
+<path d="M312 456H351ZM366 456H410Z" fill="black"/>
+<path d="M312 456H351M366 456H410" stroke="#8A9F8D" stroke-width="13" stroke-linecap="round"/>
+</g>
+</g>
+</svg>

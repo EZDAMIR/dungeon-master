@@ -1,0 +1,73 @@
+/* Sprint 4A: exact Motion Studio variables and text styles, read 2026-09-30. */
+@font-face {
+  font-family: Manrope;
+  src: url("../public/design/manrope.ttf") format("truetype");
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("../public/design/barlow-condensed.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../public/design/ibm-plex-mono.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+}
+:root {
+  --dm-paper: #f6f5f0;
+  --dm-white: #ffffff;
+  --dm-ink: #161c19;
+  --dm-muted: #58675d;
+  --dm-line: #d9ddd3;
+  --dm-citron: #d9f36f;
+  --dm-citronHover: #c8e65b;
+  --dm-stage: #111a17;
+  --dm-panel: #24332b;
+  --dm-inverseMuted: #aec0b2;
+  --dm-darkLine: #3a4c40;
+  --dm-warning: #ffcf89;
+  --dm-danger: #ffd1c8;
+  --dm-dangerText: #7b351f;
+  --dm-success: #e6f1da;
+  --dm-space-4: 4px;
+  --dm-space-8: 8px;
+  --dm-space-12: 12px;
+  --dm-space-16: 16px;
+  --dm-space-24: 24px;
+  --dm-space-32: 32px;
+  --dm-space-48: 48px;
+  --dm-space-64: 64px;
+  --dm-radius-8: 8px;
+  --dm-radius-16: 16px;
+  --dm-radius-24: 24px;
+  --dm-radius-999: 999px;
+  --dm-display: 600 112px/104px "Barlow Condensed", Manrope, sans-serif;
+  --dm-hero: 600 80px/80px "Barlow Condensed", Manrope, sans-serif;
+  --dm-heading: 600 56px/58px "Barlow Condensed", Manrope, sans-serif;
+  --dm-title: 600 24px/32px Manrope, sans-serif;
+  --dm-body: 400 16px/25px Manrope, sans-serif;
+  --dm-strong: 600 16px/24px Manrope, sans-serif;
+  --dm-small: 500 13px/20px Manrope, sans-serif;
+  --dm-label: 500 12px/18px "IBM Plex Mono", monospace;
+  --dm-metric: 600 128px/128px "Barlow Condensed", Manrope, sans-serif;
+  --dm-cue: 600 64px/64px "Barlow Condensed", Manrope, sans-serif;
+  --planning-background: var(--dm-paper);
+  --planning-surface: var(--dm-white);
+  --planning-text: var(--dm-ink);
+  --graphite-background: var(--dm-stage);
+  --graphite-surface: var(--dm-panel);
+  --citron-accent: var(--dm-citron);
+  --text: var(--dm-muted);
+  --text-h: var(--dm-ink);
+  --bg: var(--dm-paper);
+  --border: var(--dm-line);
+  --code-bg: var(--dm-white);
+  --accent: var(--dm-citron);
+  --sans: Manrope, sans-serif;
+  --heading: "Barlow Condensed", Manrope, sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
