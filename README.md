@@ -17,8 +17,34 @@ The backend setup below is optional for full local development.
 
 # Local Development
 
-> **Note:** For normal local testing, you only need to run the frontend with `npm run dev:cloud`.  
-> The backend, database, OpenAI, and ElevenLabs integrations are already hosted on the project server and do not need to be configured locally. Full local backend setup is optional.
+> **Note:** For normal local testing, only the frontend needs to be started.  
+> The backend, database, OpenAI, and ElevenLabs integrations are already running on the project server and do not need to be configured locally.
+
+## Start Frontend
+
+From the project root:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Then open:
+
+```text
+http://localhost:5173
+```
+
+The local frontend connects to the deployed Dungeon Master backend automatically.
+
+## Backend API Documentation
+
+The backend is already deployed and does not need to be started locally for normal testing.
+
+**Backend API documentation:**  
+[api.dungeon-master.helpmake-id.live](https://api.dungeon-master.helpmake-id.live/)
+
+> Running the backend, PostgreSQL, Docker, OpenAI, or ElevenLabs locally is optional and only required for full backend/infrastructure development.
 
 ## Requirements
 
