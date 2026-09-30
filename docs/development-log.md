@@ -632,3 +632,18 @@ architecture, actionlint and git diff checks. Full database/Docker checks and
 the first production release are verified by hosted CI/CD after publication.
 Actual webcam/phone and physical-distance testing remain manual. Backup copies
 and retained release files need an owner-selected long-term retention policy.
+
+Hosted verification completed: [CI run 36725352585](https://github.com/EZDAMIR/dungeon-master/actions/runs/36725352585)
+passed all three jobs, including 239 backend tests with 94.14% coverage and
+isolated Docker migrations/readiness/failure checks.
+[Automatic CD run 36725596192](https://github.com/EZDAMIR/dungeon-master/actions/runs/36725596192)
+successfully deployed `9c0ef5fd26be2b1e608e7cdde2027a66659da4a8` with backend digest
+`sha256:d2319536245501d9248b294db1bb08f02d7091a797197d6a7f62a07d68c1f84c`.
+The new PostgreSQL database was backed up before its first schema upgrade and
+the dump restored successfully into a disposable verification database.
+Public routes/API/asset bytes and Chromium rendering/reload/guard smoke passed.
+Both owned containers are healthy, API readiness reports `database: reachable`,
+and `/release.txt` agrees with the manifest. Previous release: none on this first
+deployment. No existing project was stopped/restarted/deleted; existing container
+uptimes remain 2–7 days and both helpmake frontend/API still return HTTP 200.
+Certificate renewal dry-run passed; the dedicated renewal timer is active.
