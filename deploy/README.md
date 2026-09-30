@@ -12,8 +12,8 @@ backend on `127.0.0.1:8020`. After DNS points to the VPS and local changes are p
 to `main`, copy `setup-api-vps.sh` and `nginx-api.conf.template` to a private server
 directory and run `sudo bash setup-api-vps.sh api.dungeon-master.helpmake-id.live`.
 The script refuses to overwrite an existing API site, provisions HTTP ACME before
-TLS, and enables a dedicated twice-daily renewal timer. Existing deployment-origin
-and other virtual hosts retain their configurations.
+TLS, and enables a dedicated twice-daily renewal timer. GitHub `DEPLOY_ORIGIN`
+now points to this API hostname; other virtual hosts retain their configurations.
 
 Verify the new hostname and local browser origins with:
 
@@ -95,7 +95,7 @@ Repository variables configured for this VPS:
 | `SERVER_USER` | `useradmin` |
 | `SERVER_PORT` | `22` |
 | `SERVER_KNOWN_HOSTS` | Verified OpenSSH host-key entry from the owner's SSH configuration |
-| `DEPLOY_ORIGIN` | `https://dungeon-master.helpmake-id.live` |
+| `DEPLOY_ORIGIN` | `https://api.dungeon-master.helpmake-id.live` |
 | `DEPLOY_ROOT` | Optional; defaults to `/srv/dungeon-master` |
 | `DEPLOY_AUTOMATIC` | Optional; set `false` to disable automatic deployments |
 

@@ -782,3 +782,30 @@ Server inspection found correct DNS and healthy existing API, but no matching
 certificate for the requested hostname. Per owner order, local setup and push
 precede all server configuration. Live API hostname verification remains pending.
 The owner requested author and committer dates of 2026-09-30 23:59 Asia/Almaty.
+
+## 2026-10-01 — Sprint 4B API verification and clock-dependent test removal
+
+After pushing local configuration, installed the additive API Nginx site at
+`https://api.dungeon-master.helpmake-id.live`. Certificate issuance and renewal
+dry-run succeeded; its dedicated renewal timer is active. Updated only the owned
+backend's CORS origins with a private environment backup and recreated that
+service, preserving its existing image, database and provider settings. API
+readiness, authentication, error responses, documentation and local-origin CORS
+checks pass. GitHub `DEPLOY_ORIGIN` now uses the new API hostname.
+
+Chrome at `http://127.0.0.1:5175` verified automatic guest authentication, profile
+and plan responses, cookie refresh preserving the guest and reload, with no token
+input or page errors. Server configuration is complete; the subsequent application
+release remains subject to the existing CI and CD gates.
+
+At the owner's request, removed
+`test_schedule_completion_requires_started_owned_appointment_and_confirmation`.
+GitHub backend CI failed because its appointment is moved thirty minutes before
+real wall-clock time and the default schedule query begins at local midnight;
+just after midnight that appointment falls outside the query window. This depends
+on the runner clock, not Git commit metadata. Application behavior is unchanged.
+The four remaining focused schedule/calendar tests pass. Backend formatting and
+lint pass, and the full suite passes: 284 tests, 96.07% coverage with the existing
+90% gate, using disposable local PostgreSQL. The removed completion assertions
+no longer provide regression coverage. All commits created for this task use
+2026-09-30 23:59 Asia/Almaty for both author and committer timestamps.
