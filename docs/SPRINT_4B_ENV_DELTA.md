@@ -48,3 +48,8 @@ Audio stays in bounded, owner-scoped process memory. No additional writable cach
 OAuth encryption needs a valid Fernet key supplied externally; key rotation needs a deliberate token migration/reconnection. Do not place credentials in frontend variables or commit them.
 
 The IP cap intentionally uses request.client.host. Under an existing reverse proxy, users share the peer budget; select the application limit with this topology in mind. This task does not change proxy trust or deployment.
+
+
+## Authorized local environment correction
+
+The owner's existing local backend/.env used legacy API_TOKEN and ELEVENLABS_TOKEN. Application settings use OPENAI_API_KEY and ELEVENLABS_API_KEY; canonical entries were added from those selected existing values, with no aliases or credential copies elsewhere. Existing legacy names and unrelated configuration remain. AI_FEATURE_ENABLED/ELEVENLABS_ENABLED are true, OPENAI_MODEL is gpt-5.4, OPENAI_EMBEDDING_MODEL is text-embedding-3-small, COACH_EXECUTION_MODE is live and ENABLE_FIXTURE_MODE is false. The atomic local file has mode0600 and is not committed. One real GPT request succeeded; the current ElevenLabs credential is provider-rejected invalid_api_key and requires a valid replacement. No actual credential values appear in this document.

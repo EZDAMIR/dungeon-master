@@ -80,3 +80,28 @@ def test_is_production_true_when_env_is_production():
         APP_ENV='production',
     )
     assert s.is_production is True
+
+
+@pytest.mark.parametrize('enabled', [False, True])
+def test_canonical_provider_keys_require_feature_flags_and_remain_private(
+    monkeypatch, enabled
+):
+    monkeypatch.setenv('OPENAI_API_KEY', 'mock-openai-key')
+    monkeypatch.setenv('ELEVENLABS_API_KEY', 'mock-elevenlabs-key')
+    # Historical names may coexist, but application code consumes canonical fields.
+    monkeypatch.setenv('API_TOKEN', 'legacy-unused-value')
+    monkeypatch.setenv('ELEVENLABS_TOKEN', 'legacy-unused-value')
+    settings = Settings(
+        _env_file=None,
+        SECRET_KEY='test-secret-key-at-least-16-chars',
+        DATABASE_URL='postgresql+asyncpg://unused/unused',
+        AI_FEATURE_ENABLED=enabled,
+        ELEVENLABS_ENABLED=enabled,
+        OPENAI_MODEL='gpt-5.4',
+    )
+    assert settings.OPENAI_API_KEY.get_secret_value() == 'mock-openai-key'
+    assert settings.ELEVENLABS_API_KEY.get_secret_value() == 'mock-elevenlabs-key'
+    assert settings.ai_available is enabled
+    assert settings.elevenlabs_available is enabled
+    assert 'mock-openai-key' not in repr(settings)
+    assert 'mock-elevenlabs-key' not in repr(settings)
