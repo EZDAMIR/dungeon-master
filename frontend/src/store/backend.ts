@@ -521,7 +521,7 @@ export class BackendStore {
     const controller = new AbortController(); this.generationController = controller;
     const abort = () => controller.abort(); this.controller.signal.addEventListener("abort", abort, { once: true });
     try {
-      let job = await this.request<GenerationJob>("/generation-jobs", { operation_id: crypto.randomUUID(), execution_mode: "live" }, "POST", controller.signal);
+      let job = await this.request<GenerationJob>("/generation-jobs", { operation_id: crypto.randomUUID(), execution_mode: this.state.context?.additional_preferences.synthetic === true && ["maya","arman","dana"].includes(String(this.state.context.additional_preferences.persona_key)) ? "fixture" : "live" }, "POST", controller.signal);
       this.publish({ generationJob: job });
       const deadline = Date.now() + 190000;
       while (["queued", "running"].includes(job.status)) {

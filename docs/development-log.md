@@ -680,3 +680,7 @@ passed all CI, smoke, release and deployment jobs.
 Local naming-change verification passed actionlint, eight release-trust tests,
 17 deployment regressions and all 22 automation tests, plus script syntax/style
 and `git diff --check`.
+
+## Sprint4B integrated working point
+
+Merged the three assigned local implementations and existing owner main. Delivered hands-first/voice/coach/schedule, full frozen multi-set runner and every-set persistence; refined360/390mobile and768/834tablet layouts. Recorded199frontend/283backend tests and54browser layout cases, actual four-set and offline partial/reconnect persistence. Both bounded OpenAI and Russian ElevenLabs preview checks verified. Stopped additional broad reruns at the owner's explicit request to finish this working point; hardware/Safari/STT/Google remain manual. Deployment configuration was preserved. See [release report](SPRINT_4B_RELEASE_REPORT.md).

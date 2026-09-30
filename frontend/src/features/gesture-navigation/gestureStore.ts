@@ -66,6 +66,7 @@ export class GestureStore {
     qualityHint: null,
   };
   onPhysicalInteraction: () => void = () => {};
+  setPhysicalInteraction(callback:()=>void) {this.onPhysicalInteraction=callback;}
   private scope: HTMLElement | null = null;
   private scopedListeners = new Set<(event: VisionEvent) => void>();
   subscribeEvents = (callback: (event: VisionEvent) => void) => { this.scopedListeners.add(callback); return () => { this.scopedListeners.delete(callback) } };
@@ -267,9 +268,9 @@ export class GestureStore {
       event.type === "gesture.confirmed" &&
       event.command === "select" &&
       event.targetId &&
-      (event.targetId.startsWith("session-") || ["PROFILE", "PLAN", "PROGRESS"].includes(targetMode) ||
+      (event.targetId.startsWith("session-") || ["PROFILE", "PLAN", "PROGRESS", "SCHEDULE"].includes(targetMode) ||
         (targetMode === "RESULTS" &&
-          ["results-sync", "results-progress"].includes(event.targetId)))
+          ["results-sync", "results-progress", "results-plan"].includes(event.targetId)))
     )
       this.registry.activate(event.targetId);
   };

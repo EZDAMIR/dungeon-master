@@ -24,6 +24,7 @@ export function GuidedTour({ audio, client, screen, event, language = "ru", plan
     audio.enqueue({ id: `guide:${current.event}`, text: cueText(current.cue, language, current.text), priority: 'guide', load: client ? signal => client.speech({ cue_id: current.cue }, signal) : undefined });
     return () => { delete target.dataset.guideHighlight; };
   }, [enabled, current, screen, client, audio, language]);
-  if (!enabled || !current) return null;
+  const screens:Record<string,readonly string[]>={voice:[],context:['PROFILE'],plan:['PLAN','PROFILE'],exercise:['PLAN'],camera:['CALIBRATION','CAMERA_PERMISSION','MENU','TUTORIAL'],gesture:['PLAN','MENU','TUTORIAL','SCHEDULE'],calibration:['CALIBRATION'],countdown:['COUNTDOWN'],workout:['WORKOUT'],rest:['REST'],results:['RESULTS'],progress:['PROGRESS']};
+  if (!enabled || !current || !screens[current.target]?.includes(screen)) return null;
   return <aside className="guided-tour" aria-label="Обучение"><p>{language === "ru" ? current.text : cueText(current.cue, language, current.text)}</p><div className="dm-actions"><button onClick={() => { audio.enqueue({ id: `repeat:${Date.now()}`, text: cueText(current.cue, language, current.text), priority: 'guide', load: client ? signal => client.speech({ cue_id: current.cue }, signal) : undefined }); }}>{productText(language, "repeat")}</button><button onClick={() => { guide.skip(); }}>{productText(language, "skipStep")}</button><button onClick={() => { audio.stop(); guide.stop(); onDone?.(); }}>{productText(language, "stopGuide")}</button><button onClick={() => audio.setMuted(true)}>{productText(language, "silent")}</button></div></aside>;
 }

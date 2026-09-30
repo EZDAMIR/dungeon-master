@@ -200,7 +200,7 @@ Keep `APP_ENV=development` or explicitly set `ENABLE_DEMO_PERSONAS=true` for syn
 
 Without a provider the deterministic Sprint 3 plan and stable squat analyzer remain available. Invalid generated declarations get one repair and then manual execution. Raw uploaded files are discarded after text extraction. Camera frames remain local, and no AI call runs during a workout.
 
-[Personalization contract](docs/AI_PERSONALIZATION.md), [MovementSpec](docs/MOVEMENT_SPEC_V1.md), [manual checklist](docs/SPRINT_4A_MANUAL_CHECKLIST.md) and [verification report](docs/SPRINT_4A_REPORT.md) explain the demo and known limits. Swap is unavailable; extra routines use manual timers; one demo set is completed per session. Sprint 4B integrations are intentionally left for later.
+[Personalization contract](docs/AI_PERSONALIZATION.md), [MovementSpec](docs/MOVEMENT_SPEC_V1.md), [manual checklist](docs/SPRINT_4A_MANUAL_CHECKLIST.md) and [verification report](docs/SPRINT_4A_REPORT.md) explain the demo and known limits. Extra routines remain separate manual timers. Sprint 4B adds full planned sessions, confirmed coach/schedule actions and optional voice; see the integrated release below.
 
 For VPS setup and continuous delivery, agents should follow the
 [Sprint 4A VPS/CD guide](docs/VPS_CD_AGENT_GUIDE.md): same-origin API, HTTPS,
@@ -211,3 +211,13 @@ GitHub Actions now deploys successful `main` CI releases to
 `SERVER_IP` and `SERVER_KEY` secrets. [Deployment operations](deploy/README.md)
 documents setup, manual reruns, failure handling and configuration.
 Use `make check-deploy`, `make vps-status` and `make vps-logs` to maintain it.
+
+## Sprint 4B product release
+
+The first visit offers hand control and sensitivity practice before voice selection. Mouse fallback keeps the rest of the flow available. Camera processing stays local; a single stable camera owner serves hands and workouts. Full-day and per-exercise sessions preserve every planned set, rest and next exercise; quick demo explicitly uses one set of five reps. Results show actual assessed/manual totals and sync status.
+
+Coach chat can explain a plan and propose actions; changes require confirmation. Weekly schedule includes availability, timezone, open-tab reminders and private ICS export. Google connection and ElevenLabs voice preview show actual provider status. Speech input requires a separate physical microphone action and is capped at30seconds.
+
+Apply migrations through `ae1078bb4679` with the existing backend command. Configure local providers using [environment delta](docs/SPRINT_4B_ENV_DELTA.md); secrets remain outside Git. Development jury personas are explicitly labelled fixtures and require their server flags; ordinary live generation never silently uses fixture provenance.
+
+[Integrated checks and responsive evidence](docs/SPRINT_4B_INTEGRATION_REPORT.md), [demo runbook](docs/SPRINT_4B_DEMO_RUNBOOK.md), [live/manual checklist](docs/SPRINT_4B_LIVE_PROVIDER_CHECKLIST.md) and [actual API schema](docs/contracts/release-api.openapi.json) describe completion and limits. Existing deployment configuration and publication process remain owned by the repository's current release setup.

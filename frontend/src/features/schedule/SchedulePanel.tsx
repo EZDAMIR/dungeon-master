@@ -1,3 +1,4 @@
+import { ApiError } from '../../api/client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ReleaseClient, type Schedule, type SchedulePreferences, type Proposal, type Language } from '../../api/release';
 import type { AudioCoordinator } from '../../audio/audioCoordinator';
@@ -25,7 +26,7 @@ export function SchedulePanel({ client, audio, language = "ru" }: { client: Rele
       }
     }; check(); const timer = setInterval(check, 30000); return () => clearInterval(timer);
   }, [schedule, audio]);
-  async function run(task: () => Promise<void>) { if (flight.current) return; flight.current = true; setBusy(true); setError(''); try { await task(); } catch (error) { setError(error instanceof Error && !error.message.startsWith('API') ? error.message : 'Изменение не выполнено. Обновите расписание и повторите.'); } finally { flight.current = false; setBusy(false); } }
+  async function run(task: () => Promise<void>) { if (flight.current) return; flight.current = true; setBusy(true); setError(''); try { await task(); } catch (error) { setError(error instanceof ApiError && error.code==='invalid_slot'?'Выберите будущее время в пределах вашей доступности или один из свободных слотов.':error instanceof Error && !error.message.startsWith('API') ? error.message : 'Изменение не выполнено. Обновите расписание и повторите.'); } finally { flight.current = false; setBusy(false); } }
   async function propose(instant?: string) {
     if (!schedule || !preferences) return;
     await run(async () => { const starts_at = action === 'cancel' ? null : instant ?? localToInstant(starts, preferences.timezone);

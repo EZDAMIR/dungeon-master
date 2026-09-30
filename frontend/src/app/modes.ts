@@ -23,7 +23,9 @@ export type AppMode =
   | "PROFILE"
   | "PLAN"
   | "PROGRESS"
-  | "SCHEDULE";
+  | "SCHEDULE"
+  | "REST"
+  | "NEXT_SET";
 export type WorkoutView = {
   profile: CalibrationProfile | null;
   progress: number;
@@ -52,6 +54,7 @@ export const emptyWorkout = (): WorkoutView => ({
 });
 export type AppAction =
   | { type: "NAVIGATE"; mode: AppMode }
+  | { type: "SESSION_PHASE"; mode: AppMode; reset?: boolean }
   | { type: "CAMERA_READY" }
   | { type: "CAMERA_RETRY" }
   | { type: "TUTORIAL_DONE" }
@@ -78,6 +81,7 @@ export type AppState = {
   selectedWorkoutId: string | null;
   workoutResult: WorkoutResult | null;
   workout: WorkoutView;
+  sessionFinished?: boolean;
 };
 export const INITIAL_STATE: AppState = {
   mode: "CAMERA_PERMISSION",
@@ -89,6 +93,8 @@ const TRANSITIONS: Record<
   AppMode,
   Partial<Record<AppAction["type"], AppMode>>
 > = {
+  REST: {},
+  NEXT_SET: {},
   CAMERA_PERMISSION: { CAMERA_READY: "TUTORIAL" },
   TUTORIAL: { TUTORIAL_DONE: "MENU" },
   MENU: {
@@ -181,6 +187,7 @@ function poseEvent(view: WorkoutView, event: VisionEvent): WorkoutView {
   }
 }
 export function appReducer(state: AppState, action: AppAction): AppState {
+  if(action.type==='SESSION_PHASE')return {...state,mode:action.mode,selectedWorkoutId:'personalized',workout:action.reset?emptyWorkout():state.workout,workoutResult:null,sessionFinished:action.mode==='RESULTS'};
   if (action.type === "NAVIGATE") {
     const cameraRoute = [
       "CALIBRATION",
@@ -190,7 +197,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     ].includes(action.mode);
     let mode = action.mode;
     if (cameraRoute) mode = state.selectedWorkoutId ? "CALIBRATION" : "PLAN";
-    if (mode === "RESULTS" && !state.workoutResult) mode = "PROGRESS";
+    if (["REST","NEXT_SET"].includes(mode)) mode="PLAN";
+    if (mode === "RESULTS" && !state.workoutResult && !state.sessionFinished) mode = "PROGRESS";
     // A history return to the entry screen keeps an acquired hand camera alive.
     if (mode === "CAMERA_PERMISSION" && state.mode !== "CAMERA_PERMISSION")
       mode = "TUTORIAL";

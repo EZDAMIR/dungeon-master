@@ -1,0 +1,70 @@
+{
+  "setIds": [
+    "d2de91f0-e97b-4ead-b044-3140376efaf3",
+    "ab60fe96-448f-4c68-bc88-ce38479573f3"
+  ],
+  "statuses": [
+    "completed",
+    "partial"
+  ],
+  "globalOrdinals": [
+    1,
+    2
+  ],
+  "nullableGeometry": [
+    null,
+    null
+  ],
+  "summary": {
+    "total_reps": 8,
+    "accepted_reps": 8,
+    "rejected_reps": 0,
+    "duration_ms": 41350,
+    "error_counts": {
+      "depth_insufficient": 0,
+      "too_fast": 0,
+      "incomplete_extension": 0
+    },
+    "generic_error_counts": {},
+    "total_sets": 2,
+    "camera_total_reps": 8,
+    "manual_completed_sets": 0
+  },
+  "progress": {
+    "camera_total_reps": 32,
+    "total_sets": 6,
+    "manual_completed_sets": 0,
+    "completed_sessions": 2,
+    "total_reps": 32,
+    "accepted_reps": 32,
+    "rejected_reps": 0,
+    "acceptance_rate": 1,
+    "error_counts": {
+      "depth_insufficient": 0,
+      "too_fast": 0,
+      "incomplete_extension": 0
+    },
+    "recent_sessions": [
+      {
+        "id": "38401260-83a1-43a4-9891-19b760ee8c8d",
+        "exercise_key": "calf_raise_46f1bcdea500_cd785a5441ee",
+        "completed_at": "2026-09-30T17:45:40.859000Z",
+        "total_reps": 8,
+        "accepted_reps": 8,
+        "duration_ms": 41350,
+        "dominant_error": null,
+        "generic_error_counts": {}
+      },
+      {
+        "id": "0ec333ee-8a5b-4657-b8a5-af234cf530b8",
+        "exercise_key": "calf_raise_46f1bcdea500_cd785a5441ee",
+        "completed_at": "2026-09-30T17:45:39.377000Z",
+        "total_reps": 24,
+        "accepted_reps": 24,
+        "duration_ms": 122000,
+        "dominant_error": null,
+        "generic_error_counts": {}
+      }
+    ]
+  }
+}

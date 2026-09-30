@@ -57,8 +57,8 @@ export function useBrowserRoutes(
     if (window.location.pathname + window.location.search !== url) {
       // Frame-driven readiness/countdown and pause updates must not fill history.
       const automatic =
-        ["COUNTDOWN", "WORKOUT", "PAUSED"].includes(state.mode) &&
-        ["CALIBRATION", "COUNTDOWN", "WORKOUT", "PAUSED"].includes(
+        ["COUNTDOWN", "WORKOUT", "PAUSED", "REST", "NEXT_SET", "RESULTS"].includes(state.mode) &&
+        ["CALIBRATION", "COUNTDOWN", "WORKOUT", "PAUSED", "REST", "NEXT_SET"].includes(
           previousMode.current,
         );
       if (first.current || automatic)

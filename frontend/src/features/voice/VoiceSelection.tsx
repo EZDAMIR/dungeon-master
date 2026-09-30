@@ -6,12 +6,22 @@ import { ApiError } from '../../api/client';
 import { ReleaseClient, type Voice, type VoicePreferences, type Capabilities } from '../../api/release';
 import type { AudioCoordinator } from '../../audio/audioCoordinator';
 import { GestureTarget } from '../gesture-navigation/GestureTarget';
+import { useGestureStore } from '../gesture-navigation/gestureNavigation';
+import { GestureCursor } from '../gesture-navigation/GestureCursor';
 import { defaultVoice } from "../../api/release";
 export function VoiceSelection({ client, audio, initial = defaultVoice, onComplete }: { client: ReleaseClient; audio: AudioCoordinator; initial?: VoicePreferences; onComplete: (preferences: VoicePreferences, persisted: boolean) => void }) {
   const [draft, setDraft] = useState(initial), [voices, setVoices] = useState<Voice[]>([]), [busy, setBusy] = useState(false), [error, setError] = useState(''), [loading, setLoading] = useState(true);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null), [model, setModel] = useState('');
   const t = (key: Parameters<typeof productText>[1]) => productText(draft.language, key);
   const modal = useRef<HTMLElement | null>(null);
+  const store=useGestureStore();
+  const closeRef=useRef(()=>{});closeRef.current=()=>{if(!busy)void save(true)};
+  useEffect(()=>{
+    store.setTargetScope(modal.current);
+    const remove=store.subscribeEvents(event=>{if(event.type==='gesture.confirmed'&&event.command==='back')closeRef.current()});
+    store.onPhysicalInteraction();
+    return()=>{remove();store.setTargetScope(null);store.onPhysicalInteraction()};
+  },[store]);
   useModalFocus(modal, () => { if (!busy) void save(true); });
   const playback = useSyncExternalStore(audio.subscribe, audio.getSnapshot);
   useEffect(() => {
@@ -30,6 +40,7 @@ export function VoiceSelection({ client, audio, initial = defaultVoice, onComple
     finally { setBusy(false); }
   }
   return createPortal(<section ref={modal} tabIndex={-1} data-product-modal className="voice-screen" role="dialog" aria-modal="true" aria-labelledby="voice-title" data-guide-target="voice">
+    <GestureCursor/>
     <p className="dm-label">ELEVENLABS / COACH VOICE</p><h2 id="voice-title">{t("voiceTitle")}</h2>
     <p>{t("voiceDescription")}</p>
     <div className="dm-actions" role="group" aria-label={t("language")}>{(['ru','kk','en'] as const).map(language => <GestureTarget key={language} id={`voice-language-${language}`} selected={draft.language === language} onSelect={() => { audio.stop(); setLoading(true); setVoices([]); setError(''); setDraft({ ...draft, language, voice_id: null }); }}>{language === 'ru' ? 'Русский' : language === 'kk' ? 'Қазақша' : 'English'}</GestureTarget>)}</div>

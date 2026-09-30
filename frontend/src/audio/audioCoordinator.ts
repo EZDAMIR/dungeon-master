@@ -1,3 +1,4 @@
+import { localized, type MovementSpec } from "../vision/exercises/generic/types";
 import { cueText } from "./cues";
 import { GestureAudio } from './gestureAudio';
 import type { VisionEvent } from '../types/vision';
@@ -15,6 +16,8 @@ export class AudioCoordinator extends GestureAudio {
   private generation = 0;
   private recording = false;
   private lastGenericPrimary = "";
+  private exerciseSpec: MovementSpec | null = null;
+  setExerciseSpec(spec: MovementSpec | null) {this.exerciseSpec=spec;this.lastGenericPrimary="";}
   private prepared = new Map<string, Blob>();
   private prepareController: AbortController | null = null;
   private muted = true;
@@ -33,7 +36,7 @@ export class AudioCoordinator extends GestureAudio {
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private publish(patch: Partial<AudioSnapshot>) { this.snapshot = { ...this.snapshot, ...patch }; for (const listener of this.listeners) listener(); }
   configure(loader: ((cue: string, signal: AbortSignal) => Promise<Blob>) | null, language = 'ru') { this.stop(); this.loader = loader; this.language = language; this.prepared.clear(); this.lastGenericPrimary = ""; this.seen.clear(); }
-  setScope(scope: string) { if (scope !== this.scope) { this.scope = scope; this.stop(); this.prepared.clear(); this.seen.clear(); } }
+  setScope(scope: string) { if (scope !== this.scope) { this.scope = scope; this.stop(); this.prepared.clear(); this.seen.clear(); this.lastGenericPrimary=""; } }
   setRecording(value: boolean) { this.recording = value; if (value) this.stop(); }
   async prepare(cues: readonly string[]) {
     if (!this.loader || this.muted || this.recording) return;
@@ -118,11 +121,15 @@ export class AudioCoordinator extends GestureAudio {
     if (event.type === 'workout.technique_error') { cue = event.code; text = { depth_insufficient: 'Опустись немного ниже', too_fast: 'Медленнее вниз', incomplete_extension: 'Заверши подъём' }[event.code]; }
     if (event.type === 'workout.countdown') { cue = event.count > 0 ? `countdown_${event.count}` : 'start'; text = event.count > 0 ? String(event.count) : 'Начали'; kind = 'countdown'; }
     if (event.type === 'workout.completed') { cue = 'workout_complete'; text = 'Тренировка завершена'; kind = 'guide'; }
-    if (event.type === 'workout.rep_completed' && event.accepted) { cue = 'good_rep'; text = 'Хорошее повторение'; kind = 'motivation'; }
+    if ((event.type === 'workout.rep_completed'||event.type === 'workout.generic_rep_completed') && event.accepted) { cue = 'good_rep'; text = 'Хорошее повторение'; kind = 'motivation'; }
     if (event.type === 'workout.generic_updated') {
       if (event.view.primary === this.lastGenericPrimary) return;
       this.lastGenericPrimary = event.view.primary;
       text = event.view.primary; cue = event.view.tracking ? '' : 'tracking_recovery'; kind = event.view.tracking ? 'technique' : 'recovery';
+      if(event.view.tracking && this.exerciseSpec){
+        const language=this.language as 'ru'|'kk'|'en', rule=this.exerciseSpec.error_rules.find(rule=>localized(rule.messages,language)===text), phase=this.exerciseSpec.phases.find(phase=>localized(phase.messages,language)===text);
+        cue=rule?`error:${rule.code}`:phase?`phase:${phase.id}`:localized(this.exerciseSpec.calibration.messages,language)===text?'calibration':'';
+      }
     }
     if (text) this.enqueue({ id: `${cue}:${text}`, text: cueText(cue, this.language, text), priority: kind, load: cue && this.loader ? signal => this.loadCue(cue, signal) : undefined });
   }

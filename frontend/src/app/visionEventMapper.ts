@@ -41,7 +41,7 @@ export function mapVisionEvent(
       ? { type: "TUTORIAL_DONE" }
       : null;
   if (
-    ["PROFILE", "PLAN", "PROGRESS"].includes(state.mode) &&
+    ["PROFILE", "PLAN", "PROGRESS", "SCHEDULE"].includes(state.mode) &&
     event.command === "back"
   )
     return { type: "BACK" };

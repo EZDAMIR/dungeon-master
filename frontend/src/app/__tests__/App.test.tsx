@@ -445,3 +445,25 @@ it("boots an online guest, starts the planned squat, shows Results before sync a
     /landmarks|frames|video|image|screenshot|user_id/,
   );
 });
+it('runs the full two-set manual plan and persists both globally numbered sets without camera assessment', async () => {
+  const exercise={id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',key:'desk_mobility',name:'Desk mobility',difficulty:'beginner' as const,equipment_codes:['none' as const],impact_level:'low' as const,camera_angle:'none' as const,contraindication_tags:[],analysis_profile:{version:1 as const,engine_key:'generic_v1' as const,engine_version:'manual-v1',target_reps:5,supported_client:'web' as const}};
+  const plan={id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',status:'active' as const,source:'deterministic' as const,starts_on:'2026-09-28',rationale:'actual two sets',generator_version:'deterministic-v1',created_at:'2026-09-30T00:00:00Z',updated_at:'2026-09-30T00:00:00Z',items:[{id:'ffffffff-ffff-4fff-8fff-ffffffffffff',exercise_id:exercise.id,exercise,day_index:0,position:0,sets:2,target_reps:5,rest_seconds:30,tempo_hint:null,scheduled_at:null}]};
+  vi.spyOn(backend,'getSnapshot').mockReturnValue({...backend.getSnapshot(),plan,status:'offline'});
+  const save=vi.spyOn(backend,'recordSets');
+  window.history.replaceState({},'', '/plan?fakeVision=1');
+  await act(async()=>root.render(<App backend={backend}/>));
+  click('Начать · Понедельник',0);expect(container.querySelector('header code')?.textContent).toBe('WORKOUT');
+  click('Отметить выполненным',2000);expect(container.querySelector('header code')?.textContent).toBe('REST');expect(save).not.toHaveBeenCalled();
+  click('Начать следующий подход',3000);expect(container.querySelector('header code')?.textContent).toBe('WORKOUT');
+  click('Отметить выполненным',5000);expect(container.querySelector('header code')?.textContent).toBe('RESULTS');expect(save).toHaveBeenCalledOnce();
+  const entry=backend.queue.entries()[0];expect(entry.session.client_engine_version).toBe('workout-session-v1');expect(entry.sets?.map(set=>set.set_index)).toEqual([1,2]);expect(entry.sets?.every(set=>set.accepted_reps===0&&set.metrics.mean_min_knee_angle===null)).toBe(true);expect(new Set(entry.sets?.map(set=>set.client_set_id)).size).toBe(2);
+  expect(entry.complete.summary).toMatchObject({total_sets:2,total_reps:10,camera_total_reps:0,accepted_reps:0,rejected_reps:0,manual_completed_sets:2});expect(container.textContent).toContain('FULL WORKOUT / ACTUAL SETS');expect(container.textContent).toContain('Оценка камерой отсутствует');
+});
+it('places hands introduction before voice selection without requesting camera or awaiting backend', async()=>{
+  window.history.replaceState({},'', '/schedule');
+  const getUserMedia=vi.fn();Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia}});
+  await act(async()=>root.render(<App backend={backend}/>));
+  expect(document.querySelector('.hands-intro')).not.toBeNull();expect(document.querySelector('.voice-screen')).toBeNull();expect(getUserMedia).not.toHaveBeenCalled();
+  await act(async()=>[...document.querySelectorAll<HTMLButtonElement>('.hands-intro button')].find(button=>button.textContent==='Продолжить с мышью')!.click());
+  expect(document.querySelector('.hands-intro')).toBeNull();expect(document.querySelector('.voice-screen')).not.toBeNull();expect(getUserMedia).not.toHaveBeenCalled();expect(window.location.pathname).toBe('/schedule');
+});

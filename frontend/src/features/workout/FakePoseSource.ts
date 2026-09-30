@@ -56,6 +56,7 @@ export class FakePoseSource {
       language,
     );
   }
+  configureLegacy(target:number) {this.generic=false;this.calf=false;this.angularKind=null;this.session.configureMovement("bodyweight_squat",null,target)}
   finishGeneric() {
     return this.session.finishGeneric(this.last);
   }
