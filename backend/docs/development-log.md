@@ -196,3 +196,8 @@ Implemented real gpt-5.4 Responses/typed coach tools, explicit live/fixture/fall
 ## 2026-09-30 — Corrected local provider configuration and actual live evidence
 
 The initial canonical-name check missed existing user-authorized legacy provider variables. On the user's explicit instruction, atomically corrected only the original local backend/.env to canonical names plus live provider/model flags, preserving legacy/database/SECRET_KEY/CORS entries and mode0600. No real environment values entered this repository. Bounded real doctor with retries0: gpt-5.4 strict response VERIFIED39input/12outputtokens/3796ms; ElevenLabs models and voices returnHTTP401 invalid_api_key, preview not generated. Google/STT/full browser acceptance remain unverified. Two focused config cases cover canonical keys with legacy entries, enabled/disabled gates and masked repr;11tests pass and makecheck green. No source application code, migrations, CD or server changes in this correction. Sanitized proof and updated limitations are in backend report/contracts.
+
+
+## 2026-09-30 — User-requested fresh canonical ElevenLabs retry
+
+Current canonical ELEVENLABS_API_KEY reread into process memory only, no legacy overwrite/env edit/OpenAI repeat/sourceDB. Real /v1/models again returnsHTTP401 invalid_api_key,1597ms; no voices/language/audio success claimed. Updated sanitized proof/report only; unchanged implementation gates remain green. A valid canonical ElevenLabs key is still required.
