@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useGestureSnapshot, useGestureStore } from './gestureNavigation'
-export function GestureTarget({id,selected=false,disabled=false,onSelect,children}: {id:string;selected?:boolean;disabled?:boolean;onSelect?:(source?: 'hands' | 'physical')=>void;children:ReactNode}) {
+export function GestureTarget({id,selected=false,disabled=false,onSelect,children,ariaLabel}: {id:string;selected?:boolean;disabled?:boolean;onSelect?:(source?: 'hands' | 'physical')=>void;children:ReactNode;ariaLabel?:string}) {
   const ref = useRef<HTMLButtonElement>(null)
   const store = useGestureStore()
   const snapshot = useGestureSnapshot()
@@ -8,6 +8,6 @@ export function GestureTarget({id,selected=false,disabled=false,onSelect,childre
   const focused = snapshot.focused === id
   const confirmed = selected && snapshot.lastCommand === 'confirm'
   const candidate = focused && snapshot.candidate === 'select' ? 'pinch-candidate' : selected && snapshot.candidate === 'confirm' ? 'confirm-candidate' : ''
-  return <button ref={ref} type="button" disabled={disabled} data-gesture-target={id} aria-pressed={selected} onClick={() => { store.onPhysicalInteraction(); onSelect?.('physical') }}
+  return <button ref={ref} type="button" disabled={disabled} data-gesture-target={id} aria-pressed={selected} aria-label={ariaLabel} onClick={() => { store.onPhysicalInteraction(); onSelect?.('physical') }}
     className={`gesture-target ${focused ? 'focused' : ''} ${selected ? 'selected' : ''} ${confirmed ? 'confirmed' : ''} ${candidate}`}>{children}</button>
 }

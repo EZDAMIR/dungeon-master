@@ -267,7 +267,7 @@ export class GestureStore {
       event.type === "gesture.confirmed" &&
       event.command === "select" &&
       event.targetId &&
-      (["PROFILE", "PLAN", "PROGRESS"].includes(targetMode) ||
+      (event.targetId.startsWith("session-") || ["PROFILE", "PLAN", "PROGRESS"].includes(targetMode) ||
         (targetMode === "RESULTS" &&
           ["results-sync", "results-progress"].includes(event.targetId)))
     )

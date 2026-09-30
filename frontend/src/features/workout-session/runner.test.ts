@@ -39,3 +39,7 @@ it('rejects malformed plans without changing external data',()=>{expect(()=>runn
 it('stop during paused rest does not duplicate the completed set and active time excludes rest/pause/readiness',()=>{
  const r=runner();r.start(0);ready(r,100);r.consume(rep(200,1));r.pause(300);r.tick(10000);r.resume(10001);ready(r,10100);r.consume(rep(10200,2));expect(r.getSnapshot().sets[0].durationMs).toBe(300);r.pause(11000);r.stop(12000);expect(r.getSnapshot().sets).toHaveLength(1);expect(r.getSnapshot().activeMs).toBe(300)
 })
+
+it('rest switches the same camera to hands navigation and rechecks body before next set',()=>{
+ const r=runner(),source={cancelPartial:vi.fn(),configureMovement:vi.fn(),setMode:vi.fn(),requireNeutralRelease:vi.fn()} as unknown as RealVisionSource;const controller=new WorkoutSessionController(r,()=>source);r.start(0);ready(r,1);controller.consume(rep(2,1));controller.consume(rep(3,2));expect(source.setMode).toHaveBeenLastCalledWith('MENU');expect(source.requireNeutralRelease).toHaveBeenCalled();r.next(4);expect(source.setMode).toHaveBeenLastCalledWith('CALIBRATION');controller.dispose()
+})

@@ -46,3 +46,8 @@ it('two correct cycles count exactly twice and produce a clean deterministic res
  expect(reps(events)).toHaveLength(2);expect(a.result(10000)).toMatchObject({totalReps:2,acceptedReps:2,rejectedReps:0,errorCounts:{depth_insufficient:0,too_fast:0,incomplete_extension:0}})
  expect(recommendation(a.result(10000))).toContain('Все 2 повторений')
 })
+it('configured plan target beyond five counts actual complete cycles and finishes exactly at frozen target',()=>{
+ const analyzer=new SquatAnalyzer(profile,7),events:VisionEvent[]=[]
+ for(let i=0;i<9;i++)events.push(...sequence('correct-squat').flatMap(sample=>analyzer.update({...sample,at:sample.at+i*5000})))
+ expect(reps(events)).toHaveLength(7);expect(events.filter(event=>event.type==='workout.completed')).toHaveLength(1);expect(analyzer.result(50000)).toMatchObject({targetReps:7,totalReps:7,acceptedReps:7})
+})
