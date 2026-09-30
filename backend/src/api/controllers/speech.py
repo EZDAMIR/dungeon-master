@@ -153,8 +153,9 @@ async def list_voices(
 ) -> dict:
     try:
         model = await elevenlabs.validate_model(language)
+        page = await elevenlabs.voices(page_size, next_page_token)
         return {
-            **await elevenlabs.voices(page_size, next_page_token),
+            **{key: value for key, value in page.items() if key != 'unavailable_voices'},
             'model_id': model,
             'language': language,
         }

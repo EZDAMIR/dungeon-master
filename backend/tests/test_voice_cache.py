@@ -1,5 +1,6 @@
 """Shared cache isolation, resumable paid batches and real MP3 cutting."""
 
+import array
 import asyncio
 import base64
 import collections
@@ -351,3 +352,158 @@ async def test_real_ffmpeg_cut_and_errors(tmp_path, monkeypatch):
     )
     with pytest.raises(elevenlabs.SpeechUnavailable, match='audio_split'):
         await voice_batch.split(copy.deepcopy(body), ['First', 'Second'])
+
+
+async def test_only_ready_professional_and_verified_voices_are_selectable(monkeypatch):
+    rows = [
+        {'voice_id': 'ordinary', 'name': 'Ordinary'},
+        {
+            'voice_id': 'ready',
+            'name': 'Ready',
+            'category': 'professional',
+            'fine_tuning': {'state': {'eleven_multilingual_v2': 'fine_tuned'}},
+        },
+        {
+            'voice_id': 'not-trained',
+            'name': 'Not trained',
+            'category': 'professional',
+            'fine_tuning': {'state': {}},
+        },
+        {
+            'voice_id': 'queued',
+            'name': 'Queued',
+            'category': 'professional',
+            'fine_tuning': {'state': {'eleven_v4': 'queued'}},
+        },
+        {
+            'voice_id': 'not-verified',
+            'name': 'Not verified',
+            'voice_verification': {'requires_verification': True, 'is_verified': False},
+        },
+        {
+            'voice_id': 'verified',
+            'name': 'Verified',
+            'voice_verification': {'requires_verification': True, 'is_verified': True},
+        },
+    ]
+    monkeypatch.setattr(
+        elevenlabs,
+        'request',
+        AsyncMock(return_value=httpx.Response(200, json={'voices': rows, 'has_more': False})),
+    )
+    page = await elevenlabs.voices(100)
+    assert [row['voice_id'] for row in page['voices']] == ['ordinary', 'ready', 'verified']
+    assert len(page['unavailable_voices']) == 3
+    assert not await elevenlabs.voice_allowed('not-trained')
+    monkeypatch.setattr(elevenlabs, 'validate_model', AsyncMock(return_value='eleven_v4'))
+    listed = await speech.list_voices(SimpleNamespace(id=uuid.uuid4()), 'ru', 100, None)
+    assert 'unavailable_voices' not in listed
+    assert len(listed['voices']) == 3
+
+
+@pytest.mark.parametrize(
+    'body,category',
+    [
+        (
+            {'detail': {'status': 'voice_not_fine_tuned', 'message': 'private'}},
+            'voice_unavailable',
+        ),
+        ({'detail': 'private'}, 'invalid_request'),
+        ([], 'invalid_request'),
+    ],
+)
+async def test_unready_voice_provider_error_is_typed(body, category, monkeypatch):
+    from src.core import http_client
+
+    monkeypatch.setenv('ELEVENLABS_API_KEY', 'synthetic-key')
+    config.clear_settings_cache()
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda request: httpx.Response(400, json=body))
+    )
+    monkeypatch.setattr(http_client, 'get_client', lambda: client)
+    try:
+        with pytest.raises(elevenlabs.SpeechUnavailable, match=category):
+            await elevenlabs.request('POST', '/v1/text-to-speech/test')
+    finally:
+        await client.aclose()
+
+
+async def test_cli_reports_unready_voices_without_preparing_them(account, monkeypatch):
+    monkeypatch.setattr(
+        elevenlabs,
+        'voices',
+        AsyncMock(
+            return_value={
+                'voices': [{'voice_id': 'voice-one'}],
+                'unavailable_voices': [
+                    {'voice_id': 'unready', 'name': 'Unready', 'reason': 'voice_not_ready'}
+                ],
+                'has_more': False,
+            }
+        ),
+    )
+    plan = await voice_cache.plan(['ru'], 'supportive')
+    assert plan['voices'] == 1 and plan['total_clips'] == 24
+    assert plan['unavailable_voices'][0]['voice_id'] == 'unready'
+    assert {job['voice'] for job in plan['jobs']} == {'voice-one'}
+    assert account.await_count == 0
+
+
+async def test_input_seek_cuts_the_correct_audio_not_just_a_valid_mp3(tmp_path):
+    if not shutil.which('ffmpeg'):
+        pytest.skip('ffmpeg is included in the production image')
+    source = tmp_path / 'tones.mp3'
+    subprocess.run(
+        [
+            'ffmpeg',
+            '-nostdin',
+            '-loglevel',
+            'error',
+            '-f',
+            'lavfi',
+            '-i',
+            'sine=frequency=440:duration=1.5',
+            '-f',
+            'lavfi',
+            '-i',
+            'sine=frequency=880:duration=1.5',
+            '-filter_complex',
+            '[0:a][1:a]concat=n=2:v=0:a=1',
+            str(source),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    body = timed(['A', 'B'])
+    body['audio_base64'] = base64.b64encode(source.read_bytes()).decode()
+    body['alignment'] = {
+        'characters': ['A', 'B'],
+        'character_start_times_seconds': [0.5, 2.0],
+        'character_end_times_seconds': [0.9, 2.4],
+    }
+    clips = await voice_batch.split(body, ['A', 'B'])
+    for index, (clip, frequency) in enumerate(zip(clips, [440, 880], strict=True)):
+        target = tmp_path / f'clip-{index}.mp3'
+        target.write_bytes(clip)
+        decoded = subprocess.run(
+            [
+                'ffmpeg',
+                '-nostdin',
+                '-loglevel',
+                'error',
+                '-i',
+                str(target),
+                '-ac',
+                '1',
+                '-ar',
+                '8000',
+                '-f',
+                's16le',
+                'pipe:1',
+            ],
+            capture_output=True,
+            check=True,
+        )
+        samples = array.array('h', decoded.stdout)
+        crossings = sum(a < 0 <= b for a, b in zip(samples, samples[1:], strict=False))
+        assert crossings / (len(samples) / 8000) == pytest.approx(frequency, rel=0.03)

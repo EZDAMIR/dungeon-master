@@ -5,6 +5,10 @@ Russian, Kazakh and English, for every allowed account voice. Its default style 
 supportive. Other styles are cached when requested. Provider model availability
 and the account quota are checked before paid preparation; no model fallback is
 performed. Normal application calls retain their authentication and ownership checks.
+Professional voices with no completed fine-tuning, or voices still requiring
+verification, are excluded from selectable voices and reported by the CLI plan.
+They can be prepared after ElevenLabs makes them available; no training or
+verification bypass is attempted.
 
 Configure the VPS runtime file (outside Git and webroot):
 
@@ -38,6 +42,8 @@ Each voice/language is generated as a single timed v4 pack. Punctuation and cura
 v4 delivery tags control phrasing; short countdown words remain untagged. The paid
 JSON response is saved before ffmpeg cuts individual MP3s using provider character
 timestamps. A failed cut can resume without paying for another generation.
+Input seeking skips most preceding audio during each cut, with half a second of
+decoder preroll before precise trimming to preserve initial phonemes.
 Invalid or incomplete timestamps stop preparation rather than publishing wrong clips.
 
 Keys include voice, model, language, style, exact text, cue version, delivery version

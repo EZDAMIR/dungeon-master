@@ -29,12 +29,40 @@ async def request(method: str, path: str, **kwargs) -> httpx.Response:
                 429: 'rate_limit',
                 404: 'model_unavailable',
             }.get(response.status_code, 'network')
+            if response.status_code == 400:
+                try:
+                    detail = response.json().get('detail')
+                    status = detail.get('status') if isinstance(detail, dict) else None
+                except (ValueError, AttributeError):
+                    status = None
+                code = (
+                    'voice_unavailable'
+                    if status == 'voice_not_fine_tuned'
+                    else 'invalid_request'
+                )
             raise SpeechUnavailable(code)
         return response
     except (httpx.TimeoutException, TimeoutError) as exc:
         raise SpeechUnavailable('timeout') from exc
     except httpx.HTTPError as exc:
         raise SpeechUnavailable('network') from exc
+
+
+def voice_ready(row: dict) -> bool:
+    verification = row.get('voice_verification')
+    if (
+        isinstance(verification, dict)
+        and verification.get('requires_verification')
+        and verification.get('is_verified') is not True
+    ):
+        return False
+    tuning = row.get('fine_tuning')
+    states = tuning.get('state') if isinstance(tuning, dict) else None
+    return (
+        row.get('category') != 'professional'
+        or not isinstance(states, dict)
+        or 'fine_tuned' in states.values()
+    )
 
 
 async def voices(page_size: int = 6, next_page_token: str | None = None) -> dict:
@@ -56,10 +84,15 @@ async def voices(page_size: int = 6, next_page_token: str | None = None) -> dict
                 'labels': {str(k): str(v) for k, v in (row.get('labels') or {}).items()},
             }
             for row in body['voices']
-            if not allowed or row['voice_id'] in allowed
+            if (not allowed or row['voice_id'] in allowed) and voice_ready(row)
         ]
         return {
             'voices': rows,
+            'unavailable_voices': [
+                {'voice_id': row['voice_id'], 'name': row['name'], 'reason': 'voice_not_ready'}
+                for row in body['voices']
+                if (not allowed or row['voice_id'] in allowed) and not voice_ready(row)
+            ],
             'has_more': bool(body['has_more']),
             'next_page_token': body.get('next_page_token'),
         }

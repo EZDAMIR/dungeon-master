@@ -33,10 +33,13 @@ async def plan(languages: list[str], style: str, voice_id: str | None = None) ->
         if elevenlabs.model_for(language) != MODEL:
             raise elevenlabs.SpeechUnavailable('cache_model_config')
         await elevenlabs.validate_model(language, MODEL)
-    voices, seen, token = {}, set(), None
+    voices, unavailable, seen, token = {}, {}, set(), None
     for _ in range(10):
         page = await elevenlabs.voices(100, token)
         voices.update({row['voice_id']: row for row in page['voices']})
+        unavailable.update(
+            {row['voice_id']: row for row in page.get('unavailable_voices', [])}
+        )
         if not page['has_more']:
             break
         token = page['next_page_token']
@@ -85,6 +88,7 @@ async def plan(languages: list[str], style: str, voice_id: str | None = None) ->
     return {
         'model': MODEL,
         'voices': len(voices),
+        'unavailable_voices': list(unavailable.values()),
         'languages': languages,
         'style': style,
         'total_clips': len(voices) * sum(len(catalog(lang)) for lang in languages),
