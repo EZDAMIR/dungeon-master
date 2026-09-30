@@ -35,6 +35,7 @@ import { MenuPage } from "../pages/MenuPage";
 import { CalibrationPage } from "../pages/CalibrationPage";
 import { CountdownPage } from "../pages/CountdownPage";
 import { WorkoutPage } from "../pages/WorkoutPage";
+import { GoogleCallbackPage } from "../pages/GoogleCallbackPage";
 import { ResultsPage } from "../pages/ResultsPage";
 import { GestureNavigationProvider } from "../features/gesture-navigation/GestureNavigationProvider";
 import {
@@ -181,6 +182,10 @@ function CameraExperience({
   );
 }
 export function App({ backend = backendStore }: { backend?: BackendStore }) {
+  if (window.location.pathname.replace(/\/$/, "").endsWith("/integrations/google/callback")) return <GoogleCallbackPage />;
+  return <DungeonMasterApp backend={backend} />;
+}
+function DungeonMasterApp({ backend }: { backend: BackendStore }) {
   const remote = useBackend(backend);
   const session = useRef<SessionCreate | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -644,6 +649,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           ведётся. Общая fitness feedback не заменяет тренера или врача.
         </footer>
         <div className="audio-status"><span role="status">{audio.status()}</span><button onClick={() => { audio.unlock(); audio.setMuted(false); setVoice(audio.status()); }}>Включить звук</button><button onClick={() => audio.stop()}>Остановить звук</button><button onClick={() => setVoiceOpen(true)}>Голос тренера</button><button onClick={() => { setGuideEnabled(true); setGuideEvent("voice.selected"); }}>Обучение</button></div>
+        {planning && !voiceOpen && <GestureCursor />}
         {audioState.subtitle && <p className="audio-subtitle" aria-live="polite">{audioState.subtitle}</p>}
         {voiceOpen && <VoiceSelection key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} initial={voicePreferences} onComplete={(preferences, persisted) => { pendingGreeting.current = true; writeVoiceCache(voiceStorage, remote.auth?.user.id ?? null, preferences, persisted); setVoicePreferences(preferences); audio.configure((cue, signal) => release.speech({ cue_id: cue }, signal), preferences.language); audio.setMuted(!preferences.audio_enabled); setVoiceOpen(false); setGuideEnabled(true); setGuideEvent("voice.selected"); setVoice(audio.status()); }} />}
         <label>
