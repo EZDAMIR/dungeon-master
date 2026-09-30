@@ -81,10 +81,10 @@ async function traverseHistory(direction: "back" | "forward") {
 }
 it('keeps the started camera and swipe instructions across planning routes, then disposes on unmount', () => {
   window.history.replaceState({}, '', '/context');
-  let store: GestureStore | null = null;
+  let emit: GestureStore['emit'] | null = null;
   const connect = GestureStore.prototype.connect;
   vi.spyOn(GestureStore.prototype, 'connect').mockImplementation(function (this: GestureStore, callback) {
-    store = this;
+    emit = this.emit;
     connect.call(this, callback);
   });
   const previousPreferences = inputPreferences.getSnapshot().preferences;
@@ -94,7 +94,7 @@ it('keeps the started camera and swipe instructions across planning routes, then
   expect(start).not.toHaveBeenCalled();
   const modalButton = (name: string) => [...document.querySelectorAll<HTMLButtonElement>('[role=dialog] button')].find(button => button.textContent === name)!;
   act(() => modalButton('Включить управление руками').click());
-  act(() => { store!.emit({type:'camera.ready', at:0}); store!.emit({type:'tracking.acquired', at:1, target:'hand'}); });
+  act(() => { emit!({type:'camera.ready', at:0}); emit!({type:'tracking.acquired', at:1, target:'hand'}); });
   act(() => modalButton('Готово — управлять руками').click());
   const video = container.querySelector('video');
   expect(start).toHaveBeenCalledOnce();
