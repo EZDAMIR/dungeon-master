@@ -180,9 +180,25 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe("typed client", () => {
+  it("uses the same-origin proxy without a manually supplied token", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "");
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ ok: true }));
+    const client = new ApiClient(undefined, 100, fetcher);
+    await client.json("/health");
+    expect(fetcher.mock.calls[0][0]).toBe("/api/v1/health");
+    expect(fetcher.mock.calls[0][1]?.headers).not.toHaveProperty("Authorization");
+  });
+  it("honors an explicitly configured API address", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example/api/v1");
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ ok: true }));
+    const client = new ApiClient(undefined, 100, fetcher);
+    await client.json("/health");
+    expect(fetcher.mock.calls[0][0]).toBe("https://api.example/api/v1/health");
+  });
   it("sends bearer JSON, captures request ID and handles empty responses", async () => {
     const fetcher = vi
       .fn<typeof fetch>()

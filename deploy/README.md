@@ -4,8 +4,29 @@ The owner changed hosting to a local app with a remote API on 2026-09-30.
 The current release workflow deploys **only the backend**. Run the frontend with
 `cd frontend && npm ci && npm run dev:cloud` and open http://localhost:5173.
 Camera, vision models, WASM and UI stay on that computer. Vite proxies `/api/v1`
-to https://dungeon-master.helpmake-id.live. It also supports a local production
+to https://api.dungeon-master.helpmake-id.live. It also supports a local production
 preview; see [frontend setup](../frontend/README.md).
+
+The API hostname uses its own Nginx site and certificate, forwarding to the existing
+backend on `127.0.0.1:8020`. After DNS points to the VPS and local changes are pushed
+to `main`, copy `setup-api-vps.sh` and `nginx-api.conf.template` to a private server
+directory and run `sudo bash setup-api-vps.sh api.dungeon-master.helpmake-id.live`.
+The script refuses to overwrite an existing API site, provisions HTTP ACME before
+TLS, and enables a dedicated twice-daily renewal timer. Existing deployment-origin
+and other virtual hosts retain their configurations.
+
+Verify the new hostname and local browser origins with:
+
+```bash
+python3 deploy/check-release.py --api-health \
+  https://api.dungeon-master.helpmake-id.live \
+  http://localhost:5173 http://127.0.0.1:5173
+```
+
+`/docs` and `/openapi.json` are served by FastAPI on the API hostname; app routes
+return FastAPI 404 responses. `/release.txt` uses the existing API release marker.
+Add any additional local browser origin to the existing runtime `CORS_ORIGINS`,
+preserving other entries, and recreate only the owned backend to apply it.
 
 The existing guest/profile/catalog/plan/session APIs remain because the local app
 uses them. OpenAI personalization and reusable ElevenLabs voice generation are

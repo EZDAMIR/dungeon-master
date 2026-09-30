@@ -21,9 +21,10 @@ npm run dev:cloud
 
 Open **http://localhost:5173**. `dev:cloud` uses the committed public `.env.cloud`
 configuration: `/api/v1` goes through Vite's localhost proxy to
-`https://dungeon-master.helpmake-id.live`. Models, WASM, fonts, UI, camera frames,
+`https://api.dungeon-master.helpmake-id.live`. Models, WASM, fonts, UI, camera frames,
 landmarks and counting stay local; OpenAI and ElevenLabs credentials stay on the VPS.
-No local backend or database is required. The server binds loopback and refuses
+No local backend, database or manual token entry is required. Guest identity and
+credential refresh are managed automatically. The server binds loopback and refuses
 an occupied port rather than silently changing the browser origin.
 
 For a local production build: `npm run build:cloud`, then `npm run preview:cloud`

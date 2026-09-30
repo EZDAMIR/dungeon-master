@@ -55,6 +55,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   for (const key of ['scrollHeight', 'clientHeight', 'scrollTop', 'scrollBy']) Reflect.deleteProperty(document.documentElement, key);
@@ -337,6 +338,8 @@ it("keeps calibration, squat and immediate Results usable when every backend req
   expect(transport).toHaveBeenCalledTimes(2);
 });
 it("boots an online guest, starts the planned squat, shows Results before sync and refreshes Progress", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-30T12:00:00Z"));
   const user = {
     id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     email: null,

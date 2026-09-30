@@ -756,3 +756,29 @@ root asset-byte smoke pass. 25 automation/deployment regressions pass. Synthetic
 Chrome camera evidence confirms local hand startup and pose readiness feedback;
 real camera/Firefox/phone acceptance remains manual. Server release/provider
 results are recorded after applying the change below.
+
+## 2026-10-01 — Sprint 4B API hostname and local setup follow-up
+
+Updated the local cloud proxy to `https://api.dungeon-master.helpmake-id.live`,
+keeping the same-origin `/api/v1` client and automatic guest/refresh credentials.
+No manual token entry is required. Added an additive API Nginx template and setup
+script with HTTP-first ACME issuance and a dedicated certificate renewal timer.
+The existing backend port, API release marker and deployment origin are preserved.
+Extended the release checker with standalone API/CORS verification and regression
+coverage for wrong origins, missing allowed headers/methods and response CORS.
+
+Fast-forwarded owner main without downloading the large README GIFs; they remain
+tracked and are excluded only from this local sparse checkout. The workspace app
+is running at `http://127.0.0.1:5175` because other temporary checkouts occupy
+5173/5174. Chrome verified rendering and no token input or uncaught exception,
+with API requests blocked until the server is configured. Stabilized the existing
+calendar-dependent online flow test with its fixture date after midnight exposed
+its wall-clock dependency.
+
+Local checks: 221 frontend tests, 27 automation tests (including 22 deployment
+regressions), type checking, lint, 54-folder instruction validation and 3
+instruction tests, cloud production build and script syntax/style passed.
+Server inspection found correct DNS and healthy existing API, but no matching
+certificate for the requested hostname. Per owner order, local setup and push
+precede all server configuration. Live API hostname verification remains pending.
+The owner requested author and committer dates of 2026-09-30 23:59 Asia/Almaty.

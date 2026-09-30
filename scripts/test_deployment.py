@@ -49,6 +49,22 @@ class PublicReleaseTests(unittest.TestCase):
             def log_message(self, *_):
                 pass
 
+            def do_OPTIONS(self):
+                self.send_response(200)
+                self.send_header("Access-Control-Allow-Origin", "http://localhost:5175")
+                self.send_header("Access-Control-Allow-Credentials", "true")
+                self.send_header(
+                    "Access-Control-Allow-Methods",
+                    "GET" if fixture.fault == "cors-method" else "GET, POST",
+                )
+                self.send_header(
+                    "Access-Control-Allow-Headers",
+                    "content-type"
+                    if fixture.fault == "cors-headers"
+                    else "authorization,content-type",
+                )
+                self.end_headers()
+
             def do_GET(self):
                 status, kind, data = 200, "application/octet-stream", b""
                 if self.path == "/api/v1/ready":
@@ -78,6 +94,8 @@ class PublicReleaseTests(unittest.TestCase):
                     kind, data = "text/html", files["index.html"]
                 self.send_response(status)
                 self.send_header("Content-Type", kind)
+                if self.headers.get("Origin") and fixture.fault != "cors-response":
+                    self.send_header("Access-Control-Allow-Origin", "http://localhost:5175")
                 if fixture.fault == "cached-html" and kind == "text/html":
                     self.send_header("Cache-Control", "immutable")
                 self.end_headers()
@@ -120,6 +138,18 @@ class PublicReleaseTests(unittest.TestCase):
     def test_wrong_deployed_sha_fails(self):
         with self.assertRaisesRegex(ValueError, "SHA"):
             check_release.check(self.origin, self.frontend, "c" * 40)
+
+    def test_api_hostname_accepts_local_frontend_requests(self):
+        check_release.check_api(self.origin, ["http://localhost:5175"])
+
+    def test_api_hostname_rejects_wrong_origin_and_incomplete_cors(self):
+        with self.assertRaisesRegex(ValueError, "preflight"):
+            check_release.check_api(self.origin, ["http://localhost:5173"])
+        for fault in ["cors-method", "cors-headers", "cors-response"]:
+            with self.subTest(fault=fault):
+                self.fault = fault
+                with self.assertRaisesRegex(ValueError, "CORS|preflight"):
+                    check_release.check_api(self.origin, ["http://localhost:5175"])
 
 
 class ReleaseTrustTests(unittest.TestCase):
