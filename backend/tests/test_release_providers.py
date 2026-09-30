@@ -119,6 +119,7 @@ async def test_elevenlabs_error_categories(transport, code, category):
         (MP3, 'text/plain'),
         (b'ID3' + b'x' * (5 * 1024 * 1024), 'audio/mpeg'),
     ],
+    ids=['empty', 'json', 'invalid-mp3', 'wrong-media-type', 'oversized-mp3'],
 )
 async def test_json_empty_oversize_or_invalid_audio_never_success(transport, content, media):
     def handler(request):
