@@ -11,7 +11,9 @@ Add domain models as they are created::
 from . import (
     exercises,  # noqa: F401
     profiles,  # noqa: F401
+    training_plans,  # noqa: F401
     users,  # noqa: F401
 )
 from .profiles import ProfileDoesNotExist  # noqa: F401
+from .training_plans import PlanDoesNotExist, PlanGenerationConflict  # noqa: F401
 from .users import UserDoesNotExist  # noqa: F401

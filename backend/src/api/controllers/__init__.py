@@ -15,5 +15,6 @@ Add controllers as they are created::
 from . import (
     exercises,  # noqa: F401
     profiles,  # noqa: F401
+    training_plans,  # noqa: F401
     users,  # noqa: F401
 )
