@@ -228,6 +228,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
   const [voiceOpen, setVoiceOpen] = useState(!legacyFake && !cachedVoice);
   const [guideEvent, setGuideEvent] = useState<GuideEvent | undefined>();
   const [guideEnabled, setGuideEnabled] = useState(false);
+  const [guideEpoch, setGuideEpoch] = useState(0);
   const audioState = useSyncExternalStore(audio.subscribe, audio.getSnapshot);
   const remoteOwner = remote.auth?.user.id ?? null;
   const remoteConnecting = remote.status === "connecting";
@@ -477,7 +478,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
           )}
           <main data-guide-target={state.mode === "PROFILE" ? "context" : state.mode === "PLAN" ? "plan" : state.mode === "CALIBRATION" ? "calibration" : state.mode === "COUNTDOWN" ? "countdown" : state.mode === "WORKOUT" ? "workout" : state.mode === "RESULTS" ? "results" : state.mode === "PROGRESS" ? "progress" : undefined}>
             {state.mode === "SCHEDULE" && <SchedulePanel key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} language={voicePreferences.language} />}
-            <GuidedTour audio={audio} client={release} screen={state.mode} event={guideEvent} language={voicePreferences.language} planReady={!!remote.plan} enabled={guideEnabled && !voiceOpen} onDone={() => setGuideEnabled(false)} />
+            <GuidedTour key={guideEpoch} audio={audio} client={release} screen={state.mode} event={guideEvent} language={voicePreferences.language} planReady={!!remote.plan} enabled={guideEnabled && !voiceOpen} onDone={() => setGuideEnabled(false)} />
             {state.mode === "TUTORIAL" && (
               <TutorialPage onDone={() => send({ type: "TUTORIAL_DONE" })} />
             )}
@@ -648,7 +649,7 @@ function DungeonMasterApp({ backend }: { backend: BackendStore }) {
           Видео обрабатывается локально. Кадры не отправляются, запись камеры не
           ведётся. Общая fitness feedback не заменяет тренера или врача.
         </footer>
-        <div className="audio-status"><span role="status">{audio.status()}</span><button onClick={() => { audio.unlock(); audio.setMuted(false); setVoice(audio.status()); }}>Включить звук</button><button onClick={() => audio.stop()}>Остановить звук</button><button onClick={() => setVoiceOpen(true)}>Голос тренера</button><button onClick={() => { setGuideEnabled(true); setGuideEvent("voice.selected"); }}>Обучение</button></div>
+        <div className="audio-status"><span role="status">{audio.status()}</span><button onClick={() => { audio.unlock(); audio.setMuted(false); setVoice(audio.status()); }}>Включить звук</button><button onClick={() => audio.stop()}>Остановить звук</button><button onClick={() => setVoiceOpen(true)}>Голос тренера</button><button onClick={() => { setGuideEpoch(epoch => epoch + 1); setGuideEnabled(true); setGuideEvent("voice.selected"); }}>Обучение</button></div>
         {planning && !voiceOpen && <GestureCursor />}
         {audioState.subtitle && <p className="audio-subtitle" aria-live="polite">{audioState.subtitle}</p>}
         {voiceOpen && <VoiceSelection key={`${remoteOwner}:${remoteConnecting}`} client={release} audio={audio} initial={voicePreferences} onComplete={(preferences, persisted) => { pendingGreeting.current = true; writeVoiceCache(voiceStorage, remote.auth?.user.id ?? null, preferences, persisted); setVoicePreferences(preferences); audio.configure((cue, signal) => release.speech({ cue_id: cue }, signal), preferences.language); audio.setMuted(!preferences.audio_enabled); setVoiceOpen(false); setGuideEnabled(true); setGuideEvent("voice.selected"); setVoice(audio.status()); }} />}

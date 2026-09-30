@@ -8,7 +8,7 @@ import type {
   PersonaKey,
 } from "../api/aiCoach";
 import { ApiClient, ApiError } from "../api/client";
-import { createGuest, getMe, refreshGuest } from "../api/auth";
+import { createGuest, getMe, refreshGuest, bootstrapGuestSession } from "../api/auth";
 import { getExercises } from "../api/exercises";
 import { getProfile, putProfile } from "../api/profile";
 import { generatePlan, getCurrentPlan } from "../api/plans";
@@ -183,6 +183,11 @@ export class BackendStore {
         auth = { ...auth, user: await getMe(this.client, auth.accessToken, this.controller.signal) };
         // ApiClient may have refreshed while verifying. Preserve its renewed access token.
         if (this.state.auth?.user.id === auth.user.id) auth = { ...auth, accessToken: this.state.auth.accessToken, expiresAt: this.state.auth.expiresAt };
+        if (auth.user.is_guest && !this.authVerified) {
+          const refreshed = await bootstrapGuestSession(this.client, auth.accessToken, this.controller.signal);
+          if (refreshed.user.id !== auth.user.id) throw new ApiError('http', 401);
+          auth = { accessToken: refreshed.access_token, user: refreshed.user, expiresAt: Date.now() + refreshed.expires_in * 1000 };
+        }
       }
       if (!auth) {
         const response = await createGuest(this.client, this.controller.signal);

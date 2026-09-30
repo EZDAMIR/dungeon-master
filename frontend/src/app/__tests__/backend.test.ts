@@ -73,7 +73,7 @@ function server() {
     hasPlan = false;
   const transport = vi.fn<typeof fetch>(async (url, options) => {
     const path = String(url).replace("http://test", "");
-    if (path === "/auth/guest" || path === "/auth/refresh")
+    if (path === "/auth/guest" || path === "/auth/refresh" || path === "/auth/session")
       return response({
         access_token: "synthetic-guest-token",
         token_type: "bearer",
