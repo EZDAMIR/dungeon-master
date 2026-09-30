@@ -18,13 +18,20 @@
     "sdk_retries": 0
   },
   "elevenlabs": {
+    "provider": "elevenlabs",
     "model": "eleven_flash_v2_5",
+    "language": "ru",
     "status": "LIVE_BLOCKED",
     "reason": "invalid_api_key",
-    "models_http_status": 401,
-    "voices_http_status": 401,
     "preview_generated": false,
-    "language_capabilities_verified": false
+    "models_http_status": 401,
+    "latency_ms": 1597,
+    "voices_http_status": null,
+    "voices_status": "not_attempted_after_metadata_auth_failure",
+    "language_capabilities_verified": false,
+    "fresh_canonical_key_read": true,
+    "legacy_key_read_or_reapplied": false,
+    "env_edited": false
   },
   "transcription": {
     "status": "UNVERIFIED"
@@ -39,5 +46,38 @@
     "reason": "elevenlabs_key_rejected"
   },
   "focused_config_tests": 11,
-  "source_database_used": false
+  "source_database_used": false,
+  "elevenlabs_attempts": [
+    {
+      "attempt": "initial_canonical_fix",
+      "result": {
+        "model": "eleven_flash_v2_5",
+        "status": "LIVE_BLOCKED",
+        "reason": "invalid_api_key",
+        "models_http_status": 401,
+        "voices_http_status": 401,
+        "preview_generated": false,
+        "language_capabilities_verified": false
+      }
+    },
+    {
+      "attempt": "user_requested_fresh_canonical_retry",
+      "result": {
+        "provider": "elevenlabs",
+        "model": "eleven_flash_v2_5",
+        "language": "ru",
+        "status": "LIVE_BLOCKED",
+        "reason": "invalid_api_key",
+        "preview_generated": false,
+        "models_http_status": 401,
+        "latency_ms": 1597,
+        "voices_http_status": null,
+        "voices_status": "not_attempted_after_metadata_auth_failure",
+        "language_capabilities_verified": false,
+        "fresh_canonical_key_read": true,
+        "legacy_key_read_or_reapplied": false,
+        "env_edited": false
+      }
+    }
+  ]
 }
