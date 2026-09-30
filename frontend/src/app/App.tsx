@@ -17,7 +17,7 @@ import { RealVisionSource, poseStage } from '../features/workout/RealVisionSourc
 import { PoseDebugPanel } from '../features/workout/PoseDebugPanel'
 import { FakePoseControls } from '../features/workout/FakePoseControls'
 import type { AppState } from './modes'
-import { CameraStage } from '../shared/components/CameraStage'
+import { CameraStage } from '../features/workout/CameraStage'
 import { CameraPermissionView } from '../shared/components/CameraPermissionView'
 import { CameraErrorView } from '../shared/components/CameraErrorView'
 import { WorkoutAudio } from '../audio/workoutAudio'

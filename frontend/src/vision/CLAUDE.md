@@ -1,6 +1,7 @@
 # Visual AI Core Instructions
 
-Scope: `frontend/src/vision/`.
+Scope: `frontend/src/vision/`. Extends [source instructions](../CLAUDE.md).
+Read the nearer folder guide before editing primitives, adapters or exercises.
 
 This directory owns deterministic, client-side interpretation of hand and body
 landmarks. It must remain usable without React, routing, the backend, or external
@@ -22,31 +23,41 @@ camera frame
 
 ## Module boundaries
 
-- `core/`: shared types, clocks, geometry, smoothing, stabilizers and event bus.
+- `core/`: camera lifecycle, clocks, configuration, geometry, smoothing and hold gates.
 - `gestures/`: hand landmark mapping, pinch ratio, virtual cursor and command engine.
-- `pose/`: pose selection, visibility and body-orientation helpers.
+- `pose/`: recognizer adapter, side selection, visibility, calibration, smoothing,
+  pause gate and pose-session orchestration.
 - `exercises/<exercise>/`: one exercise state machine and technique rules.
 - `feedback/`: error prioritization and cooldown policy.
 - `workers/`: optional inference worker protocol and adapters.
 
-Low-level modules do not import React or manipulate DOM elements.
+Pure processing modules do not import React, app types, or manipulate DOM elements.
+Camera and recognizer adapters may use browser video APIs and MediaPipe; they must
+not query UI targets, navigate or call backend/providers.
 
 ## Required semantic events
 
-Use a discriminated union containing at least:
+Use the existing discriminated union in `../types/vision.ts`. Current event groups
+include:
 
 - `camera.ready`
 - `camera.denied`
+- `camera.error`
 - `tracking.lost`
 - `cursor.moved`
 - `gesture.candidate`
 - `gesture.confirmed`
 - `calibration.updated`
+- `calibration.completed`
+- `calibration.required`
 - `workout.phase_changed`
 - `workout.rep_completed`
 - `workout.technique_error`
 - `workout.paused`
 - `workout.completed`
+
+This list is illustrative; `src/types/vision.ts` is the exact contract. Do not
+invent an event bus or duplicate the union merely to match a folder template.
 
 Events carry timestamps from one monotonic clock.
 

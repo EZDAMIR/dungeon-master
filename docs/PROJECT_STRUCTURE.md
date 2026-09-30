@@ -7,6 +7,17 @@ Legend:
 - `[sprint N]` — create when that capability is implemented.
 - `*` — nearest instruction file must be read before editing below it.
 
+Every authored folder under `frontend/` now has a `CLAUDE.md` covering its
+responsibilities, code rules, dependencies and verification. This includes
+colocated tests, scripts, assets, fixtures and reserved folders. The tree below
+shows capability locations rather than repeating all folder guides. Generated
+dependencies, model/WASM directories and build output do not receive guides.
+Run `cd frontend && npm run check:instructions` to verify coverage and guide links.
+
+The shared camera view is `frontend/src/features/workout/CameraStage.tsx`: it
+composes gesture state and the pose overlay. `shared/components/` keeps the
+callback-driven permission/error views and progress presentation.
+
 ```text
 dungeon-master/
 ├── README.md                              [new]

@@ -4,7 +4,7 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import { NavigationContext } from '../gestureNavigation'
 import { GestureStore } from '../gestureStore'
 import { GestureCursor } from '../GestureCursor'
-import { CameraStage } from '../../../shared/components/CameraStage'
+import { CameraStage } from '../../workout/CameraStage'
 import type { RealGestureSource } from '../RealGestureSource'
 let root:Root, container:HTMLDivElement, frames:Map<number,FrameRequestCallback>, id:number
 beforeEach(()=>{

@@ -2,6 +2,11 @@
 
 Scope: `frontend/`.
 
+Before editing, read `CLAUDE.md` here and in every ancestor/target folder beneath
+`frontend/`. These folder guides apply to code, tests, scripts and assets. They
+extend the repository architecture; a reserved folder's guide does not authorize
+implementing a later sprint. Add a guide with every new authored folder.
+
 Read `CLAUDE.md`, `../docs/VISION_PIPELINE.md`, and
 `src/vision/CLAUDE.md` before changing camera or movement code.
 
@@ -21,7 +26,8 @@ This sequence prevents UI work from being blocked by model inference.
 
 - Use discriminated unions for vision events and application modes.
 - Put thresholds in named configuration objects.
-- Keep low-level vision code independent of React and the DOM.
+- Keep pure vision processors independent of React and the DOM; camera and
+  recognizer adapters may use browser APIs, without querying UI targets.
 - Dispatch semantic actions instead of calling `.click()` from the vision core.
 - Use `AbortController` for cancellable startup and API operations.
 - Stop media tracks and dispose recognizers on unmount or mode change.
@@ -30,6 +36,7 @@ This sequence prevents UI work from being blocked by model inference.
 
 ## Completion checks
 
+- `npm run check:instructions` and `npm run test:instructions` pass.
 - Type checking passes.
 - Unit tests pass.
 - Production build passes.

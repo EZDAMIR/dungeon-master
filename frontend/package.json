@@ -13,7 +13,9 @@
     "prepare:vision": "node scripts/prepare-vision-assets.mjs",
     "predev": "npm run prepare:vision",
     "prebuild": "npm run prepare:vision",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "check:instructions": "node scripts/check-folder-instructions.mjs",
+    "test:instructions": "node --test scripts/check-folder-instructions.node-test.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",

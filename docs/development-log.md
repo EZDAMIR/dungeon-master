@@ -1,5 +1,60 @@
 # Dungeon Master development log
 
+## 2026-09-30 — Sprint 0 architecture follow-up: frontend folder instructions
+
+Acceptance for this task: every authored frontend folder has guidance tied to its
+current code, and the existing Sprint 1–2 local flow continues to pass checks.
+This extends the Sprint 0 architecture documentation without implementing any
+later-sprint capability. The working tree was clean at the start.
+
+Read `Ya-Sabyr/1wash-front` through authenticated, read-only GitHub CLI requests:
+the root and app/pages/features/entities/widgets/shared `CLAUDE.md` guides. Web and
+connector access could not resolve the repository; the locally authenticated CLI
+could. Its purpose/responsibility/dependency style was adapted to Dungeon Master's
+existing layers and stack. No changes were made to the reference repository.
+
+Added 41 folder-specific `CLAUDE.md` files, so all 43 authored frontend folders
+now have instructions, including scripts, assets, test directories, fixtures and
+reserved folders. Reserved guides explicitly describe unimplemented capabilities.
+Updated frontend entrypoints, the source/vision boundary descriptions, README and
+project-structure documentation. Browser adapters may use video APIs; pure vision
+processors remain independent of React, UI targets and backend availability.
+
+Moved `CameraStage.tsx` from `shared/components/` to `features/workout/` because
+it composes the gesture store and pose overlay. Updated App and the existing
+overlay tests. Its behavior and lifecycle are unchanged; shared components now
+have no feature imports. Existing type-only app state imports remain explicit
+UI/runtime contracts; this task does not introduce FSD layers or barrel exports.
+
+Added `check:instructions`, which derives authored folders from tracked and
+nonignored untracked frontend paths, checks nonempty guides and validates local
+guide links. Generated models/WASM, dependencies and build output are excluded
+by git ignore rules. Two Node tests cover ancestor/placeholder/fixture coverage,
+missing/empty guides and broken/inherited links. The first broader test run exposed
+Vitest discovering Node tests named `.test.mjs`; naming them `.node-test.mjs`
+keeps the runners separate, and the subsequent complete suite passed.
+
+| Command/check | Result |
+|---|---|
+| `cd frontend && npm run check:instructions` | Passed: 43 authored folders; initially failed on the 41 missing guides |
+| `npm run test:instructions` | Passed: 2 Node tests |
+| `npm run test -- src/features/gesture-navigation/__tests__/overlays.test.tsx src/features/workout src/app/__tests__/App.test.tsx` | Passed: 9 focused tests |
+| `npm run lint` | Passed |
+| `npm run type-check` | Passed |
+| `npm run test` | Final run passed: 93 tests in 17 files |
+| `npm run build` | Passed; both pinned model checksums verified and local WASM prepared |
+| `python3 scripts/verify_architecture.py` | Passed; scaffold check only |
+| `git diff --check` | Passed |
+| Shared import inspection / backend diff | No shared feature imports; backend unchanged |
+
+Limitations: instruction checks validate coverage/content presence and local links,
+not semantic compliance with every rule. Real-camera testing was not performed;
+existing Sprint 1–2 device/person reliability acceptance remains pending. Backend
+tests were not rerun because no backend files or contracts changed.
+
+Next safe task: perform `SPRINT_1_MANUAL_CHECKLIST.md` and
+`SPRINT_2_MANUAL_CHECKLIST.md`, then tune named configuration only from observations.
+
 ## 2026-09-30 — Sprint 1: Gesture Navigation
 
 Branch: `sprint/gesture-navigation`.

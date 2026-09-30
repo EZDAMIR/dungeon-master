@@ -24,6 +24,8 @@ Click **Включить камеру** and grant the browser's camera permissio
 ## Checks
 
 ```bash
+npm run check:instructions
+npm run test:instructions
 npm run lint
 npm run type-check
 npm run test
@@ -32,6 +34,22 @@ npm run build
 ```
 
 `type-check` checks both TypeScript project references; the original solution-level `tsc --noEmit` command did not check the application project. Coverage measures `src/` runtime code; generated WASM, test files and type-only contracts are outside its scope. HTML coverage is in `coverage/`.
+
+## Folder guidance
+
+Start with [frontend instructions](CLAUDE.md) and [the agent guide](AGENTS.md), then
+read the `CLAUDE.md` in each folder you edit. Guides cover all authored source,
+test, script, asset and reserved folders. Generated model/WASM directories,
+dependencies and build output inherit their owning source instructions and do not
+receive generated guides. `check:instructions` uses tracked and nonignored
+untracked file paths to catch missing/empty guides and broken local guide links.
+
+The format follows [1wash-front's folder instructions](https://github.com/Ya-Sabyr/1wash-front/tree/main/src)
+and is tailored to Dungeon Master's existing layers. See [source responsibilities](src/CLAUDE.md),
+[application composition](src/app/CLAUDE.md), [feature integration](src/features/CLAUDE.md),
+[vision processing](src/vision/CLAUDE.md), [shared UI](src/shared/CLAUDE.md),
+and [fixture guidance](tests/fixtures/CLAUDE.md). Reserved-folder guides document
+future boundaries without implementing later sprints.
 
 ## Gestures and feedback
 
