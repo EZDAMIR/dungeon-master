@@ -83,6 +83,10 @@ export type SessionCreate = {
   client_engine_version: string;
 };
 export type SetCreate = {
+  assessment_mode?: "camera" | "manual";
+  completion_status?: "completed" | "partial";
+  spec_revision?: string | null;
+  target_snapshot?: { target_reps: number | null; duration_seconds: number | null; rest_seconds: number; plan_sets: number } | null;
   client_set_id: string;
   exercise_key: string;
   set_index: number;
@@ -91,10 +95,13 @@ export type SetCreate = {
   duration_ms: number;
   error_counts: ErrorCounts;
   generic_error_counts?: Record<string, number>;
-  metrics: { mean_rep_duration_ms: number; mean_min_knee_angle: number };
+  metrics: { mean_rep_duration_ms: number | null; mean_min_knee_angle: number | null };
   engine_version: string;
 };
 export type SessionSummary = {
+  total_sets?: number;
+  camera_total_reps?: number;
+  manual_completed_sets?: number;
   total_reps: number;
   accepted_reps: number;
   rejected_reps: number;
@@ -118,6 +125,9 @@ export type WorkoutSet = SetCreate & {
   updated_at: string;
 };
 export type Progress = {
+  total_sets?: number;
+  camera_total_reps?: number;
+  manual_completed_sets?: number;
   completed_sessions: number;
   total_reps: number;
   accepted_reps: number;

@@ -23,12 +23,18 @@ export function PlanExperience({
   backend,
   onStart,
   onContext,
+  onDetails,
+  onStartSession,
+  onQuickDemo,
 }: {
   plan: AIPlanMetadata;
   planId: string;
   backend: BackendStore;
   onStart: (exercise: ActiveExercise) => void;
   onContext: () => void;
+  onDetails?: () => void;
+  onStartSession?: (exercises: ActiveExercise[]) => void;
+  onQuickDemo?: (exercise: ActiveExercise) => void;
 }) {
   const [details, setDetails] = useState<{
       item: AIPlanExercise;
@@ -37,6 +43,8 @@ export function PlanExperience({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [why, setWhy] = useState(false);
+  const requestController = useRef<AbortController | null>(null);
+  useEffect(() => () => { requestController.current?.abort(); void backend.cancelGeneration().catch(() => {}); }, [backend]);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (details && !dialog.current?.open) dialog.current?.showModal();
@@ -45,23 +53,27 @@ export function PlanExperience({
   async function open(item: AIPlanExercise) {
     setBusy(true);
     setError("");
+    const controller = new AbortController(); requestController.current?.abort(); requestController.current = controller;
     try {
       const spec =
         item.camera_coaching_mode === "manual_only"
           ? null
-          : await backend.exerciseSpec(item.exercise_key);
+          : await backend.exerciseSpec(item.exercise_key, controller.signal);
+      if (controller.signal.aborted) return;
       setDetails({ item, spec });
+      onDetails?.();
     } catch {
+      if (controller.signal.aborted) return;
       setError("Не удалось открыть инструкции. Повторите после подключения.");
     } finally {
       setBusy(false);
     }
   }
   const first = plan.days[0];
-  const start = (item: AIPlanExercise, spec: ExerciseSpec | null) => {
+  const start = (item: AIPlanExercise, spec: ExerciseSpec | null, quick = false) => {
     const parsed = validateSpec(spec?.movement_spec);
     setDetails(null);
-    onStart({
+    (quick && onQuickDemo ? onQuickDemo : onStart)({
       item: {
         ...item,
         camera_coaching_mode: parsed.valid
@@ -70,9 +82,25 @@ export function PlanExperience({
       },
       spec: parsed.valid ? parsed.spec : null,
       planId,
+      specRevision: spec?.spec_revision ?? null,
       language: plan.coach_persona.language,
     });
   };
+  async function startDay(items: AIPlanExercise[]) {
+    if (!onStartSession || busy) return;
+    setBusy(true); setError("");
+    const controller = new AbortController(); requestController.current?.abort(); requestController.current = controller;
+    try {
+      const exercises: ActiveExercise[] = [];
+      for (const item of items) {
+        const declaration = item.camera_coaching_mode === "manual_only" ? null : await backend.exerciseSpec(item.exercise_key, controller.signal);
+        const parsed = validateSpec(declaration?.movement_spec);
+        exercises.push({ item: { ...item, camera_coaching_mode: parsed.valid ? item.camera_coaching_mode : "manual_only" }, spec: parsed.valid ? parsed.spec : null, planId, specRevision: declaration?.spec_revision ?? null, language: plan.coach_persona.language });
+      }
+      if (!controller.signal.aborted) onStartSession(exercises);
+    } catch { if (controller.signal.aborted) return; setError("Не удалось подготовить упражнения. План сохранён. Повторите после подключения."); }
+    finally { setBusy(false); }
+  }
   return (
     <section
       data-figma-node={
@@ -143,6 +171,7 @@ export function PlanExperience({
           <h3>
             {day.title} · {day.estimated_minutes} min
           </h3>
+          {onStartSession && <FlowAction id={`day-start-${day.day_index}`} disabled={busy} onSelect={() => { void startDay(day.items); }}>Начать тренировку дня · {day.items.reduce((total, item) => total + item.sets, 0)} подходов</FlowAction>}
           <div className="plan-list">
             {day.items.map((item, index) => (
               <div className="exercise-row" key={item.exercise_key}>
@@ -236,6 +265,7 @@ export function PlanExperience({
       <dialog
         ref={dialog}
         className="dm-sheet"
+        data-guide-target="exercise"
         onCancel={() => setDetails(null)}
       >
         {details && (
@@ -313,6 +343,7 @@ export function PlanExperience({
                   {details.spec?.status === "valid" ? "Camera Coach" : "Manual"}{" "}
                   →
                 </FlowAction>
+                {onQuickDemo && <FlowAction id="exercise-quick-demo" onSelect={() => start(details.item, details.spec, true)}>Быстрая демонстрация · 1 × 5</FlowAction>}
                 <button onClick={() => setDetails(null)}>Закрыть</button>
                 <button disabled>Swap unavailable</button>
               </div>

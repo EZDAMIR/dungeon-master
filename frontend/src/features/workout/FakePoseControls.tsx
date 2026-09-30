@@ -26,7 +26,7 @@ export function FakePoseControls({
         exercise.language,
       );
       onSource?.(source);
-    }
+    } else if(exercise?.item.exercise_key==='bodyweight_squat') {source.configureLegacy(exercise.item.target_reps);onSource?.(source)}
   }, [exercise, source, onSource]);
   useLayoutEffect(() => {
     const stage = poseStage(mode);

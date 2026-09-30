@@ -123,6 +123,8 @@ export type AIPlanMetadata = {
 };
 export type FallbackMetadata = { status: "fallback"; message: string };
 export type ExerciseSpec = {
+  id?: string;
+  spec_revision?: string;
   exercise_key: string;
   display_name: string;
   description: string;
@@ -131,6 +133,7 @@ export type ExerciseSpec = {
   movement_spec: MovementSpec | null;
 };
 export type ActiveExercise = {
+  specRevision?: string | null;
   item: AIPlanExercise;
   spec: MovementSpec | null;
   planId: string | null;

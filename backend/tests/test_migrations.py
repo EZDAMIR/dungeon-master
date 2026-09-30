@@ -45,10 +45,12 @@ async def test_upgrade_preserves_populated_previous_revision(
             capture_output=True,
         )
         monkeypatch.setattr(postgres, '_engine', engine)
-        guest = await client.post('/api/v1/auth/guest')
-        assert guest.status_code == 200
-        user_id = uuid.UUID(guest.json()['user']['id'])
-        headers = {'Authorization': 'Bearer ' + guest.json()['access_token']}
+        # Seed an actual legacy guest before the recovery-cookie table exists.
+        from src.api.controllers import users
+
+        guest = await users.guest_create()
+        user_id = uuid.UUID(str(guest['user']['id']))
+        headers = {'Authorization': 'Bearer ' + guest['access_token']}
         # Sprint 4A tests the deployed Sprint 3 schema using reflection, not current models.
         import datetime
 

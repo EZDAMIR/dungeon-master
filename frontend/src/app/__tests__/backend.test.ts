@@ -73,7 +73,7 @@ function server() {
     hasPlan = false;
   const transport = vi.fn<typeof fetch>(async (url, options) => {
     const path = String(url).replace("http://test", "");
-    if (path === "/auth/guest")
+    if (path === "/auth/guest" || path === "/auth/refresh" || path === "/auth/session")
       return response({
         access_token: "synthetic-guest-token",
         token_type: "bearer",
@@ -292,13 +292,13 @@ describe("bootstrap and profiles", () => {
     expect(reloaded.getSnapshot().auth?.user.id).toBe(user.id);
     expect(readAuth(storage)?.expiresAt).toBeGreaterThan(Date.now());
   });
-  it("recovers a rejected token once and stays local if guest creation fails", async () => {
+  it("refreshes a rejected token once without creating a new guest and stays local if credentials fail", async () => {
     const storage = new SafeStorage(testStorage);
     storage.write(AUTH_KEY, { accessToken: "invalid", expiresAt: 1, user });
     const transport = server(),
       original = transport.getMockImplementation()!;
     transport.mockImplementation((url, options) =>
-      String(url).endsWith("/auth/me")
+      String(url).endsWith("/auth/me") && (options?.headers as Record<string, string>)?.Authorization === "Bearer invalid"
         ? Promise.resolve(response({}, 401))
         : original(url, options),
     );
@@ -307,7 +307,9 @@ describe("bootstrap and profiles", () => {
       storage,
     );
     await store.bootstrap();
-    expect(requests(transport, "/auth/guest")).toHaveLength(1);
+    expect(requests(transport, "/auth/guest")).toHaveLength(0);
+    expect(requests(transport, "/auth/refresh")).toHaveLength(1);
+    expect(store.getSnapshot().auth?.user.id).toBe(user.id);
     storage.remove(AUTH_KEY);
     const failing = vi.fn<typeof fetch>().mockResolvedValue(response({}, 401)),
       offline = new BackendStore(
@@ -475,7 +477,7 @@ describe("aggregate sync and bounded pending queue", () => {
       String(url).endsWith("/workout-sessions") ||
       String(url).endsWith("/auth/me")
         ? Promise.resolve(response({}, 401))
-        : String(url).endsWith("/auth/guest")
+        : String(url).endsWith("/auth/refresh")
           ? Promise.resolve(
               response({
                 access_token: "new-guest",
@@ -487,10 +489,12 @@ describe("aggregate sync and bounded pending queue", () => {
     );
     await store.retry();
     expect(store.queue.entries()).toHaveLength(1);
-    expect(requests(transport, "/auth/guest")).toHaveLength(2);
+    expect(requests(transport, "/auth/guest")).toHaveLength(1);
+    expect(store.getSnapshot().auth?.user.id).toBe(user.id);
     await store.retry();
-    expect(requests(transport, "/workout-sessions")).toHaveLength(1);
-    expect(store.getSnapshot().syncMessage).toContain("прежнего гостя");
+    expect(requests(transport, "/auth/guest")).toHaveLength(1);
+    expect(store.queue.entries()[0].ownerId).toBe(user.id);
+    expect(store.getSnapshot().status).toBe("error");
   });
   it("uses in-memory fallback when localStorage is blocked and marks cache honestly", async () => {
     const raw = {

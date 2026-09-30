@@ -32,11 +32,11 @@ backend development use `npm run dev` and `.env.example` as before.
 `localhost` means the device running the app; opening a laptop's plain HTTP LAN
 address on a phone does not grant camera access.
 
-Voice starts muted. Enabling it prepares eight reusable Russian ElevenLabs cues
-in the background, with authenticated API requests and a process-local server
-cache. Playback makes no network requests. Unavailable or failed clips use browser
-speech/tones; generated personalized messages continue to use browser speech.
-The voice API also supports English cues. No microphone permission is requested.
+Voice selection and cached coaching playback use the existing Sprint 4B
+ElevenLabs integration. Choose a returned account voice and preview it through
+the authenticated API. Browser speech remains the fallback when the provider is
+unavailable. Camera frames never enter voice or OpenAI requests. See the
+[provider checklist](../docs/LIVE_PROVIDER_CHECKLIST.md) for current limitations.
 
 The normal entry opens context without requesting a camera. Use `?juryDemo=1` for Maya/Arman/Dana, review sources, generate a plan and open exercise details. In camera setup, click **Включить камеру** and grant the browser's camera permission. This is the initial conventional action. Complete the tutorial with your hand, select a workout by pinch, then hold Thumb Up. Camera access is not requested on page load. Normal semantic buttons remain available as an accessibility fallback, with tutorial skip and navigation controls under **Доступное управление**.
 

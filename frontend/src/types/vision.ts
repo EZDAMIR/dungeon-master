@@ -25,7 +25,19 @@ export type CameraErrorCode =
   | "model_load_failed"
   | "unknown";
 
+export type GenericRepMetrics = {
+  totalDurationMs: number;
+  minKneeAngle: number | null;
+  maxReturnKneeAngle: number | null;
+  descentDurationMs: number | null;
+  ascentDurationMs: number | null;
+  depthScore: number | null;
+  meanVisibility: number | null;
+  tempo: "slow" | "ok" | "fast";
+};
 export type VisionEvent =
+  | { type: "workout.generic_rep_completed"; at: number; repIndex: number; accepted: boolean; errors: readonly string[]; metrics: GenericRepMetrics }
+
   | {
       type: "workout.generic_updated";
       at: number;

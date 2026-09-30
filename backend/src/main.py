@@ -14,7 +14,9 @@ import fastapi.exceptions
 import fastapi.middleware.cors
 import fastapi.responses
 
+from src.ai import openai
 from src.api import exceptions as app_exceptions
+from src.api.services import generation_jobs
 from src.api.v1 import routers
 from src.core import config
 from src.core import http_client
@@ -31,10 +33,13 @@ async def lifespan(app: fastapi.FastAPI):
 
     await postgres.on_startup()
     await http_client.on_startup()
+    await generation_jobs.on_startup()
 
     yield
 
     logger.info('Shutting down')
+    await generation_jobs.on_shutdown()
+    await openai.on_shutdown()
     await http_client.on_shutdown()
     await postgres.on_shutdown()
 

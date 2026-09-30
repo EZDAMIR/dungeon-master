@@ -56,6 +56,7 @@ export function ContextFlow({
   step?: "intake" | "documents" | "review";
   onStepChange?: (step: "intake" | "documents" | "review") => void;
 }) {
+  useEffect(() => () => { void backend.cancelGeneration().catch(() => {}); }, [backend]);
   const [localStep, setLocalStep] = useState<"intake" | "documents" | "review">(
       "intake",
     ),
@@ -171,6 +172,7 @@ export function ContextFlow({
           }}
         />
       )}
+      {remote.generationJob && <div className="dm-status" role="status"><p>Генерация: {remote.generationJob.status} · {remote.generationJob.stage}</p>{remote.generationJob.total_specs > 0 && <p>Подготовлено упражнений: {remote.generationJob.completed_specs} / {remote.generationJob.total_specs}</p>}{["queued", "running"].includes(remote.generationJob.status) && <button onClick={() => { void backend.cancelGeneration(); }}>Отменить генерацию</button>}</div>}
       {busy && (
         <div
           role="status"

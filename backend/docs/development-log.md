@@ -187,3 +187,22 @@ Docker edits stay uncommitted. Details: [repository log](../../docs/development-
 ## 2026-09-30 — Sprint 4A AI context, sources and declarations
 
 Added seven owned AI/document tables, strict schemas and thin authenticated endpoints. Model-first migration `041f28173bcc` adds private exercise ownership, plan metadata and generic correction counts without rewriting historical migrations. Added official pinned OpenAI/pypdf adapters, confirmed-source top-5 RAG, structured profile/plan/spec generation, one repair/manual fallback and deterministic fallback. Source edits invalidate active AI personalization. Full regression: 239 tests pass, 96.83% coverage, populated upgrade preserved and Alembic drift clean; provider calls are mocked. Camera processing remains entirely in the browser. No Sprint 4B/provider voice/calendar integration.
+
+## 2026-09-30 — Sprint 4B backend working release
+
+Implemented real gpt-5.4 Responses/typed coach tools, explicit live/fixture/fallback provenance and confirmed-source cache revisions; owner-confirmed plan/schedule proposals; paginated account ElevenLabs voices/capability-checked language previews and private bounded cue/message audio; bounded transient STT; local IANA/DST schedule/ICS and encrypted owner OAuth/app-event reconciliation; rotating guest recovery; multiworker-safe leased generation jobs; immutable historical specs and real mixed/manual set persistence/progress. Metadata-first additive revisions6d9526d00d1b/ae1078bb4679 preserve historical migrations. Final disposable DB regression283passed/96.09%, unchanged90%gate, lint/format/architecture checks green. Live providers remain BLOCKED without keys, never represented as successful. Lifecycle main.py and encryption dependency pyproject changes are explicitly required by role A1. No frontend/CD/deployment/sourceenv changes or pushes. Exact contracts/report/env delta live in docs/contracts and docs/SPRINT_4B_BACKEND_REPORT.md; A2 integrates the committed handoff.
+
+
+## 2026-09-30 — Corrected local provider configuration and actual live evidence
+
+The initial canonical-name check missed existing user-authorized legacy provider variables. On the user's explicit instruction, atomically corrected only the original local backend/.env to canonical names plus live provider/model flags, preserving legacy/database/SECRET_KEY/CORS entries and mode0600. No real environment values entered this repository. Bounded real doctor with retries0: gpt-5.4 strict response VERIFIED39input/12outputtokens/3796ms; ElevenLabs models and voices returnHTTP401 invalid_api_key, preview not generated. Google/STT/full browser acceptance remain unverified. Two focused config cases cover canonical keys with legacy entries, enabled/disabled gates and masked repr;11tests pass and makecheck green. No source application code, migrations, CD or server changes in this correction. Sanitized proof and updated limitations are in backend report/contracts.
+
+
+## 2026-09-30 — User-requested fresh canonical ElevenLabs retry
+
+Current canonical ELEVENLABS_API_KEY reread into process memory only, no legacy overwrite/env edit/OpenAI repeat/sourceDB. Real /v1/models again returnsHTTP401 invalid_api_key,1597ms; no voices/language/audio success claimed. Updated sanitized proof/report only; unchanged implementation gates remain green. A valid canonical ElevenLabs key is still required.
+
+
+## 2026-09-30 — Verified user-updated ElevenLabs candidate and canonical synchronization
+
+Root detected distinct canonical/legacy entries after the user updated the familiar legacy name. Freshlegacy-only candidate realmodelsHTTP200/11models,6accountvoices and oneRUFlash2.5MP3preview66499bytes60chars4900ms VERIFIED. Metadata confirmsKKeleven_v3 but noKK/ENaudio claimed. Canonical key synchronized atomically600 only after success and concurrent-changecheck; unrelatedconfig preserved, nosecretcopies/commits/sourceDB/OpenAIrepeat. Updated sanitized proof/report/FINAL; no source application changes or unrelated test reruns.

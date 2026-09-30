@@ -129,6 +129,7 @@ it("replays generated calf corrections and a valid recovery through the shared p
   const source = new FakePoseSource(
     (e) => {
       events.push(e);
+      if (e.type === "calibration.required") source.setStage("calibration");
       if (e.type === "calibration.completed") {
         mode = "workout";
       }
@@ -142,13 +143,14 @@ it("replays generated calf corrections and a valid recovery through the shared p
   );
   source.play("standing-side", 0);
   source.setStage(mode);
-  source.play("shallow-squat", 5000);
+  source.play("shallow-squat", 4100);
   source.lost(8500);
   source.standing(9200);
-  source.play("correct-squat", 11000);
+  source.setStage("workout");
+  source.play("correct-squat", 10700);
   expect(
     events
-      .filter((e) => e.type === "workout.rep_completed")
+      .filter((e) => e.type === "workout.generic_rep_completed")
       .map((e) => e.accepted),
   ).toEqual([false, true]);
 });
@@ -170,12 +172,12 @@ it.each([
   source.play("standing-side", 0);
   expect(events.some((e) => e.type === "calibration.completed")).toBe(true);
   source.setStage("workout");
-  source.play("shallow-squat", 5000);
-  source.standing(8600);
-  source.play("correct-squat", 10200);
+  source.play("shallow-squat", 4100);
+  source.standing(7650);
+  source.play("correct-squat", 9150);
   expect(
     events
-      .filter((e) => e.type === "workout.rep_completed")
+      .filter((e) => e.type === "workout.generic_rep_completed")
       .map((e) => e.accepted),
   ).toEqual([false, true]);
 });

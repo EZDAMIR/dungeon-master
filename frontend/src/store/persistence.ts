@@ -201,114 +201,50 @@ export type PendingEntry = {
   ownerId: string | null;
   session: SessionCreate;
   set: SetCreate;
+  sets?: SetCreate[];
   complete: SessionComplete;
   attempts: number;
   lastAttemptAt: string | null;
 };
+function parseSet(value: unknown, ordinal: number): SetCreate | null {
+  if (!record(value) || !uuid(value.client_set_id) || typeof value.exercise_key !== "string" || !/^[a-z][a-z0-9_]{0,79}$/.test(value.exercise_key) || value.set_index !== ordinal || !count(value.total_reps) || !count(value.accepted_reps) || value.accepted_reps > value.total_reps || !count(value.duration_ms, 3_600_000) || !bounded(value.engine_version) || !record(value.metrics)) return null;
+  const errors = errorCounts(value.error_counts), generic = parseGenericErrors(value.generic_error_counts);
+  const duration = value.metrics.mean_rep_duration_ms, angle = value.metrics.mean_min_knee_angle;
+  if (!errors || !generic || (duration !== null && (typeof duration !== "number" || !Number.isFinite(duration) || duration < 0 || duration > 3_600_000)) || (angle !== null && (typeof angle !== "number" || !Number.isFinite(angle) || angle < 0 || angle > 180))) return null;
+  if (value.assessment_mode !== undefined && !["camera", "manual"].includes(String(value.assessment_mode))) return null;
+  if (value.completion_status !== undefined && !["completed", "partial"].includes(String(value.completion_status))) return null;
+  if (value.spec_revision !== undefined && value.spec_revision !== null && !uuid(value.spec_revision)) return null;
+  if (value.assessment_mode === "manual" && (value.accepted_reps !== 0 || Object.values(errors).some(Boolean) || Object.values(generic).some(Boolean))) return null;
+  let target: SetCreate["target_snapshot"];
+  if (value.target_snapshot !== undefined && value.target_snapshot !== null) {
+    const t = value.target_snapshot;
+    if (!record(t) || (t.target_reps !== null && !count(t.target_reps)) || (t.duration_seconds !== null && !count(t.duration_seconds, 3600)) || !count(t.rest_seconds, 3600) || !count(t.plan_sets, 100) || t.plan_sets === 0) return null;
+    target = { target_reps: t.target_reps, duration_seconds: t.duration_seconds, rest_seconds: t.rest_seconds, plan_sets: t.plan_sets };
+  }
+  return { client_set_id: value.client_set_id, exercise_key: value.exercise_key, set_index: ordinal, total_reps: value.total_reps, accepted_reps: value.accepted_reps, duration_ms: value.duration_ms, error_counts: errors, ...(Object.keys(generic).length ? { generic_error_counts: generic } : {}), metrics: { mean_rep_duration_ms: duration, mean_min_knee_angle: angle }, engine_version: value.engine_version,
+    ...(value.assessment_mode !== undefined ? { assessment_mode: value.assessment_mode as 'camera' | 'manual' } : {}), ...(value.completion_status !== undefined ? { completion_status: value.completion_status as 'completed' | 'partial' } : {}), ...(value.spec_revision !== undefined ? { spec_revision: value.spec_revision as string | null } : {}), ...(target ? { target_snapshot: target } : {}) };
+}
 export function parsePending(value: unknown): PendingEntry | null {
-  if (
-    !record(value) ||
-    (value.ownerId !== null && !uuid(value.ownerId)) ||
-    !record(value.session) ||
-    !record(value.set) ||
-    !record(value.complete) ||
-    !count(value.attempts, 1_000_000) ||
-    (value.lastAttemptAt !== null && !timestamp(value.lastAttemptAt))
-  )
-    return null;
-  const session = value.session,
-    set = value.set,
-    complete = value.complete;
-  if (
-    !uuid(session.client_session_id) ||
-    (session.plan_id !== null && !uuid(session.plan_id)) ||
-    !timestamp(session.started_at) ||
-    !bounded(session.client_engine_version) ||
-    !uuid(set.client_set_id) ||
-    typeof set.exercise_key !== "string" ||
-    !/^[a-z][a-z0-9_]{0,79}$/.test(set.exercise_key) ||
-    set.set_index !== 1 ||
-    !count(set.total_reps) ||
-    !count(set.accepted_reps) ||
-    set.accepted_reps > set.total_reps ||
-    !count(set.duration_ms, 3_600_000) ||
-    !record(set.metrics) ||
-    !bounded(set.engine_version) ||
-    set.engine_version !== session.client_engine_version ||
-    !record(complete.summary) ||
-    !timestamp(complete.completed_at)
-  )
-    return null;
-  const generic = parseGenericErrors(set.generic_error_counts),
-    summaryGeneric = parseGenericErrors(complete.summary.generic_error_counts);
-  if (
-    !generic ||
-    !summaryGeneric ||
-    JSON.stringify(generic) !== JSON.stringify(summaryGeneric)
-  )
-    return null;
-  const errors = errorCounts(set.error_counts),
-    summaryErrors = errorCounts(complete.summary.error_counts);
-  const duration = set.metrics.mean_rep_duration_ms,
-    angle = set.metrics.mean_min_knee_angle;
-  if (
-    !errors ||
-    !summaryErrors ||
-    typeof duration !== "number" ||
-    !Number.isFinite(duration) ||
-    duration < 0 ||
-    duration > 3_600_000 ||
-    typeof angle !== "number" ||
-    !Number.isFinite(angle) ||
-    angle < 0 ||
-    angle > 180
-  )
-    return null;
-  if (
-    complete.summary.total_reps !== set.total_reps ||
-    complete.summary.accepted_reps !== set.accepted_reps ||
-    complete.summary.rejected_reps !== set.total_reps - set.accepted_reps ||
-    complete.summary.duration_ms !== set.duration_ms ||
-    JSON.stringify(errors) !== JSON.stringify(summaryErrors) ||
-    Date.parse(complete.completed_at) < Date.parse(session.started_at)
-  )
-    return null;
-  return {
-    ownerId: value.ownerId,
-    attempts: value.attempts,
-    lastAttemptAt: value.lastAttemptAt,
-    session: {
-      client_session_id: session.client_session_id,
-      plan_id: session.plan_id,
-      started_at: session.started_at,
-      client_engine_version: session.client_engine_version,
-    },
-    set: {
-      client_set_id: set.client_set_id,
-      exercise_key: set.exercise_key,
-      set_index: 1,
-      total_reps: set.total_reps,
-      accepted_reps: set.accepted_reps,
-      duration_ms: set.duration_ms,
-      error_counts: errors,
-      ...(Object.keys(generic).length ? { generic_error_counts: generic } : {}),
-      metrics: { mean_rep_duration_ms: duration, mean_min_knee_angle: angle },
-      engine_version: set.engine_version,
-    },
-    complete: {
-      completed_at: complete.completed_at,
-      summary: {
-        total_reps: set.total_reps,
-        accepted_reps: set.accepted_reps,
-        rejected_reps: set.total_reps - set.accepted_reps,
-        duration_ms: set.duration_ms,
-        error_counts: summaryErrors,
-        ...(Object.keys(generic).length
-          ? { generic_error_counts: generic }
-          : {}),
-      },
-    },
-  };
+  if (!record(value) || (value.ownerId !== null && !uuid(value.ownerId)) || !record(value.session) || !record(value.complete) || !count(value.attempts, 1_000_000) || (value.lastAttemptAt !== null && !timestamp(value.lastAttemptAt))) return null;
+  const session = value.session, complete = value.complete;
+  if (!uuid(session.client_session_id) || (session.plan_id !== null && !uuid(session.plan_id)) || !timestamp(session.started_at) || !bounded(session.client_engine_version) || !record(complete.summary) || !timestamp(complete.completed_at) || Date.parse(complete.completed_at) < Date.parse(session.started_at)) return null;
+  const rows = value.sets === undefined ? [value.set] : value.sets;
+  if (!Array.isArray(rows) || !rows.length || rows.length > 100) return null;
+  const sets = rows.map((row, index) => parseSet(row, index + 1));
+  if (sets.some(row => !row)) return null;
+  const valid = sets as SetCreate[];
+  if (new Set(valid.map(row => row.client_set_id)).size !== valid.length) return null;
+  if (value.sets === undefined && valid[0].engine_version !== session.client_engine_version) return null;
+  const total = valid.reduce((n,row) => n + row.total_reps, 0), accepted = valid.reduce((n,row) => n + row.accepted_reps, 0), camera = valid.filter(row => row.assessment_mode !== 'manual').reduce((n,row) => n + row.total_reps, 0), duration = valid.reduce((n,row) => n + row.duration_ms, 0);
+  const errors: ErrorCounts = { depth_insufficient: 0, too_fast: 0, incomplete_extension: 0 }, generic: Record<string, number> = {};
+  for (const row of valid) { for (const key of Object.keys(errors) as (keyof ErrorCounts)[]) errors[key] += row.error_counts[key]; for (const [key,n] of Object.entries(row.generic_error_counts ?? {})) generic[key] = (generic[key] ?? 0) + n; }
+  const summary = complete.summary, summaryErrors = errorCounts(summary.error_counts), summaryGeneric = parseGenericErrors(summary.generic_error_counts);
+  if (summary.total_reps !== total || summary.accepted_reps !== accepted || summary.rejected_reps !== camera - accepted || summary.duration_ms !== duration || !summaryErrors || !summaryGeneric || JSON.stringify(summaryErrors) !== JSON.stringify(errors) || JSON.stringify(summaryGeneric) !== JSON.stringify(parseGenericErrors(generic))) return null;
+  if (summary.total_sets !== undefined && summary.total_sets !== valid.length) return null;
+  if (summary.camera_total_reps !== undefined && summary.camera_total_reps !== camera) return null;
+  const manual = valid.filter(row => row.assessment_mode === 'manual' && row.completion_status !== 'partial').length;
+  if (summary.manual_completed_sets !== undefined && summary.manual_completed_sets !== manual) return null;
+  return { ownerId: value.ownerId, attempts: value.attempts, lastAttemptAt: value.lastAttemptAt, session: { client_session_id: session.client_session_id, plan_id: session.plan_id, started_at: session.started_at, client_engine_version: session.client_engine_version }, set: valid[0], ...(value.sets === undefined ? {} : { sets: valid }), complete: { completed_at: complete.completed_at, summary: { total_reps: total, accepted_reps: accepted, rejected_reps: camera - accepted, duration_ms: duration, error_counts: errors, generic_error_counts: generic, ...(summary.total_sets === undefined ? {} : { total_sets: valid.length, camera_total_reps: camera, manual_completed_sets: manual }) } } };
 }
 export class PendingQueue {
   private readonly storage: SafeStorage;
@@ -375,7 +311,7 @@ export function readProgress(
     !count(p.total_reps, Number.MAX_SAFE_INTEGER) ||
     !count(p.accepted_reps, Number.MAX_SAFE_INTEGER) ||
     p.accepted_reps > p.total_reps ||
-    p.rejected_reps !== p.total_reps - p.accepted_reps ||
+    p.rejected_reps !== (typeof p.camera_total_reps === "number" ? p.camera_total_reps : p.total_reps) - p.accepted_reps ||
     typeof p.acceptance_rate !== "number" ||
     !Number.isFinite(p.acceptance_rate) ||
     p.acceptance_rate < 0 ||
@@ -415,7 +351,13 @@ export function readProgress(
         row.dominant_error as Progress["recent_sessions"][number]["dominant_error"],
     });
   }
+  const generic = parseGenericErrors(p.generic_error_counts);
+  if (!generic) return null;
   return {
+    ...(typeof p.total_sets === "number" ? { total_sets: p.total_sets } : {}),
+    ...(typeof p.camera_total_reps === "number" ? { camera_total_reps: p.camera_total_reps } : {}),
+    ...(typeof p.manual_completed_sets === "number" ? { manual_completed_sets: p.manual_completed_sets } : {}),
+    ...(Object.keys(generic).length ? { generic_error_counts: generic } : {}),
     completed_sessions: p.completed_sessions,
     total_reps: p.total_reps,
     accepted_reps: p.accepted_reps,

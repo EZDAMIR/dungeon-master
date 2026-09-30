@@ -3,9 +3,8 @@ import { defineConfig, loadEnv } from 'vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
-  const proxy = env.VITE_API_PROXY_TARGET
-    ? { '/api': { target: env.VITE_API_PROXY_TARGET, changeOrigin: true } }
-    : undefined
+  const target = env.VITE_API_PROXY_TARGET || process.env.DUNGEON_MASTER_API_PROXY || 'http://127.0.0.1:8000'
+  const proxy = { '/api': { target, changeOrigin: !!env.VITE_API_PROXY_TARGET } }
   return {
     plugins: [react()],
     server: { host: '127.0.0.1', port: 5173, strictPort: true, proxy },

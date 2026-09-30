@@ -12,8 +12,10 @@ uses them. OpenAI personalization and reusable ElevenLabs voice generation are
 server capabilities; this is not a public arbitrary-text provider proxy.
 Provider credentials remain in `/etc/dungeon-master/runtime.env` (mode 600),
 outside the webroot. Set `ELEVENLABS_ENABLED=true`, `ELEVENLABS_API_KEY`, and an
-account-accessible `ELEVENLABS_VOICE_ID`; the default is the documented George ID.
-`ELEVENLABS_MODEL` defaults to `eleven_multilingual_v2`. OpenAI settings are unchanged.
+account-accessible `ELEVENLABS_DEFAULT_VOICE_ID` (or choose an account voice in the
+local app). `ELEVENLABS_MODEL_RU`/`EN` default to `eleven_flash_v2_5`; KK defaults
+to `eleven_v3`. Existing OpenAI and Sprint 4B provider settings are preserved.
+
 
 CI still checks the local frontend, including production assets, alongside backend
 and isolated Docker checks. Main-only exact-SHA/digest trust, backup/restore checks,

@@ -915,3 +915,50 @@ button.source-chip {
   flex: 1;
   margin: 0;
 }
+
+/* Sprint 4B product surfaces reuse the established planning tokens. */
+.voice-screen { position: fixed; inset: 0; z-index: 90; background: var(--dm-ivory, #f4f1e8); color: #252623; overflow-y: auto; padding: clamp(20px, 4vw, 64px); }
+.voice-screen h2 { max-width: 920px; }
+.voice-grid, .schedule-week { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; margin-block: 24px; }
+.voice-grid article.selected { outline: 3px solid #727d14; }
+.voice-grid button { width: 100%; margin-block: 4px; }
+.coach-panel { margin-top: 32px; }
+.coach-transcript { overflow-wrap: anywhere; }
+.coach-transcript article { padding-block: 16px; border-bottom: 1px solid #c9c6bd; }
+.coach-panel textarea { display: block; width: 100%; min-height: 96px; font: inherit; padding: 12px; }
+.proposal-card dl { display: flex; gap: 16px; flex-wrap: wrap; }
+.proposal-card dd { margin: 0; overflow-wrap: anywhere; }
+.schedule-panel input, .schedule-panel select, .voice-screen select { font: inherit; padding: 12px; max-width: 100%; }
+.schedule-panel form, .schedule-panel details { margin-block: 24px; }
+.schedule-panel form label { display: block; margin-block: 12px; }
+.availability-row { display: flex; gap: 16px; flex-wrap: wrap; margin-block: 12px; }
+.guided-tour { padding: 20px; margin: 16px 0; border: 2px solid #727d14; background: #f4f1e8; color: #252623; }
+[data-guide-highlight="true"] { outline: 3px solid #aab835; outline-offset: 6px; }
+.audio-subtitle { padding: 16px; font-size: 22px; overflow-wrap: anywhere; }
+.audio-status { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+@media(max-width: 600px) { .voice-screen { padding: 20px; } .coach-panel { padding: 16px; } }
+[hidden] { display: none !important; }
+.app-shell header, .planning-content, .experience main, .schedule-panel, .coach-panel { min-width: 0; }
+.schedule-panel h2, .voice-screen h2 { overflow-wrap: anywhere; }
+@media(max-width: 834px) { .app-shell header { flex-wrap: wrap; } .planning-nav { order: 3; width: 100%; } .backend-badge { margin-left: auto; } }
+@media(max-width: 600px) { .app-shell { padding: 20px; } .schedule-panel h2, .voice-screen h2 { font-size: 40px; line-height: 1.1; } .availability-row input { width: 100%; } .schedule-panel input { width: 100%; margin-top: 8px; } .planning-nav a { flex: 1 1 40%; font-size: 14px; } .schedule-panel .dm-actions button { flex: 1 1 100%; } .audio-status button { flex: 1 1 45%; } }
+.session-set-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-block: 24px; }
+.session-results h1 { font: var(--dm-heading); overflow-wrap: anywhere; }
+@media(max-width: 600px) { .session-results h1 { font-size: 40px; line-height: 1.1; } }
+
+.voice-screen .dm-actions {display:flex;flex-wrap:wrap;gap:12px;}
+.voice-screen .dm-actions .gesture-target {flex:1 1 180px;width:auto;min-width:min(100%,180px);white-space:normal;overflow-wrap:anywhere;line-height:1.3;}
+.voice-screen [aria-label="Язык"] .gesture-target {flex-basis:120px;min-width:120px;}
+.planning-content > .camera-column {max-width:420px;margin-bottom:24px;}
+.stable-camera-preview {width:100%;min-width:0;}
+@media(max-width:600px){.voice-screen .dm-actions .gesture-target{flex-basis:100%;min-width:0;}.session-results .dm-actions{display:flex;flex-wrap:wrap;}.session-results .dm-actions .gesture-target{flex-basis:100%;min-width:0;}}
+.coach-panel .dm-actions,.schedule-panel .dm-actions {display:flex;flex-wrap:wrap;gap:12px;}
+.coach-panel .dm-actions button,.schedule-panel .dm-actions button {flex:1 1 220px;width:auto;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.3;}
+@media(max-width:600px){.coach-panel .dm-actions button,.schedule-panel .dm-actions button {flex-basis:100%;}}
+.guided-tour .dm-actions {display:flex;flex-wrap:wrap;gap:12px;}
+.guided-tour .dm-actions button {flex:1 1 180px;min-width:0;width:auto;white-space:normal;overflow-wrap:anywhere;}
+@media(max-width:600px){.guided-tour .dm-actions button {flex-basis:100%;}.workout-shell .experience,.workout-shell main,.coach-shell,.guided-tour {min-width:0;max-width:100%;}}
+.source-chips button.source-chip {min-height:44px;padding-block:10px;}
+
+.workout-shell main {display:flex;flex-direction:column;}.workout-shell main>.coach-shell{order:0;}.workout-shell main>.guided-tour{order:1;}
+@media(max-width:834px){.workout-active .experience{display:flex;flex-direction:column;}.workout-active .experience>main{order:-1;}.coach-shell .dm-actions button{flex:1 1 160px;white-space:normal;overflow-wrap:anywhere;}}

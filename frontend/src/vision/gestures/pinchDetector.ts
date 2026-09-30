@@ -1,10 +1,12 @@
-import { clamp, distance } from '../core/geometry'
+import { clamp } from '../core/geometry'
 import { gestureConfig as config } from './gestureConfig'
 import type { HandLandmark } from './types'
 export class PinchDetector {
   private pinched = false
   private consecutive = 0
-  update(landmarks: readonly HandLandmark[]) {
+  update(landmarks: readonly HandLandmark[], aspectRatio = 1) {
+    const aspect = Number.isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 1
+    const distance = (a: HandLandmark, b: HandLandmark) => Math.hypot((a.x-b.x)*aspect,a.y-b.y)
     const palm = landmarks[5] && landmarks[17] ? distance(landmarks[5], landmarks[17]) : 0
     if (!Number.isFinite(palm) || palm < config.minPalmWidth || !landmarks[4] || !landmarks[8]) {
       this.reset()

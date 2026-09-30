@@ -211,8 +211,8 @@ Current owner-selected deployment split (2026-09-30):
 - Local `/api/v1` proxy to the owner's HTTPS VPS; camera frames never enter it.
 - FastAPI/PostgreSQL on the VPS for authenticated durable data and OpenAI/ElevenLabs.
 - Provider keys only in backend environment variables.
-- Eight fixed reusable voice cues per supported language, cached per server process;
-  generation is outside the frame loop and browser speech remains the fallback.
+- Existing Sprint 4B selected voices and cached coaching clips; provider work
+  stays outside the vision pipeline and browser speech remains the fallback.
 - Public VPS app/model routes return 404; only the API and release marker are served.
 
 The previous no-install public demo acceptance is superseded by the owner's local

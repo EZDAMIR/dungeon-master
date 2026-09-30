@@ -22,7 +22,10 @@ export type AppMode =
   | "RESULTS"
   | "PROFILE"
   | "PLAN"
-  | "PROGRESS";
+  | "PROGRESS"
+  | "SCHEDULE"
+  | "REST"
+  | "NEXT_SET";
 export type WorkoutView = {
   profile: CalibrationProfile | null;
   progress: number;
@@ -51,6 +54,7 @@ export const emptyWorkout = (): WorkoutView => ({
 });
 export type AppAction =
   | { type: "NAVIGATE"; mode: AppMode }
+  | { type: "SESSION_PHASE"; mode: AppMode; reset?: boolean }
   | { type: "CAMERA_READY" }
   | { type: "CAMERA_RETRY" }
   | { type: "TUTORIAL_DONE" }
@@ -70,12 +74,14 @@ export type AppAction =
   | { type: "OPEN_PROFILE" }
   | { type: "OPEN_PLAN" }
   | { type: "OPEN_PROGRESS" }
+  | { type: "OPEN_SCHEDULE" }
   | { type: "POSE_EVENT"; event: VisionEvent };
 export type AppState = {
   mode: AppMode;
   selectedWorkoutId: string | null;
   workoutResult: WorkoutResult | null;
   workout: WorkoutView;
+  sessionFinished?: boolean;
 };
 export const INITIAL_STATE: AppState = {
   mode: "CAMERA_PERMISSION",
@@ -87,6 +93,8 @@ const TRANSITIONS: Record<
   AppMode,
   Partial<Record<AppAction["type"], AppMode>>
 > = {
+  REST: {},
+  NEXT_SET: {},
   CAMERA_PERMISSION: { CAMERA_READY: "TUTORIAL" },
   TUTORIAL: { TUTORIAL_DONE: "MENU" },
   MENU: {
@@ -95,6 +103,7 @@ const TRANSITIONS: Record<
     OPEN_PROFILE: "PROFILE",
     OPEN_PLAN: "PLAN",
     OPEN_PROGRESS: "PROGRESS",
+    OPEN_SCHEDULE: "SCHEDULE",
   },
   CALIBRATION: { CALIBRATION_READY: "COUNTDOWN", BACK: "MENU" },
   COUNTDOWN: { COUNTDOWN_DONE: "WORKOUT", CALIBRATION_LOST: "CALIBRATION" },
@@ -109,12 +118,14 @@ const TRANSITIONS: Record<
     REPEAT: "CALIBRATION",
     MENU: "MENU",
     OPEN_PROGRESS: "PROGRESS",
+    OPEN_SCHEDULE: "SCHEDULE",
     OPEN_PROFILE: "PROFILE",
     OPEN_PLAN: "PLAN",
   },
-  PROFILE: { BACK: "MENU", OPEN_PLAN: "PLAN", OPEN_PROGRESS: "PROGRESS" },
-  PLAN: { BACK: "MENU", OPEN_PROFILE: "PROFILE", OPEN_PROGRESS: "PROGRESS" },
-  PROGRESS: { BACK: "MENU", OPEN_PROFILE: "PROFILE", OPEN_PLAN: "PLAN" },
+  PROFILE: { BACK: "MENU", OPEN_PLAN: "PLAN", OPEN_PROGRESS: "PROGRESS", OPEN_SCHEDULE: "SCHEDULE" },
+  PLAN: { BACK: "MENU", OPEN_PROFILE: "PROFILE", OPEN_PROGRESS: "PROGRESS", OPEN_SCHEDULE: "SCHEDULE" },
+  PROGRESS: { BACK: "MENU", OPEN_PROFILE: "PROFILE", OPEN_PLAN: "PLAN", OPEN_SCHEDULE: "SCHEDULE" },
+  SCHEDULE: { BACK: "PLAN", OPEN_PROFILE: "PROFILE", OPEN_PLAN: "PLAN", OPEN_PROGRESS: "PROGRESS" },
 };
 export function transition(
   mode: AppMode,
@@ -176,6 +187,7 @@ function poseEvent(view: WorkoutView, event: VisionEvent): WorkoutView {
   }
 }
 export function appReducer(state: AppState, action: AppAction): AppState {
+  if(action.type==='SESSION_PHASE')return {...state,mode:action.mode,selectedWorkoutId:'personalized',workout:action.reset?emptyWorkout():state.workout,workoutResult:null,sessionFinished:action.mode==='RESULTS'};
   if (action.type === "NAVIGATE") {
     const cameraRoute = [
       "CALIBRATION",
@@ -185,7 +197,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     ].includes(action.mode);
     let mode = action.mode;
     if (cameraRoute) mode = state.selectedWorkoutId ? "CALIBRATION" : "PLAN";
-    if (mode === "RESULTS" && !state.workoutResult) mode = "PROGRESS";
+    if (["REST","NEXT_SET"].includes(mode)) mode="PLAN";
+    if (mode === "RESULTS" && !state.workoutResult && !state.sessionFinished) mode = "PROGRESS";
     // A history return to the entry screen keeps an acquired hand camera alive.
     if (mode === "CAMERA_PERMISSION" && state.mode !== "CAMERA_PERMISSION")
       mode = "TUTORIAL";
