@@ -39,3 +39,66 @@ async def client() -> httpx.AsyncClient:
 def reset_settings_cache():
     yield
     clear_settings_cache()
+
+
+@pytest.fixture(scope='session')
+def disposable_database_url():
+    """Create a UUID-named DB; never clear the configured database."""
+    import subprocess
+    import sys
+    import uuid
+
+    from sqlalchemy.engine import make_url
+
+    value = os.environ.get('TEST_DATABASE_URL')
+    if not value:
+        pytest.fail('Set TEST_DATABASE_URL to a separate local *_test database')
+    url = make_url(value)
+    if (
+        url.host not in {'localhost', '127.0.0.1', 'postgres'}
+        or not url.database
+        or not url.database.endswith('_test')
+        or url == make_url(os.environ['DATABASE_URL'])
+    ):
+        pytest.fail('Set TEST_DATABASE_URL to a separate local *_test database')
+    name = 'dungeon_sprint3_' + uuid.uuid4().hex + '_test'
+    env = dict(os.environ, PGPASSWORD=url.password or '')
+    args = ['-h', url.host, '-p', str(url.port or 5432), '-U', url.username]
+    subprocess.run(['createdb', *args, name], env=env, check=True, capture_output=True)
+    try:
+        env['DATABASE_URL'] = url.set(database=name).render_as_string(hide_password=False)
+        env['DEBUG'] = 'false'
+        subprocess.run(
+            [sys.executable, '-m', 'alembic', 'upgrade', 'head'],
+            env=env,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            [sys.executable, '-m', 'alembic', 'check'],
+            env=env,
+            check=True,
+            capture_output=True,
+        )
+        yield env['DATABASE_URL']
+    finally:
+        subprocess.run(['dropdb', *args, name], env=env, check=True, capture_output=True)
+
+
+@pytest_asyncio.fixture
+async def database(disposable_database_url, monkeypatch):
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    from src.core import postgres
+
+    engine = create_async_engine(
+        disposable_database_url, poolclass=NullPool, hide_parameters=True
+    )
+    monkeypatch.setattr(postgres, '_engine', engine)
+    yield engine
+    await engine.dispose()
+
+
+def pytest_configure(config):
+    config.addinivalue_line('markers', 'xdist_group(name): keep disposable DB tests together')

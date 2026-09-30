@@ -43,20 +43,14 @@ async def test_perms_required_superuser_bypasses():
 async def test_perms_required_forbidden_when_missing_perm():
     user = await _resolve_user(is_superuser=False, perms=[])
 
-    class FakePerm(permission.Perm):
-        THING_READ = 'thing:read'
-
-    dep = permission.PermsRequired([FakePerm.THING_READ])
+    dep = permission.PermsRequired([permission.Perm.PROFILE_READ])
     with pytest.raises(exceptions.HTTPForbiddenException):
         await dep.dependency(current_user=user)
 
 
 async def test_perms_required_passes_with_correct_perm():
-    class FakePerm(permission.Perm):
-        THING_READ = 'thing:read'
-
-    user = await _resolve_user(is_superuser=False, perms=['thing:read'])
-    dep = permission.PermsRequired([FakePerm.THING_READ])
+    user = await _resolve_user(is_superuser=False, perms=['profile:read'])
+    dep = permission.PermsRequired([permission.Perm.PROFILE_READ])
     result = await dep.dependency(current_user=user)
     assert result is None
 

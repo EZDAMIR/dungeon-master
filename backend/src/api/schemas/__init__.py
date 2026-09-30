@@ -28,3 +28,5 @@ __all__ = [
     'String',
     'UserCurrent',
 ]
+
+from . import users  # noqa: F401

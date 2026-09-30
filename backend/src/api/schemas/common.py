@@ -29,7 +29,7 @@ class UserCurrent(pydantic.BaseModel):
     """
 
     id: uuid.UUID
-    email: pydantic.EmailStr
+    email: pydantic.EmailStr | None
     is_superuser: bool = False
     permissions: list[str] = pydantic.Field(default_factory=list)
 

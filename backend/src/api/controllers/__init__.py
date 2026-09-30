@@ -11,3 +11,5 @@ Add controllers as they are created::
         EntityCreateBadRequestStatus,
     )
 """
+
+from . import users  # noqa: F401

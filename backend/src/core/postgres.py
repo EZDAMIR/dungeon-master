@@ -64,7 +64,8 @@ def get_engine() -> sqlalchemy.ext.asyncio.AsyncEngine:
         settings = config.get_settings()
         _engine = sqlalchemy.ext.asyncio.create_async_engine(
             settings.database_url_str(),
-            echo=settings.DEBUG,
+            echo=False,
+            hide_parameters=True,
             pool_size=10,
             max_overflow=20,
             pool_pre_ping=True,

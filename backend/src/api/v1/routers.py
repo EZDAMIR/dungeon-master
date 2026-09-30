@@ -1,6 +1,6 @@
 import fastapi
 
-from .endpoints import health
+from .endpoints import auth, health
 
 
 def get_router() -> fastapi.APIRouter:
@@ -8,6 +8,8 @@ def get_router() -> fastapi.APIRouter:
     router = fastapi.APIRouter()
 
     router.include_router(health.router, tags=['Health'])
+
+    router.include_router(auth.router, tags=['Auth'])
 
     # Register domain routers here as they are created:
     # router.include_router(entities.router, tags=['Entities'])

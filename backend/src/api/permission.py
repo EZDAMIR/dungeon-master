@@ -36,6 +36,14 @@ class Perm(enum.StrEnum):
         ENTITY_CREATE = 'entity:create'
     """
 
+    PROFILE_READ = 'profile:read'
+    PROFILE_UPDATE = 'profile:update'
+    EXERCISE_READ = 'exercise:read'
+    PLAN_READ = 'plan:read'
+    PLAN_GENERATE = 'plan:generate'
+    SESSION_WRITE = 'session:write'
+    PROGRESS_READ = 'progress:read'
+
 
 def NoPermsRequired() -> fastapi.params.Depends:
     """Public endpoint — no authentication required."""
