@@ -143,3 +143,17 @@ def test_plan_enum_parity():
         assert set(models.training_plans.TrainingPlans.c[column].type.enums) == {
             v.value for v in enum
         }
+
+
+async def test_known_active_plan_constraint_translation():
+    from unittest.mock import MagicMock
+
+    orig = Exception('constraint')
+    cause = Exception('constraint')
+    cause.constraint_name = 'uq_training_plans_active_user'
+    orig.__cause__ = cause
+    fake = AsyncMock()
+    fake.transaction = MagicMock(return_value=AsyncMock())
+    fake.execute.side_effect = sa.exc.IntegrityError(None, None, orig)
+    with pytest.raises(models.PlanGenerationConflict):
+        await models.training_plans.plan_create_active.__wrapped__(fake, uuid.uuid4(), {}, [])

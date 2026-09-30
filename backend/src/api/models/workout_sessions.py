@@ -183,7 +183,6 @@ async def set_create(session, user_id: uuid.UUID, session_id: uuid.UUID, data: d
         exercise = await session.fetch_one(
             models.exercises.Exercises.select().where(
                 models.exercises.Exercises.c.key == data['exercise_key'],
-                models.exercises.Exercises.c.is_active.is_(True),
             )
         )
         if exercise is None:
@@ -217,6 +216,8 @@ async def set_create(session, user_id: uuid.UUID, session_id: uuid.UUID, data: d
             }
         if not started:
             raise SessionConflict
+        if not exercise['is_active']:
+            raise SetExerciseDoesNotExist
         created = await session.fetch_one(
             WorkoutSetResults.insert().values(**values).returning(WorkoutSetResults)
         )

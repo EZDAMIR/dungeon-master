@@ -70,7 +70,7 @@ it('renders a five-cycle pose workout, pause recovery, specific corrections and 
  click('Pose pause / resume',34000);expect(container.textContent).toContain('Тренировка на паузе')
  click('Pose pause / resume',40000);expect(container.querySelector('header code')?.textContent).toBe('WORKOUT')
  click('Shallow rep',46000);expect(container.textContent).toContain('Опустись немного ниже')
- click('Fast rep',54000);expect(container.textContent).toContain('Медленнее опускайся вниз')
+ click('Fast rep',54000);expect(container.textContent).toContain('Медленнее вниз')
  click('Incomplete extension',62000);expect(container.textContent).toContain('Заверши подъём')
  click('Correct rep',70000);expect(container.querySelector('header code')?.textContent).toBe('RESULTS')
  expect(container.textContent).toContain('Подход завершён');expect(container.textContent).toContain('40%')

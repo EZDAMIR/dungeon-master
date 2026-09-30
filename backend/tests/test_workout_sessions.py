@@ -3,6 +3,7 @@ import uuid
 
 import pydantic
 import pytest
+import sqlalchemy as sa
 
 from src.api import models, schemas
 
@@ -232,3 +233,32 @@ def test_session_enum_parity():
     assert set(models.workout_sessions.WorkoutSessions.c.status.type.enums) == {
         v.value for v in schemas.workout_sessions.SessionStatusEnum
     }
+
+
+async def test_persisted_check_constraints_and_historical_duplicate(
+    database, client, guest, session_payload, set_payload, completion_payload
+):
+    headers, user_id = guest
+    created = (
+        await client.post('/api/v1/workout-sessions', json=session_payload, headers=headers)
+    ).json()
+    sid = uuid.UUID(created['id'])
+    path = '/api/v1/workout-sessions/' + str(sid)
+    data = schemas.workout_sessions.WorkoutSetCreate(**set_payload).model_dump(
+        mode='json', by_alias=True
+    )
+    for changes in [{'accepted_reps': 6}, {'duration_ms': -1}, {'set_index': 0}]:
+        with pytest.raises(sa.exc.IntegrityError):
+            await models.workout_sessions.set_create(
+                uuid.UUID(user_id), sid, {**data, **changes}
+            )
+    saved = await client.post(path + '/sets', headers=headers, json=set_payload)
+    await client.post(path + '/complete', headers=headers, json=completion_payload)
+    async with database.begin() as conn:
+        await conn.execute(models.exercises.Exercises.update().values(is_active=False))
+    try:
+        repeated = await client.post(path + '/sets', headers=headers, json=set_payload)
+        assert repeated.status_code == 200 and repeated.json() == saved.json()
+    finally:
+        async with database.begin() as conn:
+            await conn.execute(models.exercises.Exercises.update().values(is_active=True))

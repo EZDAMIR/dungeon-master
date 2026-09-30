@@ -16,14 +16,6 @@ os.environ.setdefault(
 from src.core.config import clear_settings_cache
 from src.main import app
 
-TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL', '')
-DB_AVAILABLE = bool(TEST_DATABASE_URL)
-
-skip_without_db = pytest.mark.skipif(
-    not DB_AVAILABLE,
-    reason='TEST_DATABASE_URL not set — skipping database tests',
-)
-
 
 @pytest_asyncio.fixture
 async def client() -> httpx.AsyncClient:
@@ -50,12 +42,17 @@ def disposable_database_url():
 
     from sqlalchemy.engine import make_url
 
-    value = os.environ.get('TEST_DATABASE_URL')
+    from src.core.config import get_settings
+
+    settings = get_settings()
+    value = os.environ.get('TEST_DATABASE_URL') or settings.test_database_url_str()
     if not value:
         pytest.fail('Set TEST_DATABASE_URL to a separate local *_test database')
     url = make_url(value)
     if (
-        url.host not in {'localhost', '127.0.0.1', 'postgres'}
+        settings.is_production
+        or not url.username
+        or url.host not in {'localhost', '127.0.0.1', 'postgres'}
         or not url.database
         or not url.database.endswith('_test')
         or url == make_url(os.environ['DATABASE_URL'])
