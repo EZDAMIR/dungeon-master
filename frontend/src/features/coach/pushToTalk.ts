@@ -22,8 +22,8 @@ export class PushToTalk {
       this.recorder.ondataavailable = event => { this.bytes += event.data.size; if (this.bytes > 4 * 1024 * 1024) { this.cancel(); this.onStatus('unsupported'); return; } this.chunks.push(event.data); };
       this.recorder.onstop = () => {
         if (epoch !== this.epoch) return;
-        const file = new Blob(this.chunks, { type: mime }); const seconds = Math.min(30, (Date.now() - this.startedAt) / 1000);
-        this.release(); this.onStatus('processing'); if (file.size) this.onRecording(file, seconds); else this.onStatus('idle');
+        const file = new Blob(this.chunks, { type: mime }); const seconds = (Date.now() - this.startedAt) / 1000;
+        this.release(); if (seconds > 30.5) { this.onStatus('unsupported'); return; } this.onStatus('processing'); if (file.size) this.onRecording(file, Math.min(30, seconds)); else this.onStatus('idle');
       };
       this.recorder.onerror = () => { this.cancel(); this.onStatus('denied'); };
       this.recorder.start(250); this.onStatus('recording'); this.timer = setTimeout(() => this.stop(), 30000);

@@ -30,3 +30,10 @@ it('push-to-talk cancellation closes a permission request resolving late', async
 it('normalizes unavailable refresh without identity creation', async () => {
   const transport = vi.fn().mockResolvedValue(new Response('{}', { status: 401 })), client = new ApiClient('http://test', 100, transport); client.setAuthRecovery(async () => { throw new ApiError('http', 401); }); await expect(client.json('/private', { token: 'old' })).rejects.toMatchObject({ status: 401 }); expect(transport).toHaveBeenCalledOnce();
 });
+
+import { projectSessionSets, type MeasuredSet } from '../../store/sessionProjection';
+it('projects every set with global ordinals and preserves null generic/manual measurements', () => {
+ const base: MeasuredSet = {clientSetId: '00000000-0000-4000-8000-000000000001', exerciseKey:'arm_raise',specRevision:'00000000-0000-4000-8000-000000000004',setIndex:1,targetReps:5,assessmentMode:'camera',status:'completed',totalReps:5,acceptedReps:4,durationMs:5000,meanRepDurationMs:1000,errorCounts:{range_short:1},metrics:[{metrics:{minKneeAngle:null}}],targetSnapshot:{targetReps:5,restSeconds:30,planSets:2,durationSeconds:null}};
+ const sets = projectSessionSets([base,{...base,clientSetId:'00000000-0000-4000-8000-000000000002',setIndex:2,status:'partial',totalReps:1,acceptedReps:0},{...base,clientSetId:'00000000-0000-4000-8000-000000000003',setIndex:3,assessmentMode:'manual',meanRepDurationMs:null,metrics:[]}]);
+ expect(sets.map(set=>set.set_index)).toEqual([1,2,3]);expect(sets[0].metrics.mean_min_knee_angle).toBeNull();expect(sets[0].generic_error_counts).toEqual({range_short:1});expect(sets[1].completion_status).toBe('partial');expect(sets[2].accepted_reps).toBe(0);expect(sets[2].generic_error_counts).toEqual({});expect(sets[2].metrics.mean_rep_duration_ms).toBeNull();expect(sets[0].spec_revision).toBe(base.specRevision);
+});

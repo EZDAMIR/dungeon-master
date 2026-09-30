@@ -9,15 +9,17 @@ export function CoachPanel({ client, audio, screen, onAction, language = "ru" }:
   const [text, setText] = useState(''), [turns, setTurns] = useState<CoachTurn[]>([]), [busy, setBusy] = useState(false), [error, setError] = useState(''), [recording, setRecording] = useState<RecordingStatus>('idle');
   const t = (key: Parameters<typeof productText>[1]) => productText(language, key);
   const pendingOperation = useRef<{ text: string; id: string } | null>(null);
+  const transcription = useRef<AbortController | null>(null);
   const conversation = useRef<string | null>(null), request = useRef<AbortController | null>(null), flight = useRef(false), mic = useRef<PushToTalk | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     mic.current = new PushToTalk(status => { audio.setRecording(status === "recording"); setRecording(status); }, (blob, seconds) => {
+      transcription.current?.abort(); const upload = new AbortController(); transcription.current = upload;
       const form = new FormData(); const extension = blob.type.includes('mp4') ? 'mp4' : blob.type.includes('ogg') ? 'ogg' : 'webm'; form.append('file', blob, `recording.${extension}`); form.append('duration_seconds', String(seconds));
       form.append('language', language);
-      void client.backend.request<{ text: string }>('/coach/transcribe', form, 'POST', controller.signal).then(result => { if (!controller.signal.aborted) setText(result.text); }).catch(() => { if (!controller.signal.aborted) setError('Не удалось распознать речь. Введите текст.'); }).finally(() => { if (!controller.signal.aborted) setRecording('idle'); });
+      void client.backend.request<{ text: string }>('/coach/transcribe', form, 'POST', upload.signal).then(result => { if (!controller.signal.aborted && !upload.signal.aborted) setText(result.text); }).catch(() => { if (!controller.signal.aborted && !upload.signal.aborted) setError('Не удалось распознать речь. Введите текст.'); }).finally(() => { if (!controller.signal.aborted && !upload.signal.aborted) setRecording('idle'); });
     });
-    return () => { controller.abort(); request.current?.abort(); mic.current?.cancel(); };
+    return () => { controller.abort(); transcription.current?.abort(); request.current?.abort(); mic.current?.cancel(); };
   }, [client, audio, language]);
   async function send(value: string) {
     if (!value.trim() || flight.current) return; flight.current = true; setBusy(true); setError('');
@@ -39,7 +41,7 @@ export function CoachPanel({ client, audio, screen, onAction, language = "ru" }:
     </article>)}</div>
     <form onSubmit={event => { event.preventDefault(); void send(text); }}><label>{t("message")}<textarea value={text} maxLength={2000} onChange={event => setText(event.target.value)} /></label><button disabled={busy || !text.trim()}>{t("send")}</button></form>
     <div className="dm-actions">{['Объясни мой план', 'Предложи занятие на этой неделе', 'Как улучшить технику?'].map(chip => <button key={chip} disabled={busy} onClick={() => { void send(chip); }}>{chip}</button>)}</div>
-    <div className="dm-actions"><button disabled={recording === 'processing'} onClick={() => { audio.stop(); if (recording === 'recording') mic.current?.stop(); else void mic.current?.start(); }}>{recording === 'recording' ? t("stopRecording") : t("record")}</button><button onClick={() => mic.current?.cancel()}>{t("cancelRecording")}</button></div>
+    <div className="dm-actions"><button disabled={recording === 'processing'} onClick={() => { audio.stop(); if (recording === 'recording') mic.current?.stop(); else void mic.current?.start(); }}>{recording === 'recording' ? t("stopRecording") : t("record")}</button><button onClick={() => { transcription.current?.abort(); mic.current?.cancel(); }}>{t("cancelRecording")}</button></div>
     <p role="status">{recording === 'denied' ? 'Микрофон недоступен. Используйте текст.' : recording === 'unsupported' ? 'Запись не поддерживается. Используйте текст.' : recording === 'recording' ? 'Идёт запись · звук тренера остановлен' : recording === 'processing' ? 'Распознаём речь…' : ''}</p>{error && <p role="alert">{error}</p>}
   </aside>;
 }

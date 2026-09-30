@@ -938,3 +938,6 @@ button.source-chip {
 .schedule-panel h2, .voice-screen h2 { overflow-wrap: anywhere; }
 @media(max-width: 834px) { .app-shell header { flex-wrap: wrap; } .planning-nav { order: 3; width: 100%; } .backend-badge { margin-left: auto; } }
 @media(max-width: 600px) { .app-shell { padding: 20px; } .schedule-panel h2, .voice-screen h2 { font-size: 40px; line-height: 1.1; } .availability-row input { width: 100%; } .schedule-panel input { width: 100%; margin-top: 8px; } .planning-nav a { flex: 1 1 40%; font-size: 14px; } .schedule-panel .dm-actions button { flex: 1 1 100%; } .audio-status button { flex: 1 1 45%; } }
+.session-set-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-block: 24px; }
+.session-results h1 { font: var(--dm-heading); overflow-wrap: anywhere; }
+@media(max-width: 600px) { .session-results h1 { font-size: 40px; line-height: 1.1; } }
