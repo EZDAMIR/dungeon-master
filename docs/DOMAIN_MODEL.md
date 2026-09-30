@@ -118,3 +118,9 @@ in progress history.
 AI-assisted generation, OAuth/calendar links, voice assets, account registration
 and health-document processing are not implemented. Enum compatibility does not
 imply these capabilities exist. No providers or integration tables are added.
+
+## Sprint 4A additions
+
+Revision `041f28173bcc` is model-first and follows `d14a8a94311f`. It adds `user_ai_context` (one active row per user), `user_documents`, `document_chunks`, `document_facts` (pending/confirmed/rejected), `ai_user_profiles`, `ai_exercise_specs` and `ai_plan_runs`. Source documents/text/vectors and structured outputs are JSONB/Text; no vector database or raw upload storage is introduced. UUID owners filter all operations. Status/coach fields use named native enums, text lengths use named checks, and cascade deletion removes document facts/chunks.
+
+Existing `exercises.owner_user_id` separates private generated variants from the public catalog; `training_plans.ai_metadata` holds the source-linked plan/profile snapshot. `workout_set_results.generic_error_counts` stores bounded generated corrections alongside unchanged legacy error fields. Source/context/profile/fact changes invalidate AI personalization; deleted source text is removed while historical plan-run snapshots remain for the prototype. Profile versions restart when invalidated; this is a demo cache, not a medical audit system. The migration's downgrade is deliberately a no-op under repository policy.

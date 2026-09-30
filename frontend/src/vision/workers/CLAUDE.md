@@ -22,3 +22,21 @@ Future worker code may use recognizer adapters and provider-neutral contracts; n
 
 Commands run from `frontend/` unless specified otherwise.
 When implemented, test startup/disposal races, stale messages, bounded inference and main-thread fallback; profile real devices.
+
+## Code example — candidate message contract (reserved)
+
+Illustrative future contract only; no worker is implemented. A generation identifies each model lifecycle so cancelled or stale replies can be rejected. Keep camera permission and UI modes on the main thread.
+
+```ts
+type WorkerRequest =
+  | { type: 'initialize'; generation: number; modelUrl: string }
+  | { type: 'dispose'; generation: number }
+
+type WorkerReply =
+  | { type: 'ready'; generation: number }
+  | { type: 'error'; generation: number; message: string }
+
+function isCurrentReply(reply: WorkerReply, activeGeneration: number): boolean {
+  return reply.generation === activeGeneration
+}
+```

@@ -22,3 +22,19 @@ Fixtures/support may use pure sample contracts. Test assertions may import consu
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test` and `npm run test:instructions`; fixture changes require the consuming rule/session tests.
+
+## Code example — provider-neutral hand builder
+
+Create normalized synthetic landmarks and explicit timing instead of requiring a camera. Ratio and category parameters make trigger, jitter and loss tests reproducible.
+
+From [gestures.test.ts](../src/vision/gestures/__tests__/gestures.test.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export function sample(at: number, ratio = .6, name = 'Open_Palm', confidence = .9): HandRecognitionSample {
+    const landmarks = Array.from({ length: 21 }, () => ({ x: .5, y: .5, z: 0 }));
+    landmarks[5] = { x: .4, y: .5, z: 0 };
+    landmarks[17] = { x: .6, y: .5, z: 0 };
+    landmarks[4] = { x: .5 + ratio * .2, y: .5, z: 0 };
+    return { at, landmarks, gesture: { name, confidence }, handedness: 'Right' };
+}
+```

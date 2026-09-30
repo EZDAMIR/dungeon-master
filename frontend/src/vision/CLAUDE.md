@@ -108,3 +108,13 @@ was observed and a concrete, limited correction.
 - Do not retain frames after processing.
 - Do not upload frames or raw landmark streams.
 - Session persistence uses aggregates and error counts only.
+
+## Code example — cancel an interrupted cycle
+
+This method belongs to SquatAnalyzer. Reset only the partial movement state and emit a semantic phase change; previously completed repetitions remain in the analyzer.
+
+From [analyzer.ts](exercises/squat/analyzer.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+cancelPartial(at: number): VisionEvent[] { const changed = this.phase !== 'not_ready'; this.machine.reset(); this.previous = undefined; return changed ? [{ type: 'workout.phase_changed', at, phase: 'not_ready' }] : []; }
+```

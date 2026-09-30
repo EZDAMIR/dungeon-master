@@ -12,6 +12,13 @@ Exercises = sa.Table(
     sa.Column('key', sa.Text, nullable=False),
     sa.Column('name', sa.Text, nullable=False),
     sa.Column(
+        'owner_user_id',
+        sa.UUID,
+        sa.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=True,
+        index=True,
+    ),
+    sa.Column(
         'difficulty',
         pg.ENUM('beginner', 'intermediate', 'advanced', name='exercises_difficulty_enum'),
         nullable=False,
@@ -57,5 +64,7 @@ Exercises = sa.Table(
 @postgres.session
 async def exercise_list(session) -> list[dict]:
     return await session.fetch_all(
-        Exercises.select().where(Exercises.c.is_active.is_(True)).order_by(Exercises.c.key),
+        Exercises.select()
+        .where(Exercises.c.is_active.is_(True), Exercises.c.owner_user_id.is_(None))
+        .order_by(Exercises.c.key),
     )

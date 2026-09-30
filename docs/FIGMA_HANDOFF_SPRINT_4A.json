@@ -1,0 +1,977 @@
+{
+  "sprint": "Sprint 4A",
+  "fileKey": "vFIK97vQDk4xasLgDUdVdN",
+  "readAt": "2026-09-30",
+  "styles": [
+    {
+      "name": "DM / Display",
+      "font": {
+        "family": "Barlow Condensed",
+        "style": "SemiBold"
+      },
+      "size": 112,
+      "line": {
+        "unit": "PIXELS",
+        "value": 104
+      }
+    },
+    {
+      "name": "DM / Hero",
+      "font": {
+        "family": "Barlow Condensed",
+        "style": "SemiBold"
+      },
+      "size": 80,
+      "line": {
+        "unit": "PIXELS",
+        "value": 80
+      }
+    },
+    {
+      "name": "DM / Heading",
+      "font": {
+        "family": "Barlow Condensed",
+        "style": "SemiBold"
+      },
+      "size": 56,
+      "line": {
+        "unit": "PIXELS",
+        "value": 58
+      }
+    },
+    {
+      "name": "DM / Title",
+      "font": {
+        "family": "Manrope",
+        "style": "SemiBold",
+        "variationSettings": {
+          "wght": 600
+        }
+      },
+      "size": 24,
+      "line": {
+        "unit": "PIXELS",
+        "value": 32
+      }
+    },
+    {
+      "name": "DM / Body",
+      "font": {
+        "family": "Manrope",
+        "style": "Regular",
+        "variationSettings": {
+          "wght": 400
+        }
+      },
+      "size": 16,
+      "line": {
+        "unit": "PIXELS",
+        "value": 25
+      }
+    },
+    {
+      "name": "DM / Strong",
+      "font": {
+        "family": "Manrope",
+        "style": "SemiBold",
+        "variationSettings": {
+          "wght": 600
+        }
+      },
+      "size": 16,
+      "line": {
+        "unit": "PIXELS",
+        "value": 24
+      }
+    },
+    {
+      "name": "DM / Small",
+      "font": {
+        "family": "Manrope",
+        "style": "Medium",
+        "variationSettings": {
+          "wght": 500
+        }
+      },
+      "size": 13,
+      "line": {
+        "unit": "PIXELS",
+        "value": 20
+      }
+    },
+    {
+      "name": "DM / Label",
+      "font": {
+        "family": "IBM Plex Mono",
+        "style": "Medium"
+      },
+      "size": 12,
+      "line": {
+        "unit": "PIXELS",
+        "value": 18
+      }
+    },
+    {
+      "name": "DM / Metric",
+      "font": {
+        "family": "Barlow Condensed",
+        "style": "SemiBold"
+      },
+      "size": 128,
+      "line": {
+        "unit": "PIXELS",
+        "value": 128
+      }
+    },
+    {
+      "name": "DM / Cue",
+      "font": {
+        "family": "Barlow Condensed",
+        "style": "SemiBold"
+      },
+      "size": 64,
+      "line": {
+        "unit": "PIXELS",
+        "value": 64
+      }
+    }
+  ],
+  "masters": [
+    {
+      "id": "3:61",
+      "name": "Button / primary"
+    },
+    {
+      "id": "3:63",
+      "name": "Button / secondary"
+    },
+    {
+      "id": "3:65",
+      "name": "Button / dark"
+    },
+    {
+      "id": "3:67",
+      "name": "Button / ghost"
+    },
+    {
+      "id": "3:69",
+      "name": "Button / danger"
+    },
+    {
+      "id": "3:71",
+      "name": "Button / disabled"
+    },
+    {
+      "id": "3:73",
+      "name": "Button / hover"
+    },
+    {
+      "id": "3:75",
+      "name": "Button / focus"
+    },
+    {
+      "id": "3:78",
+      "name": "Badge / tracked"
+    },
+    {
+      "id": "3:80",
+      "name": "Badge / guided"
+    },
+    {
+      "id": "3:82",
+      "name": "Badge / timer"
+    },
+    {
+      "id": "3:84",
+      "name": "Badge / warning"
+    },
+    {
+      "id": "3:86",
+      "name": "Badge / demo"
+    },
+    {
+      "id": "3:89",
+      "name": "Field / default"
+    },
+    {
+      "id": "3:92",
+      "name": "Field / selected"
+    },
+    {
+      "id": "3:95",
+      "name": "Field / error"
+    },
+    {
+      "id": "3:99",
+      "name": "Toggle / on"
+    },
+    {
+      "id": "3:101",
+      "name": "Toggle / off"
+    },
+    {
+      "id": "3:103",
+      "name": "Exercise row"
+    },
+    {
+      "id": "4:2",
+      "name": "Brand / kinetic"
+    },
+    {
+      "id": "4:25",
+      "name": "Header / light"
+    },
+    {
+      "id": "4:48",
+      "name": "Header / dark"
+    },
+    {
+      "id": "6:316",
+      "name": "Pose / standing"
+    },
+    {
+      "id": "6:334",
+      "name": "Pose / squat"
+    },
+    {
+      "id": "8:562",
+      "name": "Header / session"
+    },
+    {
+      "id": "22:1084",
+      "name": "Pose / mobile standing"
+    },
+    {
+      "id": "22:1097",
+      "name": "Pose / mobile squat"
+    }
+  ],
+  "flows": [
+    {
+      "nodeId": "34:1177",
+      "name": "00 · Start here / Flow map"
+    },
+    {
+      "nodeId": "3:111",
+      "name": "01 · Complete desktop journey"
+    },
+    {
+      "nodeId": "3:112",
+      "name": "02 · Compare demo profiles"
+    },
+    {
+      "nodeId": "3:134",
+      "name": "03 · Camera coaching demo"
+    },
+    {
+      "nodeId": "3:154",
+      "name": "04 · Mobile journey"
+    },
+    {
+      "nodeId": "3:161",
+      "name": "05 · Tablet layout"
+    },
+    {
+      "nodeId": "41:1223",
+      "name": "06 · Ready routines"
+    },
+    {
+      "nodeId": "41:1232",
+      "name": "07 · Voice coach"
+    },
+    {
+      "nodeId": "41:1245",
+      "name": "08 · Mobile routines"
+    },
+    {
+      "nodeId": "41:1244",
+      "name": "09 · ElevenLabs integration handoff"
+    }
+  ],
+  "links": [
+    {
+      "id": "3:111",
+      "name": "Screen / welcome",
+      "targets": [
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:113"
+      ]
+    },
+    {
+      "id": "3:112",
+      "name": "Screen / demo",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:144",
+        "3:113",
+        "3:121",
+        "3:122"
+      ]
+    },
+    {
+      "id": "3:113",
+      "name": "Screen / profile",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:114"
+      ]
+    },
+    {
+      "id": "3:114",
+      "name": "Screen / goals",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:115",
+        "3:121",
+        "3:122",
+        "3:113"
+      ]
+    },
+    {
+      "id": "3:115",
+      "name": "Screen / documents",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:116",
+        "3:119",
+        "3:118",
+        "3:114"
+      ]
+    },
+    {
+      "id": "3:116",
+      "name": "Screen / processing",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:117",
+        "3:115"
+      ]
+    },
+    {
+      "id": "3:117",
+      "name": "Screen / review",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:113",
+        "3:115",
+        "3:114",
+        "3:119"
+      ]
+    },
+    {
+      "id": "3:118",
+      "name": "Screen / upload-error",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:115",
+        "3:119"
+      ]
+    },
+    {
+      "id": "3:119",
+      "name": "Screen / building",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:115"
+      ]
+    },
+    {
+      "id": "3:120",
+      "name": "Screen / plan",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:123",
+        "3:124",
+        "3:140",
+        "3:126",
+        "3:125",
+        "3:146"
+      ]
+    },
+    {
+      "id": "3:121",
+      "name": "Screen / plan-strength",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:123",
+        "3:124",
+        "3:140",
+        "3:126",
+        "3:125",
+        "3:146"
+      ]
+    },
+    {
+      "id": "3:122",
+      "name": "Screen / plan-mobility",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:123",
+        "3:140",
+        "3:125",
+        "3:146"
+      ]
+    },
+    {
+      "id": "3:123",
+      "name": "Screen / why",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144"
+      ]
+    },
+    {
+      "id": "3:124",
+      "name": "Screen / exercise",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:126",
+        "3:125"
+      ]
+    },
+    {
+      "id": "3:125",
+      "name": "Screen / swap",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144"
+      ]
+    },
+    {
+      "id": "3:126",
+      "name": "Screen / camera",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:128",
+        "3:140",
+        "3:127"
+      ]
+    },
+    {
+      "id": "3:127",
+      "name": "Screen / camera-denied",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:126",
+        "3:140"
+      ]
+    },
+    {
+      "id": "3:128",
+      "name": "Screen / gestures",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:129",
+        "3:131",
+        "3:126"
+      ]
+    },
+    {
+      "id": "3:129",
+      "name": "Screen / gesture-pinch",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:130",
+        "3:131",
+        "3:128"
+      ]
+    },
+    {
+      "id": "3:130",
+      "name": "Screen / gesture-confirm",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:131",
+        "3:129"
+      ]
+    },
+    {
+      "id": "3:131",
+      "name": "Screen / calibrate",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:132",
+        "3:137"
+      ]
+    },
+    {
+      "id": "3:132",
+      "name": "Screen / ready",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:133",
+        "3:131"
+      ]
+    },
+    {
+      "id": "3:133",
+      "name": "Screen / countdown",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:134"
+      ]
+    },
+    {
+      "id": "3:134",
+      "name": "Screen / live",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:136",
+        "3:135",
+        "3:137"
+      ]
+    },
+    {
+      "id": "3:135",
+      "name": "Screen / correction",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:137"
+      ]
+    },
+    {
+      "id": "3:136",
+      "name": "Screen / corrected",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:139",
+        "3:135",
+        "3:137"
+      ]
+    },
+    {
+      "id": "3:137",
+      "name": "Screen / tracking-lost",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:132",
+        "3:141",
+        "3:140"
+      ]
+    },
+    {
+      "id": "3:138",
+      "name": "Screen / paused",
+      "targets": [
+        "41:1232",
+        "3:147",
+        "3:141"
+      ]
+    },
+    {
+      "id": "3:139",
+      "name": "Screen / rest",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:134",
+        "3:141"
+      ]
+    },
+    {
+      "id": "3:140",
+      "name": "Screen / guided",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:141",
+        "3:125"
+      ]
+    },
+    {
+      "id": "3:141",
+      "name": "Screen / complete",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:142",
+        "3:151"
+      ]
+    },
+    {
+      "id": "3:142",
+      "name": "Screen / feedback",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:147"
+      ]
+    },
+    {
+      "id": "3:143",
+      "name": "Screen / progress",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:141"
+      ]
+    },
+    {
+      "id": "3:144",
+      "name": "Screen / settings",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:150",
+        "3:135",
+        "3:152",
+        "3:153",
+        "41:1232"
+      ]
+    },
+    {
+      "id": "3:145",
+      "name": "Screen / profile-sources",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:112",
+        "3:144",
+        "3:117",
+        "3:148",
+        "3:115"
+      ]
+    },
+    {
+      "id": "3:146",
+      "name": "Screen / offline",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:119"
+      ]
+    },
+    {
+      "id": "3:147",
+      "name": "Screen / stop",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:141"
+      ]
+    },
+    {
+      "id": "3:148",
+      "name": "Screen / delete",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:149"
+      ]
+    },
+    {
+      "id": "3:149",
+      "name": "Screen / deleted",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:119",
+        "3:115"
+      ]
+    },
+    {
+      "id": "3:150",
+      "name": "Screen / settings-quiet",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:135",
+        "3:152",
+        "3:153",
+        "41:1232"
+      ]
+    },
+    {
+      "id": "3:151",
+      "name": "Screen / session-offline",
+      "targets": [
+        "3:111",
+        "41:1223",
+        "3:143",
+        "3:145",
+        "3:112",
+        "3:144",
+        "3:141"
+      ]
+    },
+    {
+      "id": "3:152",
+      "name": "Screen / live-ru",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:135",
+        "3:137"
+      ]
+    },
+    {
+      "id": "3:153",
+      "name": "Screen / live-kz",
+      "targets": [
+        "41:1232",
+        "3:138",
+        "3:147",
+        "3:135",
+        "3:137"
+      ]
+    },
+    {
+      "id": "3:154",
+      "name": "Screen / m-welcome",
+      "targets": [
+        "3:160",
+        "41:1245",
+        "3:155"
+      ]
+    },
+    {
+      "id": "3:155",
+      "name": "Screen / m-plan",
+      "targets": [
+        "3:154",
+        "3:160",
+        "3:156",
+        "22:1083"
+      ]
+    },
+    {
+      "id": "3:156",
+      "name": "Screen / m-camera",
+      "targets": [
+        "3:154",
+        "3:160",
+        "22:1083",
+        "3:157"
+      ]
+    },
+    {
+      "id": "3:157",
+      "name": "Screen / m-live",
+      "targets": [
+        "3:154",
+        "3:160",
+        "3:158",
+        "22:1082"
+      ]
+    },
+    {
+      "id": "3:158",
+      "name": "Screen / m-correction",
+      "targets": [
+        "3:154",
+        "3:160",
+        "26:1114",
+        "22:1082"
+      ]
+    },
+    {
+      "id": "3:159",
+      "name": "Screen / m-complete",
+      "targets": [
+        "3:154",
+        "3:160",
+        "3:155"
+      ]
+    },
+    {
+      "id": "3:160",
+      "name": "Screen / m-sources",
+      "targets": [
+        "3:154",
+        "3:155"
+      ]
+    },
+    {
+      "id": "3:161",
+      "name": "Screen / tablet-plan",
+      "targets": [
+        "3:145",
+        "3:124",
+        "3:140",
+        "3:123",
+        "3:125",
+        "3:126"
+      ]
+    },
+    {
+      "id": "22:1082",
+      "name": "Screen / m-paused",
+      "targets": [
+        "3:154",
+        "3:160",
+        "3:157",
+        "3:156",
+        "3:159"
+      ]
+    },
+    {
+      "id": "22:1083",
+      "name": "Screen / m-guided",
+      "targets": [
+        "3:154",
+        "3:160",
+        "3:155",
+        "3:159"
+      ]
+    },
+    {
+      "id": "26:1114",
+      "name": "Screen / m-corrected",
+      "targets": [
+        "3:154",
+        "3:160",
+        "3:159",
+        "22:1082"
+      ]
+    }
+  ]
+}

@@ -22,3 +22,13 @@ Use hand/pose sample contracts and pure builders; fixtures must not initialize M
 
 Commands run from `frontend/` unless specified otherwise.
 Run consuming gesture/pose/squat tests and inspect fixture diffs for expected sequence and timing changes.
+
+## Code example — known synthetic calibration
+
+Use a typed baseline with an explicit active side and monotonic createdAt. This calibration is synthetic test support; it is not evidence that live-camera defaults are tuned.
+
+From [profile.ts](pose/profile.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export const profile: CalibrationProfile = { version: 'squat-calibration-v1', activeSide: 'left', standingKneeAngle: 178, standingHipAngle: 178, baselineTorsoTilt: 0, bodyScale: .8, sideViewScore: .95, createdAt: 0 };
+```

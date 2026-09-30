@@ -22,3 +22,25 @@ Scripts may read package assets and repository files; never import browser UI or
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test:instructions` and `npm run check:instructions`; asset-script changes additionally need cached, failed-checksum and fresh-download checks.
+
+## Code example — cover authored ancestors
+
+Derive guide coverage from repository paths, including fixtures and reserved folders. Git’s ignored generated assets and dependencies stay outside this list.
+
+From [check-folder-instructions.mjs](check-folder-instructions.mjs). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```js
+export function instructionFolders(files) {
+    const folders = new Set(['frontend']);
+    for (const file of files) {
+        if (!file.startsWith('frontend/'))
+            continue;
+        let folder = path.posix.dirname(file);
+        while (folder !== 'frontend') {
+            folders.add(folder);
+            folder = path.posix.dirname(folder);
+        }
+    }
+    return [...folders].sort();
+}
+```

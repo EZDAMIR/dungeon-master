@@ -4,6 +4,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 
 from ...core import postgres
+from .. import models
 
 
 class ProfileDoesNotExist(Exception):
@@ -166,4 +167,5 @@ async def profile_replace(
                     ],
                 ),
             )
+        await models.ai_coach.invalidate_personalization(session, user_id)
         return await profile_get(session, user_id)

@@ -8,12 +8,16 @@ Add domain models as they are created::
     from . import entity   # noqa: F401
 """
 
+from . import ai_coach  # noqa: F401
 from . import exercises  # noqa: F401
 from . import profiles  # noqa: F401
 from . import progress  # noqa: F401
 from . import training_plans  # noqa: F401
 from . import users  # noqa: F401
 from . import workout_sessions  # noqa: F401
+from .ai_coach import AIContextChanged  # noqa: F401
+from .ai_coach import AIDocumentLimit  # noqa: F401
+from .ai_coach import AISourceNotFound  # noqa: F401
 from .exercises import Exercises  # noqa: F401
 from .exercises import exercise_list  # noqa: F401
 from .profiles import HealthConstraints  # noqa: F401

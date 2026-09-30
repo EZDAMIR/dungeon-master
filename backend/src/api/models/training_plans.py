@@ -40,6 +40,7 @@ TrainingPlans = sa.Table(
     sa.Column('starts_on', sa.Date, nullable=False),
     sa.Column('rationale', sa.Text, nullable=False),
     sa.Column('generator_version', sa.Text, nullable=False),
+    sa.Column('ai_metadata', pg.JSONB, nullable=True),
     sa.Column(
         'created_at',
         sa.DateTime(timezone=True),

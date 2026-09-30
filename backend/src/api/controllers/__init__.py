@@ -12,6 +12,9 @@ Add controllers as they are created::
     )
 """
 
+from . import ai_coach  # noqa: F401
+from . import demo_personas  # noqa: F401
+from . import documents  # noqa: F401
 from . import exercises  # noqa: F401
 from . import profiles  # noqa: F401
 from . import progress  # noqa: F401

@@ -39,7 +39,7 @@ async def test_upgrade_preserves_populated_previous_revision(
     engine = create_async_engine(url, poolclass=NullPool, hide_parameters=True)
     try:
         subprocess.run(
-            [sys.executable, '-m', 'alembic', 'upgrade', 'e2dc2dbe10a5'],
+            [sys.executable, '-m', 'alembic', 'upgrade', 'd14a8a94311f'],
             env=env,
             check=True,
             capture_output=True,
@@ -49,38 +49,69 @@ async def test_upgrade_preserves_populated_previous_revision(
         assert guest.status_code == 200
         user_id = uuid.UUID(guest.json()['user']['id'])
         headers = {'Authorization': 'Bearer ' + guest.json()['access_token']}
-        profile = {**profile_payload, 'confirmed_constraints': ['avoid_overhead']}
-        assert (
-            await client.put('/api/v1/profile', json=profile, headers=headers)
-        ).status_code == 200
-        generated = await client.post('/api/v1/training-plans/generate', headers=headers)
-        assert generated.status_code == 200
-        plan = generated.json()
-        session_body = {**session_payload, 'plan_id': plan['id']}
-        started = await client.post(
-            '/api/v1/workout-sessions', json=session_body, headers=headers
-        )
-        assert started.status_code == 200
-        session_id = started.json()['id']
-        path = '/api/v1/workout-sessions/' + session_id
-        saved_set = await client.post(path + '/sets', json=set_payload, headers=headers)
-        assert saved_set.status_code == 200
-        completed = await client.post(
-            path + '/complete', json=completion_payload, headers=headers
-        )
-        assert completed.status_code == 200
+        # Sprint 4A tests the deployed Sprint 3 schema using reflection, not current models.
+        import datetime
+
+        import sqlalchemy as sa
+
+        from src.api import models
+
+        timestamp = datetime.datetime(2026, 9, 30, tzinfo=datetime.UTC)
+        physical = sa.MetaData()
         async with engine.begin() as connection:
-            users = postgres.metadata.tables['users']
-            constraints = postgres.metadata.tables['health_constraints']
+            await connection.run_sync(physical.reflect)
             await connection.execute(
-                users.update()
-                .where(users.c.id == user_id)
-                .values(email='migration@example.com', display_name='Проверка')
+                physical.tables['profiles']
+                .insert()
+                .values(
+                    user_id=user_id,
+                    **{
+                        k: v
+                        for k, v in profile_payload.items()
+                        if k != 'confirmed_constraints'
+                    },
+                )
+            )
+            exercise = (
+                (
+                    await connection.execute(
+                        physical.tables['exercises']
+                        .select()
+                        .where(physical.tables['exercises'].c.key == 'bodyweight_squat')
+                    )
+                )
+                .mappings()
+                .one()
+            )
+            session_id = uuid.uuid4()
+            await connection.execute(
+                physical.tables['workout_sessions']
+                .insert()
+                .values(
+                    id=session_id,
+                    user_id=user_id,
+                    client_session_id=uuid.UUID(session_payload['client_session_id']),
+                    status='completed',
+                    started_at=timestamp,
+                    completed_at=timestamp + datetime.timedelta(seconds=27),
+                    client_engine_version='squat-v1',
+                    summary=completion_payload['summary'],
+                )
             )
             await connection.execute(
-                constraints.update()
-                .where(constraints.c.user_id == user_id)
-                .values(note='Тест миграции')
+                physical.tables['workout_set_results']
+                .insert()
+                .values(
+                    id=uuid.uuid4(),
+                    session_id=session_id,
+                    exercise_id=exercise['id'],
+                    **{
+                        k: v
+                        for k, v in set_payload.items()
+                        if k not in {'exercise_key', 'engine_version', 'client_set_id'}
+                    },
+                    client_set_id=uuid.UUID(set_payload['client_set_id']),
+                )
             )
 
         async def snapshot():
@@ -94,19 +125,11 @@ async def test_upgrade_preserves_populated_previous_revision(
                             )
                         ).mappings()
                     ]
-                    for table in postgres.metadata.sorted_tables
+                    for table in physical.sorted_tables
+                    if table.name != 'alembic_version'
                 }
 
         before = await snapshot()
-        endpoints = [
-            '/api/v1/auth/me',
-            '/api/v1/profile',
-            '/api/v1/training-plans/current',
-            '/api/v1/progress/summary',
-        ]
-        before_responses = [
-            (await client.get(endpoint, headers=headers)).json() for endpoint in endpoints
-        ]
         await engine.dispose()
         subprocess.run(
             [sys.executable, '-m', 'alembic', 'upgrade', 'head'],
@@ -121,18 +144,14 @@ async def test_upgrade_preserves_populated_previous_revision(
             capture_output=True,
         )
         assert await snapshot() == before
-        after_responses = [
-            (await client.get(endpoint, headers=headers)).json() for endpoint in endpoints
-        ]
-        assert after_responses == before_responses
-        for endpoint, payload, expected in [
-            ('/api/v1/workout-sessions', session_body, completed.json()),
-            (path + '/sets', set_payload, saved_set.json()),
-            (path + '/complete', completion_payload, completed.json()),
-        ]:
-            response = await client.post(endpoint, json=payload, headers=headers)
-            assert response.status_code == 200
-            assert response.json() == expected
+        profile = await client.get('/api/v1/profile', headers=headers)
+        assert profile.status_code == 200
+        progress = await client.get('/api/v1/progress/summary', headers=headers)
+        assert progress.status_code == 200
+        assert progress.json()['total_reps'] == 5
+        assert progress.json()['recent_sessions'][0]['exercise_key'] == 'bodyweight_squat'
+        row = await models.workout_sessions.session_get(user_id, session_id)
+        assert row['summary'] == completion_payload['summary']
     finally:
         await engine.dispose()
         subprocess.run(['dropdb', *args, name], env=env, check=True, capture_output=True)

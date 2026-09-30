@@ -24,3 +24,17 @@ Use vision/core, squat analyzer, feedback policy and VisionEvent. Only poseRecog
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/vision/pose src/app/__tests__/poseFlow.test.ts`; update synthetic pose fixtures and cover calibration gaps, wrong angle, countdown cancellation, recovery and pause.
+
+## Code example — isolate provider lifecycle
+
+Expose provider-neutral samples through a small adapter. initialize/close own model resources; pure calibration and readiness consume samples without MediaPipe objects.
+
+From [types.ts](types.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export interface PoseLandmarkerAdapter {
+    initialize(): Promise<void>;
+    recognize(video: HTMLVideoElement, timestampMs: number): PoseRecognitionSample | null;
+    close(): void;
+}
+```

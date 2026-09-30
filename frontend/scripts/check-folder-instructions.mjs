@@ -26,6 +26,10 @@ export function instructionProblems(root, files) {
     }
     const content = readFileSync(guide, 'utf8')
     if (!content.trim()) problems.push(`${folder}/CLAUDE.md is empty`)
+    else if (![...content.matchAll(/^```(?:ts|tsx|js|json|bash|sh|css|html|svg)\r?\n([\s\S]*?)^```[ \t]*$/gm)]
+      .some(match => match[1].trim())) {
+      problems.push(`${folder}/CLAUDE.md has no concrete code example`)
+    }
     for (const match of content.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
       const target = match[1]
       if (/^(?:[a-z]+:|#)/i.test(target)) continue

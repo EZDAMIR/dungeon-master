@@ -22,3 +22,13 @@ API code may use transport helpers and contract types; it must not depend on Rea
 
 Commands run from `frontend/` unless specified otherwise.
 Mock HTTP success, timeout, cancellation, empty/malformed responses and offline behavior; run type checking and the frontend suite.
+
+## Code example — typed cancellable mutation
+
+Keep HTTP paths, payloads and cancellation in the API module. ApiClient owns timeouts and normalized errors; store actions own local draft and recovery behavior.
+
+From [profile.ts](profile.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export const putProfile = (client: ApiClient, token: string, body: ProfileUpdate, signal?: AbortSignal) => client.json<Profile>('/profile', { method: 'PUT', token, body, signal });
+```

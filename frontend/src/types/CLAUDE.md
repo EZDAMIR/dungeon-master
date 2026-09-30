@@ -22,3 +22,13 @@ Type-only imports from pose/squat contracts are allowed. Do not import React, pr
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run type-check` and the relevant producer/mapper tests; confirm incompatible payloads cannot compile.
+
+## Code example — literal command contracts
+
+Use a literal union so invalid commands fail type checking. VisionEvent in this module adds the event discriminator, monotonic timestamp and command-specific payload.
+
+From [vision.ts](vision.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export type GestureCommand = 'select' | 'back' | 'confirm';
+```

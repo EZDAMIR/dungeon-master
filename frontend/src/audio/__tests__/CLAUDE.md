@@ -22,3 +22,19 @@ Tests may import their subject and pure fixture/support contracts across layers;
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/audio`, then `npm run type-check` and the broader frontend suite.
+
+## Code example — audio failure isolation
+
+Mock unavailable browser speech and assert semantic handling still completes. Restore mocked globals in afterEach.
+
+From [workoutAudio.test.ts](workoutAudio.test.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+it('speech and tone failures leave semantic handling usable', async () => {
+    Object.defineProperty(window, 'speechSynthesis', { value: { getVoices: () => { throw new Error('unavailable'); } }, configurable: true });
+    const audio = new WorkoutAudio();
+    await audio.enable();
+    expect(() => audio.event({ type: 'workout.countdown', at: 1000, count: 0 })).not.toThrow();
+    audio.close();
+})
+```

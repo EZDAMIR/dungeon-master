@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "exercise_key": "controlled_squat_demo",
+  "display_name": "Controlled Squat",
+  "camera": {
+    "preferred_angle": "side",
+    "body_scope": "full",
+    "required_landmarks": [
+      "shoulder",
+      "hip",
+      "knee",
+      "ankle",
+      "heel",
+      "foot_index"
+    ],
+    "minimum_visibility": 0.65
+  },
+  "calibration": {
+    "stable_ms": 700,
+    "baseline_features": ["movement"],
+    "messages": {
+      "ru": "Встань боком",
+      "kk": "Қалыпқа тұр, буындарың көрінсін",
+      "en": "Stand side-on with your feet visible"
+    }
+  },
+  "features": [
+    {
+      "id": "movement",
+      "operation": "angle",
+      "points": ["hip", "knee", "ankle"],
+      "inputs": [],
+      "normalize_by": null,
+      "scope": "frame"
+    },
+    {
+      "id": "range",
+      "operation": "minimum",
+      "points": [],
+      "inputs": ["movement"],
+      "normalize_by": null,
+      "scope": "rep"
+    }
+  ],
+  "phases": [
+    {
+      "id": "standing",
+      "messages": {
+        "ru": "Исходное положение",
+        "kk": "Бастапқы қалып",
+        "en": "Starting position"
+      }
+    },
+    {
+      "id": "moving",
+      "messages": {
+        "ru": "Движение",
+        "kk": "Қозғалыс",
+        "en": "Move with control"
+      }
+    },
+    {
+      "id": "turnaround",
+      "messages": {
+        "ru": "Поворот",
+        "kk": "Бұрылу",
+        "en": "Turnaround"
+      }
+    },
+    {
+      "id": "returning",
+      "messages": {
+        "ru": "Возвращение",
+        "kk": "Қайту",
+        "en": "Return slowly"
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "from": "standing",
+      "to": "moving",
+      "condition": {
+        "feature": "movement",
+        "operator": "lt",
+        "value": 145.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    },
+    {
+      "from": "moving",
+      "to": "turnaround",
+      "condition": {
+        "feature": "movement",
+        "operator": "lt",
+        "value": 125.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    },
+    {
+      "from": "turnaround",
+      "to": "returning",
+      "condition": {
+        "feature": "movement",
+        "operator": "gt",
+        "value": 135.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    },
+    {
+      "from": "returning",
+      "to": "standing",
+      "condition": {
+        "feature": "movement",
+        "operator": "gte",
+        "value": 160.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    }
+  ],
+  "repetition": {
+    "start_phase": "standing",
+    "complete_from": "returning",
+    "complete_to": "standing",
+    "minimum_duration_ms": 800,
+    "maximum_duration_ms": 12000
+  },
+  "error_rules": [
+    {
+      "code": "range_too_small",
+      "evaluate_at": "rep",
+      "condition": {
+        "feature": "range",
+        "operator": "gt",
+        "value": 115.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "messages": {
+        "ru": "Чуть ниже",
+        "kk": "Толық қозғалыс",
+        "en": "Fuller range"
+      },
+      "secondary": null,
+      "reject_rep": true,
+      "hold_ms": 300
+    }
+  ],
+  "coach_messages": {
+    "ready": {
+      "messages": {
+        "ru": "Готов? Вперёд!",
+        "kk": "Бастаймыз",
+        "en": "Ready — begin"
+      },
+      "secondary": null
+    },
+    "good_rep": {
+      "messages": {
+        "ru": "Отлично! Ещё одно!",
+        "kk": "Тамаша қайталау",
+        "en": "Great repetition"
+      },
+      "secondary": null
+    },
+    "tracking_recovery": {
+      "messages": {
+        "ru": "Вернись в кадр",
+        "kk": "Кадрға қайта орал",
+        "en": "Return to the frame"
+      },
+      "secondary": null
+    },
+    "complete": {
+      "messages": {
+        "ru": "Подход завершён",
+        "kk": "Жиынтық аяқталды",
+        "en": "Set completed"
+      },
+      "secondary": null
+    }
+  }
+}

@@ -183,3 +183,7 @@ both production builds and exact model/WASM delivery through matching previews.
 Root architecture and diff checks passed. No hosted CI workflow exists; Docker
 container checks remain unavailable while the daemon is stopped. Existing user
 Docker edits stay uncommitted. Details: [repository log](../../docs/development-log.md).
+
+## 2026-09-30 — Sprint 4A AI context, sources and declarations
+
+Added seven owned AI/document tables, strict schemas and thin authenticated endpoints. Model-first migration `041f28173bcc` adds private exercise ownership, plan metadata and generic correction counts without rewriting historical migrations. Added official pinned OpenAI/pypdf adapters, confirmed-source top-5 RAG, structured profile/plan/spec generation, one repair/manual fallback and deterministic fallback. Source edits invalidate active AI personalization. Full regression: 239 tests pass, 96.83% coverage, populated upgrade preserved and Alembic drift clean; provider calls are mocked. Camera processing remains entirely in the browser. No Sprint 4B/provider voice/calendar integration.

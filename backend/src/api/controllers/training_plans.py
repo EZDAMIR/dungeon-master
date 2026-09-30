@@ -54,7 +54,7 @@ def build_weekly_plan(profile: dict, eligible: list[dict], starts_on: datetime.d
     }
 
 
-async def generate(current_user: schemas.UserCurrent) -> dict:
+async def generate(current_user: schemas.UserCurrent, ai_metadata: dict | None = None) -> dict:
     profile = await controllers.profiles.get_profile(current_user)
     eligible = controllers.exercises.eligible_exercises(
         await models.exercises.exercise_list(),
@@ -71,6 +71,8 @@ async def generate(current_user: schemas.UserCurrent) -> dict:
         eligible,
         today - datetime.timedelta(days=today.weekday()),
     )
+    if ai_metadata is not None:
+        data['plan']['ai_metadata'] = ai_metadata
     try:
         return await models.training_plans.plan_create_active(
             current_user.id,
@@ -89,3 +91,11 @@ async def current(current_user: schemas.UserCurrent) -> dict:
         return await models.training_plans.plan_get(current_user.id)
     except models.PlanDoesNotExist as exc:
         raise exceptions.HTTPNotFoundException(detail='No active plan') from exc
+
+
+async def generate_requested(
+    current_user: schemas.UserCurrent, body: schemas.training_plans.PlanGenerate | None
+) -> dict:
+    if body is not None and body.mode == 'ai_assisted':
+        return await controllers.ai_coach.generate_plan(current_user)
+    return await generate(current_user)

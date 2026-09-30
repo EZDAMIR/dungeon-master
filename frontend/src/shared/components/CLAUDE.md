@@ -22,3 +22,17 @@ Import React or shared helpers as needed; no imports from app/pages/features.
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/app/__tests__/App.test.tsx` and type checking; exercise loading, permission failure and retry through the consumer.
+
+## Code example — display supplied progress
+
+Render the caller’s clamped progress with an accessible label. Do not reproduce hold durations or gesture detection in the component.
+
+From [HoldProgress.tsx](HoldProgress.tsx). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```tsx
+export function HoldProgress({ progress }: {
+    progress: number;
+}) {
+    return <progress aria-label="Прогресс удержания жеста" max={1} value={progress}/>;
+}
+```

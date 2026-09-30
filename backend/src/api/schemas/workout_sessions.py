@@ -47,12 +47,23 @@ class WorkoutSessionCreate(pydantic.BaseModel):
 class WorkoutSetBase(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='forbid')
     client_set_id: uuid.UUID
-    exercise_key: typing.Literal['bodyweight_squat']
+    exercise_key: typing.Annotated[
+        str, pydantic.StringConstraints(strict=True, pattern=r'^[a-z][a-z0-9_]{0,79}$')
+    ]
     set_index: typing.Annotated[int, pydantic.Field(strict=True, ge=1, le=100)]
     total_reps: RepCount
     accepted_reps: RepCount
     duration_ms: Duration
     error_counts: TechniqueErrorCounts
+    generic_error_counts: typing.Annotated[
+        dict[
+            typing.Annotated[
+                str, pydantic.StringConstraints(pattern=r'^[a-z][a-z0-9_]{0,79}$')
+            ],
+            RepCount,
+        ],
+        pydantic.Field(max_length=12),
+    ] = {}
     metrics: WorkoutAggregateMetrics
     engine_version: EngineVersion
 
@@ -74,6 +85,15 @@ class SessionSummary(pydantic.BaseModel):
     rejected_reps: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=50_000)]
     duration_ms: typing.Annotated[int, pydantic.Field(strict=True, ge=0, le=360_000_000)]
     error_counts: TechniqueErrorCounts
+    generic_error_counts: typing.Annotated[
+        dict[
+            typing.Annotated[
+                str, pydantic.StringConstraints(pattern=r'^[a-z][a-z0-9_]{0,79}$')
+            ],
+            RepCount,
+        ],
+        pydantic.Field(max_length=12),
+    ] = {}
 
     @pydantic.model_validator(mode='after')
     def consistent_reps(self):

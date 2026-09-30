@@ -22,3 +22,22 @@ Use vision/core/pose contract helpers and VisionEvent. Avoid dependencies on ano
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/vision/exercises src/vision/pose/__tests__/session.test.ts`; exercise complete, partial, rejected and interrupted cycles.
+
+## Code example — exercise-owned rules
+
+Evaluate completed metrics in the implemented squat module. Keep named thresholds and error codes next to the exercise rather than in a page or generic UI helper.
+
+From [rules.ts](squat/rules.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export function evaluateRep(metrics: RepMetrics, incomplete = false): TechniqueErrorCode[] {
+    const errors: TechniqueErrorCode[] = [];
+    if (metrics.minKneeAngle > c.bottomAngle)
+        errors.push('depth_insufficient');
+    if (metrics.descentDurationMs < c.minimumDescentMs || metrics.totalDurationMs < c.minimumRepMs)
+        errors.push('too_fast');
+    if (incomplete)
+        errors.push('incomplete_extension');
+    return errors;
+}
+```

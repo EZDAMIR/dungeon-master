@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "exercise_key": "bicep_curl_demo",
+  "display_name": "Dumbbell Bicep Curl",
+  "camera": {
+    "preferred_angle": "front",
+    "body_scope": "upper",
+    "required_landmarks": ["shoulder", "elbow", "wrist", "hip"],
+    "minimum_visibility": 0.65
+  },
+  "calibration": {
+    "stable_ms": 700,
+    "baseline_features": ["movement"],
+    "messages": {
+      "ru": "Встань лицом, руки должны быть видны",
+      "kk": "Қалыпқа тұр, буындарың көрінсін",
+      "en": "Stand facing the camera"
+    }
+  },
+  "features": [
+    {
+      "id": "movement",
+      "operation": "angle",
+      "points": ["shoulder", "elbow", "wrist"],
+      "inputs": [],
+      "normalize_by": null,
+      "scope": "frame"
+    },
+    {
+      "id": "range",
+      "operation": "minimum",
+      "points": [],
+      "inputs": ["movement"],
+      "normalize_by": null,
+      "scope": "rep"
+    }
+  ],
+  "phases": [
+    {
+      "id": "standing",
+      "messages": {
+        "ru": "Исходное положение",
+        "kk": "Бастапқы қалып",
+        "en": "Starting position"
+      }
+    },
+    {
+      "id": "moving",
+      "messages": {
+        "ru": "Движение",
+        "kk": "Қозғалыс",
+        "en": "Move with control"
+      }
+    },
+    {
+      "id": "turnaround",
+      "messages": {
+        "ru": "Поворот",
+        "kk": "Бұрылу",
+        "en": "Turnaround"
+      }
+    },
+    {
+      "id": "returning",
+      "messages": {
+        "ru": "Возвращение",
+        "kk": "Қайту",
+        "en": "Return slowly"
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "from": "standing",
+      "to": "moving",
+      "condition": {
+        "feature": "movement",
+        "operator": "lt",
+        "value": 145.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    },
+    {
+      "from": "moving",
+      "to": "turnaround",
+      "condition": {
+        "feature": "movement",
+        "operator": "lt",
+        "value": 110.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    },
+    {
+      "from": "turnaround",
+      "to": "returning",
+      "condition": {
+        "feature": "movement",
+        "operator": "gt",
+        "value": 125.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    },
+    {
+      "from": "returning",
+      "to": "standing",
+      "condition": {
+        "feature": "movement",
+        "operator": "gte",
+        "value": 155.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "hold_ms": 100
+    }
+  ],
+  "repetition": {
+    "start_phase": "standing",
+    "complete_from": "returning",
+    "complete_to": "standing",
+    "minimum_duration_ms": 800,
+    "maximum_duration_ms": 12000
+  },
+  "error_rules": [
+    {
+      "code": "range_too_small",
+      "evaluate_at": "rep",
+      "condition": {
+        "feature": "range",
+        "operator": "gt",
+        "value": 90.0,
+        "upper": null,
+        "tolerance": 0.01
+      },
+      "messages": {
+        "ru": "Согни локоть",
+        "kk": "Толық қозғалыс",
+        "en": "Fuller range"
+      },
+      "secondary": null,
+      "reject_rep": true,
+      "hold_ms": 300
+    }
+  ],
+  "coach_messages": {
+    "ready": {
+      "messages": {
+        "ru": "Готов? Вперёд!",
+        "kk": "Бастаймыз",
+        "en": "Ready — begin"
+      },
+      "secondary": null
+    },
+    "good_rep": {
+      "messages": {
+        "ru": "Отлично! Ещё одно!",
+        "kk": "Тамаша қайталау",
+        "en": "Great repetition"
+      },
+      "secondary": null
+    },
+    "tracking_recovery": {
+      "messages": {
+        "ru": "Вернись в кадр",
+        "kk": "Кадрға қайта орал",
+        "en": "Return to the frame"
+      },
+      "secondary": null
+    },
+    "complete": {
+      "messages": {
+        "ru": "Подход завершён",
+        "kk": "Жиынтық аяқталды",
+        "en": "Set completed"
+      },
+      "secondary": null
+    }
+  }
+}

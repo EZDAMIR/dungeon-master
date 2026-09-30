@@ -230,3 +230,22 @@ GET `/ready` returns 503 when PostgreSQL is unreachable, with the flat body
 `{"detail":"Database not reachable", "database":"unreachable"}` and a request ID;
 OpenAPI documents that same status and schema. No integration/provider endpoints
 are implemented in Sprint 3.
+
+## Sprint 4A endpoints
+
+All requests below use the existing authenticated guest identity and `current_user.id`; requests never select another user. Flat JSON and sanitized errors remain.
+
+| Endpoint | Behavior |
+|---|---|
+| GET / PUT `/ai-context` | Read / fully replace self description, style, language and preferences; no response-only fields in PUT |
+| POST / GET `/documents` | Multipart `file` extraction / owned document facts; raw extracted text omitted from responses |
+| DELETE `/documents/{id}` | Delete source/chunks/facts and invalidate active AI personalization |
+| PUT `/documents/{id}/facts/{fact_id}` | `{ "status": "confirmed" }` or `rejected`; pending facts never personalize |
+| POST `/ai-profile/generate` | Structured owned profile or deterministic profile fallback |
+| GET `/ai-profile/current` | Current AI profile; absent/invalidated →404 |
+| POST `/training-plans/generate` | Optional `{ "mode": "ai_assisted" }`; omitted/default deterministic stays compatible |
+| GET `/exercise-specs/{key}` | Owned valid/manual spec, no raw validation errors |
+| POST `/exercise-specs/{key}/regenerate` | One repair then manual fallback |
+| POST `/demo-personas/{maya\|arman\|dana}/load` | Instant synthetic context/profile/document facts; only development or enabled demo flag |
+
+Plans include additive `ai_metadata`: status, title/summary, why, excluded choices, days/items/reasons/source references/coaching status, optional routine blocks, profile snapshot and model/prompt version. Generated items remain private variants. Session set/summary contracts add optional `generic_error_counts`; legacy clients can omit it. Progress recent sessions expose generic errors while retaining existing totals and legacy counters. Bounds and examples are in [personalization](AI_PERSONALIZATION.md) and [MovementSpec](MOVEMENT_SPEC_V1.md).

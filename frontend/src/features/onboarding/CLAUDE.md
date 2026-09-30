@@ -22,3 +22,28 @@ Use VisionEvent, named vision timing configuration and gesture-navigation presen
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run test -- src/app/__tests__/flow.test.ts src/features/gesture-navigation/__tests__/store.test.ts src/app/__tests__/App.test.tsx`; verify restart while already tracked and loss during learning.
+
+## Code example — advance from performed gestures
+
+Tracking samples establish stability; focused selection and confirmed commands advance the tutorial. Hand loss clears the tracking gate instead of advancing via a timeout.
+
+From [tutorialMachine.ts](tutorialMachine.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export function tutorialTransition(state: TutorialState, event: VisionEvent): TutorialState {
+    if (event.type === 'tracking.lost' && event.target === 'hand')
+        return { ...state, handSince: null, handFound: false };
+    if (event.type === 'tracking.acquired')
+        return { ...state, handSince: event.at, handFound: true };
+    if (state.step === 0 && state.handSince !== null && event.type === 'cursor.moved' && event.at - state.handSince >= visionConfig.handStableMs)
+        return { ...state, step: 1 };
+    if (state.step === 1 && event.type === 'focus.changed' && event.targetId === tutorialTargetId)
+        return { ...state, step: 2 };
+    if (event.type !== 'gesture.confirmed')
+        return state;
+    if ((state.step === 2 && event.command === 'select' && event.targetId === tutorialTargetId) ||
+        (state.step === 3 && event.command === 'back') || (state.step === 4 && event.command === 'confirm'))
+        return { ...state, step: state.step + 1 };
+    return state;
+}
+```

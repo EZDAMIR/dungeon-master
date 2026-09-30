@@ -199,6 +199,10 @@ The browser does not send:
 
 ## 9. Deployment
 
+Agents configuring the owner's VPS or CD should read
+[the Sprint 4A VPS/CD guide](VPS_CD_AGENT_GUIDE.md) before editing deployment files.
+It describes the target configuration; server setup and CD are not yet implemented.
+
 Recommended deployment split:
 
 - Static frontend on a platform that serves HTTPS.
@@ -256,3 +260,20 @@ WorkoutFeedbackBanner is presentation-only: short corrections, dense contrast,
 large responsive text, stable height, live region and held visibility for transient
 errors. It does not own technique thresholds. Local speech remains supplementary.
 Live distance/camera verification is pending, as recorded in the manual checklist.
+
+## Sprint 4A extension
+
+The existing API/schema/controller/model boundaries remain. `controllers.ai_coach` orchestrates profile synthesis, retrieved confirmed sources, strict plan output and one spec repair via `ai.openai`; provider work never holds a model database session. Seven small AI/document tables extend existing plan/catalog/session storage. The browser interprets declarations in `vision/exercises/generic` inside the existing PoseSession/RealVisionSource. AI supplies data, not React/layout/code. Frames/landmarks stay local; existing sync persists aggregates and progress. Read [AI personalization](AI_PERSONALIZATION.md), [MovementSpec](MOVEMENT_SPEC_V1.md) and [Figma mapping](FIGMA_SPRINT_4A_MAP.md).
+
+### Sprint 4A URL and browser history
+
+`app/router/routes.ts` maps AppMode and context steps to paths;
+`useBrowserRoutes.ts` synchronizes the native History API and preserves Vite's
+base prefix and query-controlled jury entry. AppMode still owns counting gates.
+Browser traversal dispatches `NAVIGATE`, which permits planning screens, retains
+an existing result, and normalizes camera destinations to fresh calibration
+(or plan when no exercise is selected). History never stores a runtime/calibration
+snapshot. Automatic countdown/pause updates replace history entries. Camera
+resources are disposed when leaving coaching; hand-mode transitions keep their
+existing runtime. Direct session links cannot manufacture a workout or result.
+The frontend host needs an index.html fallback for application deep links.

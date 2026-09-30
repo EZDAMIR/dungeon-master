@@ -22,3 +22,18 @@ Shared runtime code may import React, local shared helpers and generic contract 
 
 Commands run from `frontend/` unless specified otherwise.
 Run type checking and the rendered App/overlay tests; verify new UI through consumer behavior and failure/accessibility states.
+
+## Code example — callback-driven recovery UI
+
+Present a readable error and semantic retry button. The caller owns camera startup and the retry action; reusable presentation does not import a feature store.
+
+From [CameraErrorView.tsx](components/CameraErrorView.tsx). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```tsx
+export function CameraErrorView({ message, onRetry }: {
+    message: string;
+    onRetry: () => void;
+}) {
+    return <section className="camera-error"><p role="alert">{message}</p><button type="button" className="primary-action" onClick={onRetry}>Повторить / Retry</button></section>;
+}
+```

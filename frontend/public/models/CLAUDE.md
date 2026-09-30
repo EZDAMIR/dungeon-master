@@ -21,3 +21,16 @@ scripts/prepare-vision-assets.mjs prepares assets; vision adapters load local BA
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run prepare:vision` and `npm run build`; verify both model checksums and test corrupt-download rejection when preparation changes.
+
+## Code example — pin model provenance and checksums
+
+The preparation script uses these exact official sources and SHA-256 values. A model update must change its documented provenance and adapter checks together; unexpected bytes must fail preparation.
+
+From [prepare-vision-assets.mjs](../../scripts/prepare-vision-assets.mjs). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```js
+export const modelAssets = [
+    { name: 'gesture_recognizer.task', source: 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task', checksum: '97952348cf6a6a4915c2ea1496b4b37ebabc50cbbf80571435643c455f2b0482' },
+    { name: 'pose_landmarker_lite.task', source: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task', checksum: '59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a' },
+];
+```

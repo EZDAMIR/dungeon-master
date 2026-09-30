@@ -21,3 +21,16 @@ Runtime code may reference asset URLs; public files must not import application 
 
 Commands run from `frontend/` unless specified otherwise.
 Run `npm run build`; for asset changes also verify file contents under the deployed base path.
+
+## Code example — base-aware public URLs
+
+Runtime code constructs public asset URLs from Vite BASE_URL. This supports subdirectory deployment without hardcoded root-relative model paths.
+
+From [config.ts](../src/vision/core/config.ts). This is an excerpt in its existing module context; imports and surrounding declarations may be omitted.
+
+```ts
+export const visionAssets = {
+    model: `${import.meta.env.BASE_URL}models/gesture_recognizer.task`,
+    wasm: `${import.meta.env.BASE_URL}mediapipe/wasm`,
+};
+```

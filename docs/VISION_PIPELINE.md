@@ -277,3 +277,9 @@ RESULTS shows total, accepted, rejected, accepted/total percentage, unique-per-r
 ### Limits and manual status
 
 Synthetic tests establish deterministic behavior, not real inference quality. One side webcam, 2D geometry, clothing, lighting, occlusion, atypical camera placement, model noise and image projection can affect results. Defaults above have **not** been tuned with live camera testers. Real browser/GPU performance and reliability acceptance are pending `SPRINT_2_MANUAL_CHECKLIST.md`. No clinical accuracy, injury prevention, diagnosis, additional exercises, server persistence or GPT personalization is claimed.
+
+## Sprint 4A generic coaching
+
+`analyzerFactory` preserves the legacy stable squat and chooses GenericAnalyzer for validated other declarations. The same camera stream, adapters, smoothing, PoseSession, overlay, VisionEvent and sync contracts remain. `featureEvaluator`, `conditionEvaluator` and `phaseMachine` execute only finite allowlisted data; no generated JavaScript, eval or executable expressions exist. Generated required joints drive overlay highlights; generic coaching does not display a hardcoded squat angle.
+
+Calibration locks a stable side/baseline, held transitions count a complete movement cycle, and rep/frame rules produce one primary correction. Tracking loss and pauses cancel partials, retaining completed counts. Localized messages obey limits/fallback and never call a translator during exercise. Invalid specs route to manual timers/completion. FakePoseSource reuses the same PoseSession with synthetic landmarks in development; live webcam thresholds remain experimental. Read [MovementSpec](MOVEMENT_SPEC_V1.md) and [manual evidence](SPRINT_4A_MANUAL_CHECKLIST.md).

@@ -1,0 +1,548 @@
+{
+  "$defs": {
+    "Calibration": {
+      "additionalProperties": false,
+      "properties": {
+        "stable_ms": {
+          "maximum": 5000,
+          "minimum": 400,
+          "title": "Stable Ms",
+          "type": "integer"
+        },
+        "baseline_features": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_]{0,79}$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Baseline Features",
+          "type": "array"
+        },
+        "messages": {
+          "$ref": "#/$defs/Messages"
+        }
+      },
+      "required": ["stable_ms", "baseline_features", "messages"],
+      "title": "Calibration",
+      "type": "object"
+    },
+    "Camera": {
+      "additionalProperties": false,
+      "properties": {
+        "preferred_angle": {
+          "enum": ["side", "front"],
+          "title": "Preferred Angle",
+          "type": "string"
+        },
+        "body_scope": {
+          "enum": ["full", "upper"],
+          "title": "Body Scope",
+          "type": "string"
+        },
+        "required_landmarks": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_]{0,79}$",
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 3,
+          "title": "Required Landmarks",
+          "type": "array"
+        },
+        "minimum_visibility": {
+          "maximum": 1,
+          "minimum": 0.5,
+          "title": "Minimum Visibility",
+          "type": "number"
+        }
+      },
+      "required": [
+        "preferred_angle",
+        "body_scope",
+        "required_landmarks",
+        "minimum_visibility"
+      ],
+      "title": "Camera",
+      "type": "object"
+    },
+    "CoachMessages": {
+      "additionalProperties": false,
+      "properties": {
+        "ready": {
+          "$ref": "#/$defs/Cue"
+        },
+        "good_rep": {
+          "$ref": "#/$defs/Cue"
+        },
+        "tracking_recovery": {
+          "$ref": "#/$defs/Cue"
+        },
+        "complete": {
+          "$ref": "#/$defs/Cue"
+        }
+      },
+      "required": ["ready", "good_rep", "tracking_recovery", "complete"],
+      "title": "CoachMessages",
+      "type": "object"
+    },
+    "Condition": {
+      "additionalProperties": false,
+      "properties": {
+        "feature": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "Feature",
+          "type": "string"
+        },
+        "operator": {
+          "enum": [
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "between",
+            "approximately",
+            "trend_up",
+            "trend_down"
+          ],
+          "title": "Operator",
+          "type": "string"
+        },
+        "value": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "Value",
+          "type": "number"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "maximum": 10000,
+              "minimum": -10000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper"
+        },
+        "tolerance": {
+          "default": 0.01,
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Tolerance",
+          "type": "number"
+        }
+      },
+      "required": ["feature", "operator", "value"],
+      "title": "Condition",
+      "type": "object"
+    },
+    "Cue": {
+      "additionalProperties": false,
+      "properties": {
+        "messages": {
+          "$ref": "#/$defs/Messages"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SecondaryMessages"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": ["messages"],
+      "title": "Cue",
+      "type": "object"
+    },
+    "ErrorRule": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "Code",
+          "type": "string"
+        },
+        "evaluate_at": {
+          "enum": ["rep", "frame"],
+          "title": "Evaluate At",
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/$defs/Condition"
+        },
+        "messages": {
+          "$ref": "#/$defs/Messages"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SecondaryMessages"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "reject_rep": {
+          "title": "Reject Rep",
+          "type": "boolean"
+        },
+        "hold_ms": {
+          "default": 300,
+          "maximum": 5000,
+          "minimum": 100,
+          "title": "Hold Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "code",
+        "evaluate_at",
+        "condition",
+        "messages",
+        "reject_rep"
+      ],
+      "title": "ErrorRule",
+      "type": "object"
+    },
+    "Feature": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "operation": {
+          "enum": [
+            "angle",
+            "distance",
+            "normalized_distance",
+            "relative_x",
+            "relative_y",
+            "position_x",
+            "position_y",
+            "velocity_x",
+            "velocity_y",
+            "delta",
+            "visibility",
+            "body_scale",
+            "average",
+            "minimum",
+            "maximum"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "points": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_]{0,79}$",
+            "type": "string"
+          },
+          "maxItems": 3,
+          "title": "Points",
+          "type": "array"
+        },
+        "inputs": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_]{0,79}$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Inputs",
+          "type": "array"
+        },
+        "normalize_by": {
+          "anyOf": [
+            {
+              "const": "body_scale",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalize By"
+        },
+        "scope": {
+          "default": "frame",
+          "enum": ["frame", "rep"],
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": ["id", "operation"],
+      "title": "Feature",
+      "type": "object"
+    },
+    "Messages": {
+      "additionalProperties": false,
+      "properties": {
+        "ru": {
+          "anyOf": [
+            {
+              "maxLength": 56,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ru"
+        },
+        "kk": {
+          "anyOf": [
+            {
+              "maxLength": 56,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kk"
+        },
+        "en": {
+          "anyOf": [
+            {
+              "maxLength": 56,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "En"
+        }
+      },
+      "title": "Messages",
+      "type": "object"
+    },
+    "MovementStage": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "messages": {
+          "$ref": "#/$defs/Messages"
+        }
+      },
+      "required": ["id", "messages"],
+      "title": "MovementStage",
+      "type": "object"
+    },
+    "Repetition": {
+      "additionalProperties": false,
+      "properties": {
+        "start_phase": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "Start Phase",
+          "type": "string"
+        },
+        "complete_from": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "Complete From",
+          "type": "string"
+        },
+        "complete_to": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "Complete To",
+          "type": "string"
+        },
+        "minimum_duration_ms": {
+          "maximum": 30000,
+          "minimum": 300,
+          "title": "Minimum Duration Ms",
+          "type": "integer"
+        },
+        "maximum_duration_ms": {
+          "maximum": 30000,
+          "minimum": 500,
+          "title": "Maximum Duration Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start_phase",
+        "complete_from",
+        "complete_to",
+        "minimum_duration_ms",
+        "maximum_duration_ms"
+      ],
+      "title": "Repetition",
+      "type": "object"
+    },
+    "SecondaryMessages": {
+      "additionalProperties": false,
+      "properties": {
+        "ru": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ru"
+        },
+        "kk": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kk"
+        },
+        "en": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "En"
+        }
+      },
+      "title": "SecondaryMessages",
+      "type": "object"
+    },
+    "Transition": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "From",
+          "type": "string"
+        },
+        "to": {
+          "pattern": "^[a-z][a-z0-9_]{0,79}$",
+          "title": "To",
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/$defs/Condition"
+        },
+        "hold_ms": {
+          "maximum": 5000,
+          "minimum": 100,
+          "title": "Hold Ms",
+          "type": "integer"
+        }
+      },
+      "required": ["from", "to", "condition", "hold_ms"],
+      "title": "Transition",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "exercise_key": {
+      "pattern": "^[a-z][a-z0-9_]{0,79}$",
+      "title": "Exercise Key",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 48,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "camera": {
+      "$ref": "#/$defs/Camera"
+    },
+    "calibration": {
+      "$ref": "#/$defs/Calibration"
+    },
+    "features": {
+      "items": {
+        "$ref": "#/$defs/Feature"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Features",
+      "type": "array"
+    },
+    "phases": {
+      "items": {
+        "$ref": "#/$defs/MovementStage"
+      },
+      "maxItems": 8,
+      "minItems": 2,
+      "title": "Phases",
+      "type": "array"
+    },
+    "transitions": {
+      "items": {
+        "$ref": "#/$defs/Transition"
+      },
+      "maxItems": 32,
+      "minItems": 2,
+      "title": "Transitions",
+      "type": "array"
+    },
+    "repetition": {
+      "$ref": "#/$defs/Repetition"
+    },
+    "error_rules": {
+      "items": {
+        "$ref": "#/$defs/ErrorRule"
+      },
+      "maxItems": 12,
+      "title": "Error Rules",
+      "type": "array"
+    },
+    "coach_messages": {
+      "$ref": "#/$defs/CoachMessages"
+    }
+  },
+  "required": [
+    "version",
+    "exercise_key",
+    "display_name",
+    "camera",
+    "calibration",
+    "features",
+    "phases",
+    "transitions",
+    "repetition",
+    "error_rules",
+    "coach_messages"
+  ],
+  "title": "MovementSpecV1",
+  "type": "object"
+}
