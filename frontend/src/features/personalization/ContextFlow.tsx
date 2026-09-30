@@ -56,6 +56,7 @@ export function ContextFlow({
   step?: "intake" | "documents" | "review";
   onStepChange?: (step: "intake" | "documents" | "review") => void;
 }) {
+  useEffect(() => () => { void backend.cancelGeneration().catch(() => {}); }, [backend]);
   const [localStep, setLocalStep] = useState<"intake" | "documents" | "review">(
       "intake",
     ),

@@ -508,7 +508,7 @@ export class BackendStore {
     this.generationController?.abort();
     if (job && ["queued", "running"].includes(job.status)) {
       const stopped = await this.request<GenerationJob>(`/generation-jobs/${job.id}/cancel`, { operation_id: crypto.randomUUID() }, "POST");
-      this.publish({ generationJob: stopped });
+      if (this.state.generationJob?.id === job.id) this.publish({ generationJob: stopped });
     }
   }
   async generatePersonalized() {
@@ -532,12 +532,12 @@ export class BackendStore {
       if (!["completed", "fallback"].includes(job.status)) throw new ApiError("http", 503, job.error_category);
       const plan = await this.request<TrainingPlan>("/training-plans/current", undefined, "GET", controller.signal);
       this.publish({ plan, planMessage: null }); return plan;
-    } finally { this.controller.signal.removeEventListener("abort", abort); this.generationController = null; }
+    } finally { this.controller.signal.removeEventListener("abort", abort); if (this.generationController === controller) this.generationController = null; }
   }
-  async exerciseSpec(key: string) {
+  async exerciseSpec(key: string, signal?: AbortSignal) {
     return this.client.json<ExerciseSpec>(
       "/exercise-specs/" + encodeURIComponent(key),
-      this.authenticated(),
+      { ...this.authenticated(), signal: signal ?? this.controller.signal },
     );
   }
   async refreshProgress(): Promise<void> {

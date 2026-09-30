@@ -1,3 +1,4 @@
+import { ApiError } from "./client";
 import type { BackendStore } from '../store/backend';
 export type Language = 'ru' | 'kk' | 'en';
 export type VoicePreferences = { voice_id: string | null; language: Language; style: 'calm' | 'supportive' | 'energetic' | 'strict'; audio_enabled: boolean; revision: number };
@@ -15,10 +16,10 @@ export type GenerationJob = { id: string; status: 'queued' | 'running' | 'comple
 export class ReleaseClient {
   readonly backend: BackendStore;
   constructor(backend: BackendStore) { this.backend = backend; }
-  capabilities(signal?: AbortSignal) { return this.backend.request<Capabilities>("/capabilities", undefined, "GET", signal); }
+  async capabilities(signal?: AbortSignal) { const value = await this.backend.request<Capabilities>("/capabilities", undefined, "GET", signal); if (!value?.elevenlabs || typeof value.elevenlabs.configured !== "boolean") throw new ApiError("protocol"); return value; }
   preferences(signal?: AbortSignal) { return this.backend.request<VoicePreferences>('/coach/preferences', undefined, 'GET', signal); }
   savePreferences(value: Omit<VoicePreferences, 'revision'>, signal?: AbortSignal) { return this.backend.request<VoicePreferences>('/coach/preferences', value, 'PUT', signal); }
-  voices(language: Language, signal?: AbortSignal) { return this.backend.request<VoiceList>(`/voices?language=${language}&page_size=6`, undefined, 'GET', signal); }
+  async voices(language: Language, signal?: AbortSignal) { const value = await this.backend.request<VoiceList>(`/voices?language=${language}&page_size=6`, undefined, 'GET', signal); if (!Array.isArray(value?.voices) || value.voices.some(voice => typeof voice.voice_id !== 'string' || typeof voice.name !== 'string')) throw new ApiError('protocol'); return value; }
   preview(voice: string, language: Language, style: VoicePreferences['style'], signal: AbortSignal) { return this.backend.requestBlob(`/voices/${encodeURIComponent(voice)}/preview`, { language, style }, 'POST', signal); }
   speech(body: { cue_id: string; exercise_key?: string; spec_revision?: string } | { message_id: string }, signal: AbortSignal) { return this.backend.requestBlob('/speech', body, 'POST', signal); }
   turn(text: string, conversation_id: string | null, screen: string, signal?: AbortSignal, operation_id: string = crypto.randomUUID()) { return this.backend.request<CoachTurn>('/coach/turns', { operation_id, text, conversation_id, screen, exercise_key: null }, 'POST', signal); }
