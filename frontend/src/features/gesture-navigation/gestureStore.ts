@@ -11,6 +11,7 @@ import {
   type TutorialState,
 } from "../onboarding/tutorialMachine";
 import { GestureTargetRegistry } from "./gestureTargetRegistry";
+import { scrollForSwipe } from "./gestureScroll";
 export type GestureSnapshot = {
   camera: "idle" | "loading" | "ready" | "error";
   error: string | null;
@@ -137,6 +138,8 @@ export class GestureStore {
     });
   };
   emit = (original: VisionEvent) => {
+    if (original.type === "gesture.swiped" &&
+      !["TUTORIAL", "MENU", "PROFILE", "PLAN", "PROGRESS", "RESULTS"].includes(this.mode)) return;
     let event = original;
     if (event.type === "cursor.moved") {
       this.cursor.x = event.x;
@@ -207,6 +210,20 @@ export class GestureStore {
       case "focus.changed":
         this.publish({ focused: event.targetId });
         break;
+      case "gesture.swiped": {
+        const moved = scrollForSwipe(event.direction, this.cursor);
+        this.cursor.pinching = false;
+        this.publish({
+          candidate: null,
+          progress: 0,
+          focused: null,
+          lastCommand: event.direction === "up" ? "scroll-up" : "scroll-down",
+          message: moved
+            ? `Прокрутка ${event.direction === "up" ? "вверх" : "вниз"}. Останови ладонь перед следующим свайпом.`
+            : "Достигнут край страницы. Свайпни открытой ладонью в другую сторону.",
+        });
+        break;
+      }
       case "gesture.candidate":
         this.cursor.pinching = event.command === "select";
         this.publish({

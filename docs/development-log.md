@@ -680,3 +680,28 @@ passed all CI, smoke, release and deployment jobs.
 Local naming-change verification passed actionlint, eight release-trust tests,
 17 deployment regressions and all 22 automation tests, plus script syntax/style
 and `git diff --check`.
+
+## 2026-09-30 — Sprint 1 follow-up: open-palm swipe scrolling
+
+Added local up/down swipe recognition with smoothed palm-center movement,
+confidence/direction/duration gates, jump rejection, settling/release, cooldown
+and tracking-loss cancellation. The semantic gesture.swiped event scrolls the
+nearest overflow panel under the virtual cursor, or the page, in bounded smooth
+steps. Modal edges stop background scrolling. Scroll events clear stale focus,
+show HUD direction/recovery guidance and optionally play local tones. Pose modes
+ignore swipes; existing pinch/fist/thumb-up actions retain their rules.
+
+Planning and Results now expose camera controls and keep an already started
+shared runtime alive across navigation. Camera access remains an explicit action;
+exercise restarts remount the runtime, and unmount disposes it. Added development
+fake swipe controls and a synthetic hand trajectory, deterministic recognition,
+scroll-panel/modal, audio and rendered application/lifecycle tests.
+
+Verification: focused gesture/features/app/audio checks passed; all 164 frontend
+tests passed with 88.21% statement coverage. `npm run check:instructions`,
+`npm run test:instructions` (3 tests), `npm run lint`, `npm run type-check`,
+`npm run build` and `git diff --check` passed. Models/WASM verified during build.
+Build retains its >500 kB chunk advisory. Backend unchanged. Live-camera/browser
+performance and swipe threshold tuning were not performed; no local browser or
+webcam test tool is available. Updated the vision pipeline and Sprint 1 manual
+checklist; deployment is outside this change.

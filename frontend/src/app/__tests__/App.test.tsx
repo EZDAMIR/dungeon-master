@@ -5,6 +5,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { App } from "../App";
+import { RealVisionSource } from '../../features/workout/RealVisionSource';
 let root: Root, container: HTMLDivElement, time: number, backend: BackendStore;
 beforeEach(() => {
   backend = new BackendStore(
@@ -54,6 +55,7 @@ afterEach(() => {
   container.remove();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  for (const key of ['scrollHeight', 'clientHeight', 'scrollTop', 'scrollBy']) Reflect.deleteProperty(document.documentElement, key);
   window.history.replaceState({}, "", "/");
 });
 function click(label: string, at: number) {
@@ -75,6 +77,42 @@ async function traverseHistory(direction: "back" | "forward") {
     await navigated;
   });
 }
+it('keeps the started camera and swipe instructions across planning routes, then disposes on unmount', () => {
+  window.history.replaceState({}, '', '/context');
+  const start = vi.spyOn(RealVisionSource.prototype, 'start').mockResolvedValue();
+  const dispose = vi.spyOn(RealVisionSource.prototype, 'dispose');
+  act(() => root.render(<App backend={backend} />));
+  expect(start).not.toHaveBeenCalled();
+  click('Включить камеру', 0);
+  const video = container.querySelector('video');
+  expect(start).toHaveBeenCalledOnce();
+  dispose.mockClear();
+  click('Your plan', 1000);
+  click('Progress', 2000);
+  click('Your context', 3000);
+  expect(container.querySelector('video')).toBe(video);
+  expect(container.textContent).toContain('свайпни открытой ладонью');
+  expect(dispose).not.toHaveBeenCalled();
+  act(() => root.unmount());
+  expect(dispose).toHaveBeenCalledOnce();
+  root = createRoot(container);
+});
+it('scrolls planning screens through fake swipe events and shows recognized direction', () => {
+  window.history.replaceState({}, '', '/plan?fakeVision=1');
+  Object.defineProperties(document.documentElement, {
+    scrollHeight: { configurable: true, value: 2000 },
+    clientHeight: { configurable: true, value: 500 },
+    scrollTop: { configurable: true, value: 300 },
+    scrollBy: { configurable: true, value: vi.fn() },
+  });
+  act(() => root.render(<App backend={backend} />));
+  click('Swipe down', 1000);
+  expect(document.documentElement.scrollBy).toHaveBeenLastCalledWith({ top: 325, behavior: 'smooth' });
+  expect(container.querySelector('.gesture-hud [role="status"]')?.textContent).toContain('Прокрутка вниз');
+  click('Swipe up', 2000);
+  expect(document.documentElement.scrollBy).toHaveBeenLastCalledWith({ top: -300, behavior: 'smooth' });
+  expect(window.location.pathname).toBe('/plan');
+});
 it("updates URLs and restores planning screens with browser Back and Forward", async () => {
   window.history.replaceState({}, "", "/?juryDemo=1");
   act(() => root.render(<App backend={backend} />));

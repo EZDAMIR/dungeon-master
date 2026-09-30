@@ -2,6 +2,7 @@ import type { GestureCommand, VisionEvent } from '../../types/vision'
 import { HoldGate } from '../core/holdGate'
 import { CursorMapper, type Viewport } from './cursorMapper'
 import { PinchDetector } from './pinchDetector'
+import { SwipeDetector } from './swipeDetector'
 import { gestureConfig } from './gestureConfig'
 import type { HandRecognitionSample } from './types'
 const commands: Record<string, 'back' | 'confirm' | undefined> = { Closed_Fist: 'back', Thumb_Up: 'confirm' }
@@ -9,6 +10,7 @@ const commands: Record<string, 'back' | 'confirm' | undefined> = { Closed_Fist: 
 export class GestureEngine {
   private cursor = new CursorMapper()
   private pinch = new PinchDetector()
+  private swipe = new SwipeDetector()
   private hold = new HoldGate()
   private tracked = false
   private candidate: GestureCommand | null = null
@@ -29,6 +31,8 @@ export class GestureEngine {
     const hold = this.hold.update(command, at)
     // Pinch geometry can look closed inside a fist. A recognized held command takes priority.
     const pinch = this.pinch.update(sample.landmarks)
+    const direction = this.swipe.update(sample, at, !!command || !pinch.valid || pinch.progress > 0 || pinch.pinched)
+    if (direction) events.push({ type: 'gesture.swiped', at, direction })
     if (this.wasPinched && !pinch.pinched) events.push({ type: 'gesture.cancelled', at, command: 'select' })
     this.wasPinched = pinch.pinched
     const nextCandidate = hold.command ?? (!command && pinch.progress > 0 && !pinch.pinched ? 'select' : null)
@@ -40,5 +44,5 @@ export class GestureEngine {
     if (pinch.confirmed && !command) events.push({ type: 'gesture.confirmed', at, command: 'select' })
     return events
   }
-  reset() { this.tracked = false; this.candidate = null; this.wasPinched = false; this.cursor.reset(); this.pinch.reset(); this.hold.reset() }
+  reset() { this.tracked = false; this.candidate = null; this.wasPinched = false; this.cursor.reset(); this.pinch.reset(); this.swipe.reset(); this.hold.reset() }
 }

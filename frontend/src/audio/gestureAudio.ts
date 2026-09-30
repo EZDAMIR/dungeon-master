@@ -5,6 +5,7 @@ export class GestureAudio {
     try { this.context ??= new AudioContext(); await this.context.resume() } catch { /* Visual feedback remains usable. */ }
   }
   event(event: VisionEvent) {
+    if (event.type === 'gesture.swiped') { this.tone(event.direction === 'up' ? 620 : 440); return }
     if (event.type !== 'gesture.confirmed' || (event.command==='select' && !event.targetId)) return
     this.tone(event.command==='select' ? 520 : event.command==='confirm' ? 780 : 360)
   }

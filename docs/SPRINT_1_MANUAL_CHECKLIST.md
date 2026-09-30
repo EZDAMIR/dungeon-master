@@ -33,6 +33,24 @@ Additional matrix: left/right hand, bright/dim light, plain/busy background, clo
 
 ## Observations
 
+Swipe scrolling follow-up (not performed):
+
+- [ ] Enable the camera on Context/Plan/Progress and verify the swipe hint.
+- [ ] Swipe an open palm up/down ten times each, pausing briefly between strokes;
+      check direction, one scroll per stroke, visible feedback and optional tone.
+- [ ] Move only the pointing finger, pinch, hold fist/thumb up, move horizontally
+      and make small palm movements; none should scroll.
+- [ ] Scroll a long page to both ends, then reverse direction.
+- [ ] Hover the virtual cursor over a scrollable exercise dialog; swipe through it
+      and verify the background stays still at the dialog's edge.
+- [ ] Switch planning routes after starting the camera; verify the stream stays
+      active without another permission request, including browser Back/Forward.
+- [ ] Hide the hand during a partial swipe and switch tabs; verify recovery does
+      not complete the interrupted stroke.
+- [ ] Enter calibration/workout/pause; verify body movements never scroll.
+- [ ] Finish a workout; verify hand recognition returns and Results can scroll.
+- [ ] Check normal camera distance, both hands and narrow/mobile viewports.
+
 - Browser/device: not tested.
 - Camera: not tested.
 - Lighting/hand/viewport: not tested.

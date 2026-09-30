@@ -227,11 +227,6 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           source.current?.dispose();
           source.current = null;
           setCameraEpoch((value) => value + 1);
-        } else if (
-          ["PROFILE", "PLAN", "PROGRESS", "RESULTS"].includes(next.mode)
-        ) {
-          source.current?.dispose();
-          source.current = null;
         }
         session.current = null;
         setGenericView(null);
@@ -260,10 +255,6 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           result: action.result,
           angle: meanMinKneeAngle(before.workout.reps),
         };
-      }
-      if (next.mode === "RESULTS") {
-        source.current?.dispose();
-        source.current = null;
       }
       if (
         action.type === "REPEAT" ||
@@ -311,6 +302,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     setGenericView(null);
     source.current?.dispose();
     source.current = null;
+    setCameraEpoch((value) => value + 1);
     session.current = null;
     send({ type: "BEGIN_EXERCISE", manual: !exercise.spec });
     if (!exercise.spec) {
@@ -335,8 +327,6 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     };
     if (current.current.mode === "PAUSED") send({ type: "RESUME" });
     send({ type: "WORKOUT_DONE", result });
-    source.current?.dispose();
-    source.current = null;
   };
   const toggleVoice = () => {
     const muted = !audio.isMuted();
@@ -397,8 +387,8 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           <BackendBadge status={remote.status} pending={remote.pendingCount} />
         </header>
         <div className={planning ? "planning-content" : "experience"}>
-          {(!planning || legacyFake) && !(active && !active.spec) && (
-            <div className="camera-column">
+          {!(active && !active.spec && inWorkout) && (
+            <div className={`camera-column ${planning ? "planning-camera" : ""}`}>
               <CameraExperience
                 key={cameraEpoch}
                 fake={fake}

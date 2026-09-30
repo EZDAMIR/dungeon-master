@@ -10,4 +10,17 @@ export const gestureConfig = {
   holdMs: 600,
   releaseMs: 200,
   cooldownMs: 700,
+  swipe: {
+    smoothingAlpha: .7,
+    minimumDistance: .16,
+    maximumHorizontalDrift: .1,
+    maximumStepDistance: .14,
+    minimumDurationMs: 120,
+    maximumDurationMs: 600,
+    maximumGapMs: 250,
+    minimumSamples: 3,
+    settleDistance: .025,
+    settleMs: 200,
+    cooldownMs: 700,
+  },
 }

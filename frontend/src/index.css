@@ -451,6 +451,10 @@ select:focus-visible {
   border-radius: 16px;
   pointer-events: none;
 }
+.planning-camera {
+  max-width: 360px;
+  margin-bottom: 24px;
+}
 .gesture-hud {
   padding: 16px;
   margin-top: 16px;

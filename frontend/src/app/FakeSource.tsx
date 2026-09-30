@@ -20,6 +20,8 @@ export function FakeSource() {
     <button type="button" onClick={()=>command('select')}>Pinch / select</button>
     <button type="button" onClick={()=>command('back')}>Fist hold</button>
     <button type="button" onClick={()=>command('confirm')}>Thumb Up hold</button>
+    <button type="button" onClick={()=>emit({type:'gesture.swiped',at:now(),direction:'up'})}>Swipe up</button>
+    <button type="button" onClick={()=>emit({type:'gesture.swiped',at:now(),direction:'down'})}>Swipe down</button>
     <button type="button" onClick={()=>emit({type:'tracking.lost',at:now(),target:'hand'})}>Hand lost</button>
     <button type="button" onClick={()=>emit({type:'camera.error',at:now(),code:'not_readable',message:'Камера отключена. Повтори запуск.'})}>Camera error</button>
   </details>

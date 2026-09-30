@@ -35,6 +35,7 @@ target hardware.
 | Thumb-index pinch | select focused target | edge-triggered with hysteresis |
 | Closed fist | back | stable hold |
 | Thumb up | confirm/start | stable hold |
+| Open palm swiped up/down | scroll up/down | multi-frame stroke, settle/release and cooldown |
 | Raised hand in workout | pause/resume | stable hold and workout-only |
 
 At least the pinch, fist and thumb-up commands must be robust before extra gestures
@@ -59,6 +60,25 @@ measurement. Use different enter and exit thresholds to prevent flicker.
 
 Do not call DOM `.click()` from the low-level engine. Emit a semantic select event
 with the currently focused target ID.
+
+Swipe scrolling extends Sprint 1 navigation. `SwipeDetector` tracks the smoothed
+center of the wrist and palm bases only for a confident Open_Palm category.
+Pointing, pinch and held commands cannot scroll. Defaults require at least three
+samples, 0.16 normalized vertical travel in 120–600 ms, at most 0.1 horizontal
+drift and no sample jump over 0.14. Gaps over 250 ms cancel partial strokes.
+After firing, the palm must settle within 0.025 for 200 ms or release for 200 ms;
+a 700 ms cooldown also applies. Hand loss resets the detector.
+
+The engine emits `gesture.swiped { direction: "up" | "down", at }`; it never
+queries the DOM. GestureStore consumes this in hand-navigation modes only.
+The UI smoothly scrolls 65% of the viewport of the nearest scrollable panel under
+the cursor, falling back to the page and stopping at modal boundaries. Up moves
+toward the top; down moves toward the bottom. HUD feedback and optional local
+tones identify the direction. Stop the palm briefly before another stroke.
+Planning and Results retain the shared camera runtime after explicit permission;
+direct planning links expose the camera start action without requesting access
+automatically. Pose modes disable scrolling. Synthetic tests cover these defaults;
+live-camera tuning remains pending the Sprint 1 manual checklist.
 
 ## 5. Pose pipeline
 
