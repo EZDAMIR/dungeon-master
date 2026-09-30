@@ -19,19 +19,48 @@
   },
   "elevenlabs": {
     "provider": "elevenlabs",
+    "candidate": "fresh_legacy",
     "model": "eleven_flash_v2_5",
     "language": "ru",
-    "status": "LIVE_BLOCKED",
-    "reason": "invalid_api_key",
-    "preview_generated": false,
-    "models_http_status": 401,
-    "latency_ms": 1597,
-    "voices_http_status": null,
-    "voices_status": "not_attempted_after_metadata_auth_failure",
-    "language_capabilities_verified": false,
-    "fresh_canonical_key_read": true,
-    "legacy_key_read_or_reapplied": false,
-    "env_edited": false
+    "canonical_synchronized": true,
+    "preview_generated": true,
+    "models_http_status": 200,
+    "models_count": 11,
+    "language_capabilities": {
+      "ru": [
+        "eleven_v4",
+        "eleven_v4_turbo",
+        "eleven_v3",
+        "eleven_v3_conversational",
+        "eleven_multilingual_v2",
+        "eleven_flash_v2_5",
+        "eleven_turbo_v2_5"
+      ],
+      "kk": [
+        "eleven_v4",
+        "eleven_v4_turbo",
+        "eleven_v3",
+        "eleven_v3_conversational"
+      ],
+      "en": [
+        "eleven_v4",
+        "eleven_v4_turbo",
+        "eleven_v3",
+        "eleven_v3_conversational",
+        "eleven_multilingual_v2",
+        "eleven_flash_v2_5",
+        "eleven_turbo_v2_5",
+        "eleven_turbo_v2",
+        "eleven_flash_v2"
+      ]
+    },
+    "voices_count": 6,
+    "status": "VERIFIED",
+    "audio_bytes": 66499,
+    "content_type": "audio/mpeg",
+    "char_count": 60,
+    "language_capabilities_verified": true,
+    "latency_ms": 4900
   },
   "transcription": {
     "status": "UNVERIFIED"
@@ -43,7 +72,7 @@
   },
   "application_end_to_end_live": {
     "status": "UNVERIFIED",
-    "reason": "elevenlabs_key_rejected"
+    "reason": "provider_primitives_verified_full_profile_plan_browser_not_exercised_in_bounded_followup"
   },
   "focused_config_tests": 11,
   "source_database_used": false,
@@ -77,6 +106,54 @@
         "fresh_canonical_key_read": true,
         "legacy_key_read_or_reapplied": false,
         "env_edited": false
+      }
+    },
+    {
+      "attempt": "fresh_legacy_candidate_then_verified_canonical_sync",
+      "result": {
+        "provider": "elevenlabs",
+        "candidate": "fresh_legacy",
+        "model": "eleven_flash_v2_5",
+        "language": "ru",
+        "canonical_synchronized": true,
+        "preview_generated": true,
+        "models_http_status": 200,
+        "models_count": 11,
+        "language_capabilities": {
+          "ru": [
+            "eleven_v4",
+            "eleven_v4_turbo",
+            "eleven_v3",
+            "eleven_v3_conversational",
+            "eleven_multilingual_v2",
+            "eleven_flash_v2_5",
+            "eleven_turbo_v2_5"
+          ],
+          "kk": [
+            "eleven_v4",
+            "eleven_v4_turbo",
+            "eleven_v3",
+            "eleven_v3_conversational"
+          ],
+          "en": [
+            "eleven_v4",
+            "eleven_v4_turbo",
+            "eleven_v3",
+            "eleven_v3_conversational",
+            "eleven_multilingual_v2",
+            "eleven_flash_v2_5",
+            "eleven_turbo_v2_5",
+            "eleven_turbo_v2",
+            "eleven_flash_v2"
+          ]
+        },
+        "voices_count": 6,
+        "status": "VERIFIED",
+        "audio_bytes": 66499,
+        "content_type": "audio/mpeg",
+        "char_count": 60,
+        "language_capabilities_verified": true,
+        "latency_ms": 4900
       }
     }
   ]
