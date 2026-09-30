@@ -50,6 +50,7 @@ export const emptyWorkout = (): WorkoutView => ({
   countdown: 3,
 });
 export type AppAction =
+  | { type: "NAVIGATE"; mode: AppMode }
   | { type: "CAMERA_READY" }
   | { type: "CAMERA_RETRY" }
   | { type: "TUTORIAL_DONE" }
@@ -175,6 +176,26 @@ function poseEvent(view: WorkoutView, event: VisionEvent): WorkoutView {
   }
 }
 export function appReducer(state: AppState, action: AppAction): AppState {
+  if (action.type === "NAVIGATE") {
+    const cameraRoute = [
+      "CALIBRATION",
+      "COUNTDOWN",
+      "WORKOUT",
+      "PAUSED",
+    ].includes(action.mode);
+    let mode = action.mode;
+    if (cameraRoute) mode = state.selectedWorkoutId ? "CALIBRATION" : "PLAN";
+    if (mode === "RESULTS" && !state.workoutResult) mode = "PROGRESS";
+    // A history return to the entry screen keeps an acquired hand camera alive.
+    if (mode === "CAMERA_PERMISSION" && state.mode !== "CAMERA_PERMISSION")
+      mode = "TUTORIAL";
+    return {
+      ...state,
+      mode,
+      // History may select screens, but cannot restore an old counting gate.
+      workout: emptyWorkout(),
+    };
+  }
   if (
     action.type === "OPEN_PLAN" &&
     state.selectedWorkoutId === "personalized" &&

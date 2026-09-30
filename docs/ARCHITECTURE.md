@@ -260,3 +260,16 @@ Live distance/camera verification is pending, as recorded in the manual checklis
 ## Sprint 4A extension
 
 The existing API/schema/controller/model boundaries remain. `controllers.ai_coach` orchestrates profile synthesis, retrieved confirmed sources, strict plan output and one spec repair via `ai.openai`; provider work never holds a model database session. Seven small AI/document tables extend existing plan/catalog/session storage. The browser interprets declarations in `vision/exercises/generic` inside the existing PoseSession/RealVisionSource. AI supplies data, not React/layout/code. Frames/landmarks stay local; existing sync persists aggregates and progress. Read [AI personalization](AI_PERSONALIZATION.md), [MovementSpec](MOVEMENT_SPEC_V1.md) and [Figma mapping](FIGMA_SPRINT_4A_MAP.md).
+
+### Sprint 4A URL and browser history
+
+`app/router/routes.ts` maps AppMode and context steps to paths;
+`useBrowserRoutes.ts` synchronizes the native History API and preserves Vite's
+base prefix and query-controlled jury entry. AppMode still owns counting gates.
+Browser traversal dispatches `NAVIGATE`, which permits planning screens, retains
+an existing result, and normalizes camera destinations to fresh calibration
+(or plan when no exercise is selected). History never stores a runtime/calibration
+snapshot. Automatic countdown/pause updates replace history entries. Camera
+resources are disposed when leaving coaching; hand-mode transitions keep their
+existing runtime. Direct session links cannot manufacture a workout or result.
+The frontend host needs an index.html fallback for application deep links.

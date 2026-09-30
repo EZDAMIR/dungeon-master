@@ -202,3 +202,36 @@ The existing `RealVisionSource` and `PoseSession` host the generic interpreter; 
 Development `?juryDemo=1&fakeVision=1` reuses FakePoseSource to replay synthetic calf/squat landmarks through the same interpreter. Start the fake camera, calibrate/count down, run a shallow attempt, recover tracking and run a correct attempt. Fake controls/debug output are removed in production. An actual webcam, human distance-readability check and live provider run still require manual verification.
 
 The synthetic persona plans are instant fixtures, not a claim of live AI. Swaps are disabled honestly. Manual exercises and separate routine timers do not report automatic technique assessment. Default API is `http://localhost:8000/api/v1`; set `VITE_API_BASE_URL` when serving another local backend. Both ordinary builds and `npm run build -- --base=/dungeon-master/` are verified.
+
+## Sprint 4A URL navigation
+
+Screens use the browser History API with the existing guarded AppMode reducer.
+The main navigation uses links, supports opening a new tab, and preserves
+`?juryDemo=1` / development `fakeVision=1`. Browser Back/Forward restores context
+steps and planning screens without reloading the application.
+
+| URL (relative to Vite BASE_URL) | Screen |
+|---|---|
+| `/context` | Context intake / query-only jury selector |
+| `/context/documents` | Optional document upload and sources |
+| `/context/review` | Extracted fact confirmation |
+| `/plan` | Personalized or deterministic plan |
+| `/camera/setup` | Selected exercise calibration |
+| `/camera/countdown` | Readiness countdown |
+| `/workout` / `/workout/paused` | Current exercise / pause |
+| `/results` | Current in-memory result |
+| `/progress` | Persisted progress |
+| `/camera/permission`, `/tutorial`, `/menu` | Existing gesture demo entry and navigation |
+
+A refresh/direct link to a workout without a selected exercise goes to `/plan`;
+a result without its in-memory session goes to `/progress`. History traversal to
+a previously active camera exercise starts fresh calibration and discards partial
+counting state. An abandoned manual exercise returns to the plan. Countdown and
+pause updates replace the current history entry instead of adding entries on
+every automatic transition. No camera access is requested by a planning link.
+
+Vite dev/preview provide SPA fallback. A deployment host must serve `index.html`
+for unknown **application** paths (while serving `/api` and real assets normally).
+For a `/dungeon-master/` build, `/dungeon-master/plan` must fall back to
+`/dungeon-master/index.html`. Static hosts without such fallback will return 404
+on refreshed deep links; deployment remains outside Sprint 4A.

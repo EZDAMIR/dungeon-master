@@ -45,15 +45,23 @@ export function ContextFlow({
   jury,
   onPlan,
   onBack,
+  step: routedStep,
+  onStepChange,
 }: {
   backend: BackendStore;
   remote: BackendSnapshot;
   jury: boolean;
   onPlan: () => void;
   onBack: () => void;
+  step?: "intake" | "documents" | "review";
+  onStepChange?: (step: "intake" | "documents" | "review") => void;
 }) {
-  const [step, setStep] = useState<"intake" | "documents" | "review">("intake"),
+  const [localStep, setLocalStep] = useState<"intake" | "documents" | "review">(
+      "intake",
+    ),
     [switcher, setSwitcher] = useState(jury && !remote.context);
+  const step = routedStep ?? localStep;
+  const setStep = onStepChange ?? setLocalStep;
   const [edited, setDraft] = useState<AIContext | null>(null),
     [busy, setBusy] = useState(""),
     [error, setError] = useState(""),

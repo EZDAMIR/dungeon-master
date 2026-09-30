@@ -64,3 +64,21 @@ Production Chrome verified Maya/Arman/Dana prefilled contexts, document review/c
 Remaining limits: swap unavailable; one demo set per session; rest duration shown without an automatic multi-set rest timer; routine completion is local/manual; no OCR or real medical data; generic analyzers and camera-angle heuristic are experimental; physical full-body readability and a human-timed 3–5-minute walkthrough remain to be checked. Russian/Kazakh display glyphs can fall back from Barlow Condensed to Manrope. Plan rows/details/recovery/progress have documented Figma deviations; not every transient state has a screenshot. No dedicated tablet camera frame exists in the source file.
 
 Next safe task: hardware/live-provider validation of Sprint 4A and the documented visual deviations. Next Sprint: **Sprint 4B — ElevenLabs voice and Google Calendar**. No Sprint 4B work was started.
+
+## Sprint 4A navigation follow-up
+
+Implemented native browser paths for context/documents/review, plans, camera
+setup/countdown/workout/pause, results, progress and the existing gesture entry.
+Back/Forward and refresh use the existing guarded AppMode reducer; camera
+calibration is never restored from history, and result traversal does not
+duplicate sync. Planning navigation uses native links with current-page state
+and preserves jury/dev query flags. Route parsing honors `/dungeon-master/`.
+
+Verification: **144 frontend tests**, **87.44%** statement/line coverage,
+lint/type-check/instruction checks and root/base builds passed. Production
+Chrome verified deep links/reloads/history, owned synthetic plan restoration,
+document steps, manual abandonment, results/progress and responsive navigation
+without page errors. Two additional navigation screenshots are in visual QA.
+A deployment host must provide an index.html fallback for refreshed application
+paths; actual host configuration remains outside Sprint 4A. Existing hardware
+and provider verification limitations above remain.

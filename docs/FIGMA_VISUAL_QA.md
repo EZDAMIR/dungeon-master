@@ -43,3 +43,22 @@ Planning colors, graphite surfaces, citron counters/actions, warning/success/err
 Review fixed white text on white workout buttons/badges, missing Maya selector highlight, oversized source-chip/action spacing, long generated cues, and retained page scroll after navigating from a long plan/review. Horizontal overflow checks were false at both 390 and 834 px. Details stack as a sheet; source chips wrap; semantic gesture controls retain 52 px targets. Camera counter/cues live outside the image and cannot cover the body. Long content grows the page rather than shrinking the display font.
 
 Empty, loading, failure, unavailable, manual and sync variants are reused and covered by functional tests. Screenshot evidence is intentionally narrower than “every state visually verified.” Actual camera technique detection, two-line reading at full-body distance, installed RU/KK voice playback and a human-timed 3–5-minute jury run remain manual checks. A separate tablet camera source could not be verified because it does not exist in this file. There are no unchecked sources presented as verified frames.
+
+## Sprint 4A URL navigation follow-up
+
+Native planning links keep the existing typography, pill spacing, focus styles
+and token colors. The current page uses the existing active-navigation variant.
+Browser Chrome QA covered root and `/dungeon-master/` production builds: direct
+links/reloads, Back/Forward, context/document/review steps, a persisted synthetic
+Maya plan reload, camera denial → manual → results → progress → Back, guarded
+abandoned manual links and unknown paths. No page errors; 390/834px plan checks
+reported no horizontal overflow. This adds navigation checks to the earlier visual
+review, without claiming live-camera or deployment-host validation.
+
+| Figma node/frame | Frontend route/state | Tested viewport | Responsive counterpart | Implementation status | Known visual deviation |
+|---|---|---|---|---|---|
+| 3:120 Maya plan | `/plan` / PLAN | 1440×960 | 3:155 | [Production navigation screenshot](screenshots/sprint4a/navigation-plan-desktop.png) checked | Earlier plan-row/content deviations still apply |
+| 3:155 mobile plan | `/plan` / PLAN | 390×844 | 3:120 | [Production mobile navigation screenshot](screenshots/sprint4a/navigation-plan-mobile.png) checked | Earlier localized display-font fallback still applies |
+
+The frontend host must provide index.html fallback for direct application URLs;
+Vite dev/preview fallback was tested. Actual deployment remains outside Sprint 4A.

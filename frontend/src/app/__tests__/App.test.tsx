@@ -58,12 +58,100 @@ afterEach(() => {
 });
 function click(label: string, at: number) {
   time = at;
-  const button = [...container.querySelectorAll("button")].find(
-    (button) => button.textContent === label,
-  );
+  const button = [
+    ...container.querySelectorAll<HTMLButtonElement | HTMLAnchorElement>(
+      "button, a",
+    ),
+  ].find((button) => button.textContent === label);
   if (!button) throw new Error(`Missing button: ${label}`);
   act(() => button.click());
 }
+async function traverseHistory(direction: "back" | "forward") {
+  await act(async () => {
+    const navigated = new Promise<void>((resolve) => {
+      window.addEventListener("popstate", () => resolve(), { once: true });
+    });
+    window.history[direction]();
+    await navigated;
+  });
+}
+it("updates URLs and restores planning screens with browser Back and Forward", async () => {
+  window.history.replaceState({}, "", "/?juryDemo=1");
+  act(() => root.render(<App backend={backend} />));
+  expect(window.location.pathname).toBe("/context");
+  click("Your plan", 1);
+  expect(window.location.pathname).toBe("/plan");
+  click("Progress", 2);
+  expect(window.location.pathname).toBe("/progress");
+  await traverseHistory("back");
+  expect(window.location.pathname).toBe("/plan");
+  expect(container.querySelector("header code")?.textContent).toBe("PLAN");
+  await traverseHistory("forward");
+  expect(window.location.pathname).toBe("/progress");
+  expect(container.querySelector("header code")?.textContent).toBe("PROGRESS");
+  expect(window.location.search).toBe("?juryDemo=1");
+});
+it("routes document review steps and restores them through browser history", async () => {
+  window.history.replaceState({}, "", "/context/documents");
+  act(() => root.render(<App backend={backend} />));
+  expect(container.textContent).toContain("Bring your context");
+  click("Продолжить без документа →", 1);
+  expect(window.location.pathname).toBe("/context/review");
+  expect(container.textContent).toContain("Is this a fair starting point?");
+  await traverseHistory("back");
+  expect(window.location.pathname).toBe("/context/documents");
+  expect(container.textContent).toContain("Bring your context");
+  await traverseHistory("forward");
+  expect(container.textContent).toContain("Is this a fair starting point?");
+});
+it.each([
+  "/workout",
+  "/camera/countdown",
+  "/camera/setup",
+  "/results",
+  "/unknown",
+])(
+  "normalizes an unsafe or unknown direct link %s without requesting a camera",
+  (path) => {
+    window.history.replaceState({}, "", path);
+    const getUserMedia = vi.fn();
+    Object.defineProperty(navigator, "mediaDevices", {
+      value: { getUserMedia },
+      configurable: true,
+    });
+    act(() => root.render(<App backend={backend} />));
+    expect(window.location.pathname).toBe(
+      path === "/results"
+        ? "/progress"
+        : path === "/unknown"
+          ? "/context"
+          : "/plan",
+    );
+    expect(getUserMedia).not.toHaveBeenCalled();
+  },
+);
+it("restarts calibration on Forward to an abandoned workout and never restores repetitions", async () => {
+  act(() => root.render(<App backend={backend} />));
+  click("Camera ready", 0);
+  click("Продолжить без проверки жестов", 500);
+  click("Bodyweight SquatДемонстрационный подход · 5 повторений", 1000);
+  click("Подтвердить выбор", 1500);
+  expect(window.location.pathname).toBe("/camera/setup");
+  click("Stable calibration / countdown", 7000);
+  expect(window.location.pathname).toBe("/camera/countdown");
+  click("Stable calibration / countdown", 14000);
+  expect(window.location.pathname).toBe("/workout");
+  click("Correct rep", 22000);
+  expect(container.textContent).toContain("1 / 5");
+  await traverseHistory("back");
+  expect(window.location.pathname).toBe("/menu");
+  await traverseHistory("forward");
+  expect(window.location.pathname).toBe("/camera/setup");
+  expect(container.querySelector("header code")?.textContent).toBe(
+    "CALIBRATION",
+  );
+  expect(container.textContent).not.toContain("1 / 5");
+});
 it("drives the rendered application through the shared fake semantic pipeline", () => {
   act(() => root.render(<App backend={backend} />));
   expect(container.querySelector("header code")?.textContent).toBe(
@@ -121,7 +209,7 @@ it("hides fake controls by default and does not request camera before the start 
   expect(container.textContent).toContain("Tell us about you");
   expect(getUserMedia).not.toHaveBeenCalled();
 });
-it("renders a five-cycle pose workout, pause recovery, specific corrections and results", () => {
+it("renders a five-cycle pose workout, pause recovery, specific corrections and results", async () => {
   act(() => root.render(<App backend={backend} />));
   click("Camera ready", 0);
   click("Продолжить без проверки жестов", 500);
@@ -155,6 +243,14 @@ it("renders a five-cycle pose workout, pause recovery, specific corrections and 
   expect(container.textContent).toContain("Подход завершён");
   expect(container.textContent).toContain("40%");
   expect(container.textContent).toContain("Среднее время повторения");
+  expect(window.location.pathname).toBe("/results");
+  const queued = backend.queue.entries().length;
+  click("Progress", 75000);
+  expect(window.location.pathname).toBe("/progress");
+  await traverseHistory("back");
+  expect(window.location.pathname).toBe("/results");
+  expect(container.textContent).toContain("40%");
+  expect(backend.queue.entries()).toHaveLength(queued);
   click("Повторить подход", 78000);
   expect(container.querySelector("header code")?.textContent).toBe(
     "CALIBRATION",

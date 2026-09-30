@@ -45,3 +45,21 @@ The source file includes later RV voice/routine screens. Only the reusable routi
 No existing tablet camera frame was found: `3:161` is **tablet-plan**, 834×1112. Camera responsiveness at that size reuses desktop/mobile shell rules and is documented as an inferred counterpart, not a verified tablet Figma frame. Desktop frames are 1440×960; mobile frames 390×844. These dimensions justify the responsive targets.
 
 Figma's snapshot persona copy uses Maya 12 minutes/chair, Arman 20 minutes/bodyweight and Dana 8 minutes/mobility. The explicit Sprint 4A patch overrides the dynamic stories to 15 minutes/no equipment, 30 minutes/dumbbells and 10 minutes/standing. The existing layout, type and token system remain the reference. No unchecked node IDs or invented frame names are presented as Figma evidence.
+
+## Sprint 4A URL navigation follow-up
+
+Existing frame/component mappings above now have concrete browser paths; reusable
+loading/error/dialog variants keep their parent path. No extra visual screen was
+created for routing.
+
+| Figma frame/node | Screen/state | Route/AppMode | Code component | Data source | Desktop/mobile |
+|---|---|---|---|---|---|
+| 3:113 / 3:114 | Context intake/goals | `/context` / PROFILE | ContextFlow | Existing profile + AI context | Desktop / stacking mobile |
+| 3:115 / 3:116 | Documents / extraction | `/context/documents` / PROFILE | ContextFlow | Owned documents | Desktop / mobile sources |
+| 3:117 | Fact review | `/context/review` / PROFILE | ContextFlow | Confirmed/pending/rejected facts | Desktop / stacked mobile |
+| 3:120–3:125 | Plans / why / details / swap unavailable | `/plan` / PLAN | PlanExperience | Active plan | Desktop / 3:155 mobile |
+| 3:126 / 3:127 / 3:131 | Setup / denied / calibration | `/camera/setup` / CALIBRATION | CameraExperience + CameraCoachShell | Selected spec + local camera | Desktop / 3:156 mobile |
+| 3:133 | Countdown | `/camera/countdown` / COUNTDOWN | CameraCoachShell | Local readiness | Desktop / mobile shell |
+| 3:134–3:140 | Coaching / correction / recovery / pause / manual | `/workout`, `/workout/paused` | CameraCoachShell | Local pose engine / manual timer | Desktop / 3:157–3:158 mobile |
+| 3:141 | Results | `/results` / RESULTS | ResultsPage | Current aggregate | Desktop / 3:159 mobile |
+| 3:143 | Progress | `/progress` / PROGRESS | ProgressPage | Existing durable history | Desktop / responsive |

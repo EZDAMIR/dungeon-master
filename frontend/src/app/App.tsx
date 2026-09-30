@@ -1,4 +1,6 @@
 import { MovementPreview } from "../features/personalization/components";
+import { initialRouteState, routeUrl } from "./router/routes";
+import { useBrowserRoutes } from "./router/useBrowserRoutes";
 import { localized } from "../vision/exercises/generic/types";
 import type { ActiveExercise } from "../api/aiCoach";
 import type { GenericView } from "../vision/exercises/generic/types";
@@ -22,7 +24,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { appReducer, INITIAL_STATE, type AppAction } from "./modes";
+import { appReducer, type AppAction } from "./modes";
 import { mapVisionEvent } from "./visionEventMapper";
 import { FakeSource } from "./FakeSource";
 import { TutorialPage } from "../pages/TutorialPage";
@@ -178,17 +180,14 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     new URLSearchParams(window.location.search).get("juryDemo") === "1";
   const legacyFake =
     fakeVisionEnabled(import.meta.env.DEV, window.location.search) && !jury;
-  const [state, dispatch] = useReducer(appReducer, {
-    ...INITIAL_STATE,
-    mode: legacyFake ? "CAMERA_PERMISSION" : "PROFILE",
-  });
-  useLayoutEffect(() => {
-    document.scrollingElement?.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant",
-    });
-  }, [state.mode]);
+  const [state, dispatch] = useReducer(appReducer, legacyFake, (legacy) =>
+    initialRouteState(
+      window.location.pathname,
+      import.meta.env.BASE_URL,
+      legacy,
+    ),
+  );
+  const [cameraEpoch, setCameraEpoch] = useState(0);
   const source = useRef<WorkoutRuntime | null>(null);
   const captureSource = useCallback((runtime: WorkoutRuntime | null) => {
     source.current = runtime;
@@ -213,8 +212,30 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
         before.selectedWorkoutId === "planned-squat" &&
         !backend.getSnapshot().plan
       )
-        return;
+        return before;
+      if (
+        action.type === "NAVIGATE" &&
+        poseStage(action.mode) &&
+        before.selectedWorkoutId === "personalized" &&
+        (!activeRef.current?.spec ||
+          activeRef.current.planId !== backend.getSnapshot().plan?.id)
+      )
+        action = { type: "NAVIGATE", mode: "PLAN" };
       const next = appReducer(before, action);
+      if (action.type === "NAVIGATE") {
+        if (poseStage(next.mode)) {
+          source.current?.dispose();
+          source.current = null;
+          setCameraEpoch((value) => value + 1);
+        } else if (
+          ["PROFILE", "PLAN", "PROGRESS", "RESULTS"].includes(next.mode)
+        ) {
+          source.current?.dispose();
+          source.current = null;
+        }
+        session.current = null;
+        setGenericView(null);
+      }
       current.current = next;
       dispatch(action);
       if (
@@ -250,9 +271,18 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
         next.mode === "TUTORIAL"
       )
         session.current = null;
+      return next;
     },
     [backend],
   );
+  const { contextStep, setContextStep } = useBrowserRoutes(state, send);
+  useLayoutEffect(() => {
+    document.scrollingElement?.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+  }, [state.mode, contextStep]);
   useEffect(() => {
     if (state.mode === "RESULTS" && pendingResult.current) {
       const result = pendingResult.current;
@@ -318,6 +348,11 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
     state.mode,
   );
   const inWorkout = !!poseStage(state.mode);
+  const planningLinks = [
+    { mode: "PLAN", action: "OPEN_PLAN", label: "Your plan" },
+    { mode: "PROGRESS", action: "OPEN_PROGRESS", label: "Progress" },
+    { mode: "PROFILE", action: "OPEN_PROFILE", label: "Your context" },
+  ] as const;
   return (
     <GestureNavigationProvider state={state} onEvent={onEvent}>
       <div className={`app-shell ${inWorkout ? "workout-shell" : ""}`}>
@@ -328,15 +363,34 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           </strong>
           {planning && (
             <nav className="planning-nav">
-              <button onClick={() => send({ type: "OPEN_PLAN" })}>
-                Your plan
-              </button>
-              <button onClick={() => send({ type: "OPEN_PROGRESS" })}>
-                Progress
-              </button>
-              <button onClick={() => send({ type: "OPEN_PROFILE" })}>
-                Your context
-              </button>
+              {planningLinks.map((link) => (
+                <a
+                  key={link.mode}
+                  href={routeUrl(
+                    link.mode,
+                    "intake",
+                    import.meta.env.BASE_URL,
+                    window.location.search,
+                  )}
+                  aria-current={state.mode === link.mode ? "page" : undefined}
+                  onClick={(event) => {
+                    if (
+                      event.button !== 0 ||
+                      event.ctrlKey ||
+                      event.metaKey ||
+                      event.shiftKey ||
+                      event.altKey
+                    )
+                      return;
+                    event.preventDefault();
+                    if (state.mode === "PROFILE" && link.mode === "PROFILE")
+                      setContextStep("intake");
+                    send({ type: link.action });
+                  }}
+                >
+                  {link.label}
+                </a>
+              ))}
             </nav>
           )}
           {import.meta.env.DEV && <code>{state.mode}</code>}
@@ -346,6 +400,7 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
           {(!planning || legacyFake) && !(active && !active.spec) && (
             <div className="camera-column">
               <CameraExperience
+                key={cameraEpoch}
                 fake={fake}
                 audio={audio}
                 state={state}
@@ -397,6 +452,8 @@ export function App({ backend = backendStore }: { backend?: BackendStore }) {
                 backend={backend}
                 remote={remote}
                 jury={jury}
+                step={contextStep}
+                onStepChange={setContextStep}
                 onPlan={() => send({ type: "OPEN_PLAN" })}
                 onBack={() => send({ type: "BACK" })}
               />

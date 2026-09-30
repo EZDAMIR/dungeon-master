@@ -518,3 +518,17 @@ a running daemon; hosted verification is triggered by the authorized push.
 ## 2026-09-30 — Sprint 4A personalization and universal camera coaching
 
 Started from `40c72ab` on `sprint/core-backend-domains`, isolated work on `sprint/ai-personalized-coach`. Added owned context/documents/fact confirmation/RAG/AI profile/plan/spec tables and forward migration, official structured SDK adapter with mocked tests, explicit fallbacks and synthetic Maya/Arman/Dana. Reused the browser pose/camera/sync architecture and existing Figma tokens/components; added a generic interpreter and source-linked context-to-progress flow. Production screenshots and development-only landmark replay exposed and fixed strict context payload, denied-camera recovery, smoothing return hold, contrast and scroll issues. Verification and remaining visual/hardware limits are recorded in [Sprint 4A report](SPRINT_4A_REPORT.md).
+
+## 2026-09-30 — Sprint 4A URL navigation follow-up
+
+Added History API paths around the existing AppMode flow, including context
+intake/documents/review. Browser Back/Forward and native planning links preserve
+query flags and Vite base. Direct workout/results links normalize safely; history
+never restores calibration or duplicate sync. Automatic camera transitions use
+replacement entries, with explicit fresh calibration after abandoned sessions.
+Focused route/render tests and full frontend verification accompany the change.
+
+Routing follow-up verification: 144 frontend tests passed; 87.44% statement/line
+coverage; lint/type-check/instruction checker passed. Production Chrome verified
+root and prefixed deep links, query flags and guarded browser history without
+page errors. Existing result traversal does not enqueue duplicate sync.
