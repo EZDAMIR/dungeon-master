@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:cloud": "npm run prepare:vision && vite --mode cloud",
+    "build:cloud": "npm run prepare:vision && tsc -b && vite build --mode cloud",
+    "preview:cloud": "vite preview --mode cloud",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "type-check": "tsc -b --pretty false",

@@ -1,4 +1,44 @@
-# Dungeon Master continuous deployment
+# Dungeon Master API-only deployment
+
+The owner changed hosting to a local app with a remote API on 2026-09-30.
+The current release workflow deploys **only the backend**. Run the frontend with
+`cd frontend && npm ci && npm run dev:cloud` and open http://localhost:5173.
+Camera, vision models, WASM and UI stay on that computer. Vite proxies `/api/v1`
+to https://dungeon-master.helpmake-id.live. It also supports a local production
+preview; see [frontend setup](../frontend/README.md).
+
+The existing guest/profile/catalog/plan/session APIs remain because the local app
+uses them. OpenAI personalization and reusable ElevenLabs voice generation are
+server capabilities; this is not a public arbitrary-text provider proxy.
+Provider credentials remain in `/etc/dungeon-master/runtime.env` (mode 600),
+outside the webroot. Set `ELEVENLABS_ENABLED=true`, `ELEVENLABS_API_KEY`, and an
+account-accessible `ELEVENLABS_VOICE_ID`; the default is the documented George ID.
+`ELEVENLABS_MODEL` defaults to `eleven_multilingual_v2`. OpenAI settings are unchanged.
+
+CI still checks the local frontend, including production assets, alongside backend
+and isolated Docker checks. Main-only exact-SHA/digest trust, backup/restore checks,
+migrations, deployment locking and pending-release recovery remain. The release
+artifact contains backend metadata/configuration and no frontend files. Current CD
+uses API readiness/auth/error checks and confirms that public app routes return 404;
+there is no public browser application to test. Historical web bundles remain
+supported by the server script for recovery; deploying them requires a matching
+web-host Nginx configuration.
+
+The API-only Nginx template proxies `/api/`, serves only `release.txt` from
+`/srv/dungeon-master/api/current`, and returns 404 for everything else. On the
+existing host, back up its own site, render the template with its domain, run
+`sudo nginx -t` and gracefully reload. Do not rerun first-host setup or alter other
+projects. Previous frontend releases remain on disk but are no longer served.
+API metadata publication switches `api/current` atomically and rolls it back on
+failed public checks; the old frontend pointer is untouched. `deployed.json`
+records `mode: api`, `frontend: null` and `api_release`. Forward backend/schema
+rollback still requires compatibility inspection.
+
+The remaining sections document the original full-web deployment and its recovery
+mechanisms. Their frontend publication/browser checks apply only to old web
+bundles, not the current API-only workflow.
+
+## Previous full-web deployment
 
 The [pipeline](../.github/workflows/ci.yml) uses plain job names:
 **CI (Back)** and **CI (Front)** run backend/frontend checks and unit tests.

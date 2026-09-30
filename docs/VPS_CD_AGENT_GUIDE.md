@@ -1,3 +1,8 @@
+> **Owner change, 2026-09-30:** Current deployments are API-only. The app and vision
+> run on localhost; read the current [deployment operations](../deploy/README.md)
+> and [local app instructions](../frontend/README.md). The full-web examples below
+> describe previous hosting. Do not republish the frontend in new releases.
+
 # Sprint 4A — инструкция агентам по VPS и CD
 
 Реализация CD и актуальные команды: [deployment operations](../deploy/README.md).

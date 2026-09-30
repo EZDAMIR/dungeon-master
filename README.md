@@ -64,14 +64,16 @@ Use Node.js 22.12+ and a webcam on localhost or HTTPS:
 ```bash
 cd frontend
 npm ci
-cp .env.example .env
-npm run dev
+npm run dev:cloud
 ```
 
-`VITE_API_BASE_URL` defaults to `http://localhost:8000/api/v1`. The first dev/build
+`dev:cloud` opens http://localhost:5173 and proxies `/api/v1` to the VPS. The app,
+vision models and camera inference run locally; OpenAI and ElevenLabs run behind
+the authenticated backend API. No local backend is required. The first dev/build
 prepares pinned official models and installed MediaPipe WASM automatically; the
-build host needs Internet access on the first preparation. Visitors receive
-these assets from the deployed frontend.
+build host needs Internet access on the first preparation. The browser receives
+these assets from your local frontend server. See [local app setup](frontend/README.md)
+for the production preview and optional local backend workflow.
 
 Click «Включить камеру», then use pointer/pinch, Fist for Back and Thumb Up to
 confirm. Profile setup needs no typing. Menu distinguishes the saved plan from

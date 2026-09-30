@@ -140,14 +140,7 @@ jobs:
         with:
           ref: ${{ needs.verify.outputs.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - name: Install frontend dependencies
-        run: npm --prefix frontend ci
-      - name: Build matching backend and frontend release
+      - name: Build API-only release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ needs.verify.outputs.sha }}
@@ -187,14 +180,5 @@ jobs:
         with:
           name: vps-release
           path: build
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '24'
-      - name: Install isolated browser smoke tools
-        run: |
-          npm install --prefix "$RUNNER_TEMP/dungeon-browser" --no-save --ignore-scripts playwright@1.58.2
-          "$RUNNER_TEMP/dungeon-browser/node_modules/.bin/playwright" install --with-deps chromium
       - name: Deploy, verify and record release
-        env:
-          NODE_PATH: ${{ runner.temp }}/dungeon-browser/node_modules
         run: make deploy

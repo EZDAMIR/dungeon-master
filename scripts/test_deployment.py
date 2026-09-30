@@ -42,6 +42,7 @@ class PublicReleaseTests(unittest.TestCase):
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_bytes(data)
         self.fault = ""
+        self.api_only = False
         fixture = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -60,6 +61,8 @@ class PublicReleaseTests(unittest.TestCase):
                     kind, data = "application/json", b'{"detail":"fixture"}'
                     if fixture.fault == "api-html":
                         kind, data = "text/html", files["index.html"]
+                elif fixture.api_only and self.path != "/release.txt":
+                    status = 404
                 elif self.path[1:] in files:
                     data = files[self.path[1:]]
                     if self.path.endswith(".wasm"):
@@ -106,6 +109,13 @@ class PublicReleaseTests(unittest.TestCase):
                 self.fault = fault
                 with self.assertRaises(ValueError):
                     check_release.check(self.origin, self.frontend, SHA)
+
+    def test_api_only_checks_require_no_public_frontend(self):
+        self.api_only = True
+        check_release.check(self.origin, self.frontend, SHA, api_only=True)
+        self.api_only = False
+        with self.assertRaises(ValueError):
+            check_release.check(self.origin, self.frontend, SHA, api_only=True)
 
     def test_wrong_deployed_sha_fails(self):
         with self.assertRaisesRegex(ValueError, "SHA"):
@@ -352,6 +362,33 @@ class ServerDeploymentTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("unfinished release", result.stderr)
         self.assertTrue((self.root / "pending").exists())
+
+    def test_api_release_publishes_only_metadata_and_preserves_old_frontend(self):
+        (self.bundle / "deployment-mode.txt").write_text("api\n")
+        shutil.rmtree(self.bundle / "frontend")
+        result = self.run_deploy()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.root / "frontend/current").resolve(), self.old)
+        self.assertEqual((self.root / "api/current/release.txt").read_text().strip(), SHA)
+        self.assertFalse((self.root / "api/current/index.html").exists())
+        self.assertEqual(self.run_deploy("complete").returncode, 0)
+        state = json.loads((self.root / "deployed.json").read_text())
+        self.assertEqual(state["mode"], "api")
+        self.assertIsNone(state["frontend"])
+        self.assertEqual(state["sha"], SHA)
+        checks = [command for command in self.commands() if "check-release.py" in command[1]]
+        self.assertTrue(all(command[-1] == "--api-only" for command in checks))
+
+    def test_failed_api_release_preserves_previous_api_and_frontend(self):
+        (self.bundle / "deployment-mode.txt").write_text("api\n")
+        old_api = self.root / "api/releases/old"
+        old_api.mkdir(parents=True)
+        (self.root / "api/current").symlink_to(old_api)
+        result = self.run_deploy(failure="smoke")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual((self.root / "api/current").resolve(), old_api)
+        self.assertEqual((self.root / "frontend/current").resolve(), self.old)
+        self.assertFalse((self.root / "pending").exists())
 
     def test_no_destructive_or_cross_project_docker_commands(self):
         self.assertEqual(self.run_deploy().returncode, 0)

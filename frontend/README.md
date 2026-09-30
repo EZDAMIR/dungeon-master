@@ -11,13 +11,32 @@ The stable legacy exercise profile is `bodyweight_squat_side_v1`; Sprint 4A addi
 - Node.js 22.12 or newer (verified here with 26.0.0), npm.
 - A webcam and current Chrome or Edge with WebAssembly/WebGL support.
 - `localhost` or HTTPS; plain HTTP on a LAN address cannot access the camera.
-- Internet access on the developer/build host for npm and the first official model download. The deployed build serves all model/WASM assets itself.
+- Internet access on the developer/build host for npm and the first official model download. The local app serves all model/WASM assets from your own computer.
 
 ```bash
 cd frontend
 npm ci
-npm run dev
+npm run dev:cloud
 ```
+
+Open **http://localhost:5173**. `dev:cloud` uses the committed public `.env.cloud`
+configuration: `/api/v1` goes through Vite's localhost proxy to
+`https://dungeon-master.helpmake-id.live`. Models, WASM, fonts, UI, camera frames,
+landmarks and counting stay local; OpenAI and ElevenLabs credentials stay on the VPS.
+No local backend or database is required. The server binds loopback and refuses
+an occupied port rather than silently changing the browser origin.
+
+For a local production build: `npm run build:cloud`, then `npm run preview:cloud`
+and open **http://localhost:4173**. Preview uses the same API proxy. For full local
+backend development use `npm run dev` and `.env.example` as before.
+`localhost` means the device running the app; opening a laptop's plain HTTP LAN
+address on a phone does not grant camera access.
+
+Voice starts muted. Enabling it prepares eight reusable Russian ElevenLabs cues
+in the background, with authenticated API requests and a process-local server
+cache. Playback makes no network requests. Unavailable or failed clips use browser
+speech/tones; generated personalized messages continue to use browser speech.
+The voice API also supports English cues. No microphone permission is requested.
 
 The normal entry opens context without requesting a camera. Use `?juryDemo=1` for Maya/Arman/Dana, review sources, generate a plan and open exercise details. In camera setup, click **Включить камеру** and grant the browser's camera permission. This is the initial conventional action. Complete the tutorial with your hand, select a workout by pinch, then hold Thumb Up. Camera access is not requested on page load. Normal semantic buttons remain available as an accessibility fallback, with tutorial skip and navigation controls under **Доступное управление**.
 

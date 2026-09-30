@@ -22,7 +22,7 @@ def fetch(origin, path, expected_status=200):
         return response.headers, response.read()
 
 
-def check(origin, frontend, sha):
+def check(origin, frontend, sha, api_only=False):
     headers, data = fetch(origin, "/api/v1/ready")
     if json.loads(data) != {"status": "ok", "database": "reachable"}:
         raise ValueError("Database readiness failed")
@@ -33,7 +33,12 @@ def check(origin, frontend, sha):
             raise ValueError(f"API returned SPA HTML for {path}")
         json.loads(data)
     if fetch(origin, "/release.txt")[1].decode().strip() != sha:
-        raise ValueError("Wrong deployed frontend SHA")
+        raise ValueError("Wrong deployed release SHA")
+    if api_only:
+        for path in ["/", "/context", "/plan", "/assets/missing.js", "/models/missing.task"]:
+            fetch(origin, path, 404)
+        print("HTTPS, release SHA, API readiness/auth/errors and API-only hosting passed.")
+        return
     index = (frontend / "index.html").read_bytes()
     for route in [
         "/",
@@ -66,4 +71,9 @@ def check(origin, frontend, sha):
 
 
 if __name__ == "__main__":
-    check(sys.argv[1].rstrip("/"), Path(sys.argv[2]), sys.argv[3])
+    check(
+        sys.argv[1].rstrip("/"),
+        Path(sys.argv[2]),
+        sys.argv[3],
+        api_only="--api-only" in sys.argv[4:],
+    )

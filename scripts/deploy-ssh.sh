@@ -40,11 +40,15 @@ abort_release() {
 trap 'result=$?; if [[ $result != 0 ]]; then abort_release; fi; cleanup; exit "$result"' EXIT
 printf '%s\n' "$GH_TOKEN" | ssh "${ssh_options[@]}" "$server" \
     "bash '$remote/deploy/deploy.sh' prepare '$remote' '$root' '$DEPLOY_ORIGIN' '$GITHUB_ACTOR'"
-node scripts/check_deployed_browser.cjs "$DEPLOY_ORIGIN"
+# API releases have no public browser application to smoke-test.
+mode=$(tar -xOf build/release.tar.gz ./deployment-mode.txt 2>/dev/null || printf 'web')
+if [[ "$mode" != api ]]; then
+    node scripts/check_deployed_browser.cjs "$DEPLOY_ORIGIN"
+fi
 ssh "${ssh_options[@]}" "$server" \
     "bash '$remote/deploy/deploy.sh' complete '$remote' '$root' '$DEPLOY_ORIGIN'"
 printf 'Deployed %s to %s\n' "$RELEASE_SHA" "$DEPLOY_ORIGIN"
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-    printf 'Deployed `%s` to %s. HTTPS, API, assets and browser smoke passed.\n' \
-        "$RELEASE_SHA" "$DEPLOY_ORIGIN" >> "$GITHUB_STEP_SUMMARY"
+    printf 'Deployed `%s` to %s (%s). Release checks passed.\n' \
+        "$RELEASE_SHA" "$DEPLOY_ORIGIN" "$mode" >> "$GITHUB_STEP_SUMMARY"
 fi

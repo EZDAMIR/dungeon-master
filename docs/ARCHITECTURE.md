@@ -205,14 +205,19 @@ The implemented [deployment workflow and operations](../deploy/README.md) use
 same-origin HTTPS/Nginx, an isolated production Compose project and SHA/digest
 release verification. Backend binds localhost port 8020 on the shared VPS.
 
-Recommended deployment split:
+Current owner-selected deployment split (2026-09-30):
 
-- Static frontend on a platform that serves HTTPS.
-- FastAPI container with PostgreSQL.
-- CORS restricted to the deployed frontend origin.
+- React/Vite app and model assets on localhost, including a local production preview.
+- Local `/api/v1` proxy to the owner's HTTPS VPS; camera frames never enter it.
+- FastAPI/PostgreSQL on the VPS for authenticated durable data and OpenAI/ElevenLabs.
 - Provider keys only in backend environment variables.
-- Local model assets shipped with the frontend build.
-- Health and readiness endpoints monitored independently.
+- Eight fixed reusable voice cues per supported language, cached per server process;
+  generation is outside the frame loop and browser speech remains the fallback.
+- Public VPS app/model routes return 404; only the API and release marker are served.
+
+The previous no-install public demo acceptance is superseded by the owner's local
+app instruction. This does not improve unsupported device inference performance;
+each local browser still performs its own vision work.
 
 ## 10. Architecture decisions
 

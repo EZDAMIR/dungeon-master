@@ -7,9 +7,7 @@ set -euo pipefail
 : "${GH_TOKEN:?Set a packages-write token}"
 [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ && "$(git rev-parse HEAD)" == "$RELEASE_SHA" ]]
 
-# CI also builds a prefixed preview; the VPS always serves from the domain root.
-VITE_API_BASE_URL=/api/v1 npm --prefix frontend run build -- --base=/
-python3 scripts/check_frontend_build.py --base=/
+# The frontend and vision assets run locally; only the API goes to the VPS.
 image="ghcr.io/${GITHUB_REPOSITORY,,}-backend"
 printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
 trap 'docker logout ghcr.io >/dev/null' EXIT
@@ -25,9 +23,8 @@ digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$image:$RELEA
 mkdir -p build
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"; docker logout ghcr.io >/dev/null' EXIT
-cp -R frontend/dist "$stage/frontend"
 cp -R deploy "$stage/deploy"
 printf '%s\n' "$RELEASE_SHA" > "$stage/release.txt"
-printf '%s\n' "$RELEASE_SHA" > "$stage/frontend/release.txt"
+printf 'api\n' > "$stage/deployment-mode.txt"
 printf '%s\n' "$digest" > "$stage/backend-image.txt"
 tar -czf build/release.tar.gz -C "$stage" .

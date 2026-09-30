@@ -10,6 +10,11 @@ runtime=${RUNTIME_ENV_FILE:-/etc/dungeon-master/runtime.env}
 sha=$(cat "$bundle/release.txt")
 image=$(cat "$bundle/backend-image.txt")
 release_id=$(basename "$bundle")
+mode=web
+if [[ -f "$bundle/deployment-mode.txt" ]]; then
+    mode=$(cat "$bundle/deployment-mode.txt")
+fi
+[[ "$mode" == web || "$mode" == api ]] || exit 1
 [[ "$sha" =~ ^[0-9a-f]{40}$ && "$release_id" =~ ^[a-z0-9-]+$ ]] || exit 1
 [[ "$image" =~ ^ghcr.io/[a-z0-9/_.-]+@sha256:[0-9a-f]{64}$ ]] || exit 1
 [[ "$origin" =~ ^https://[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]] || exit 1
@@ -21,13 +26,25 @@ exec 9> "$root/deploy.lock"
 flock -w 600 9
 metadata="$root/backend/releases/$release_id"
 frontend="$root/frontend/releases/$release_id"
+current="$root/frontend/current"
+if [[ "$mode" == api ]]; then
+    mkdir -p "$root/api/releases"
+    frontend="$root/api/releases/$release_id"
+    current="$root/api/current"
+fi
 export BACKEND_IMAGE="$image" RUNTIME_ENV_FILE="$runtime"
 compose=(docker compose --project-name dungeon-master --env-file "$runtime"
     --file "$bundle/deploy/docker-compose.vps.yml")
 
 switch_frontend() {
-    ln -s "$1" "$root/frontend/current.next"
-    mv -Tf "$root/frontend/current.next" "$root/frontend/current"
+    ln -s "$1" "$current.next"
+    mv -Tf "$current.next" "$current"
+}
+
+check_release() {
+    arguments=("$origin" "$frontend" "$sha")
+    if [[ "$mode" == api ]]; then arguments+=(--api-only); fi
+    python3 "$bundle/deploy/check-release.py" "${arguments[@]}"
 }
 
 abort_release() {
@@ -36,7 +53,7 @@ abort_release() {
         if [[ -n "$previous" ]]; then
             switch_frontend "$previous"
         else
-            rm -f "$root/frontend/current"
+            rm -f "$current"
         fi
         rm "$root/pending"
         printf 'Release failed; previous frontend restored. Backend/schema require inspection.\n' >&2
@@ -50,14 +67,18 @@ case "$action" in
         ;;
     complete)
         [[ -L "$root/pending" && "$(readlink "$root/pending")" == "$metadata" ]] || exit 1
-        python3 "$bundle/deploy/check-release.py" "$origin" "$frontend" "$sha"
+        check_release
         if [[ -f "$root/deployed.json" ]]; then
             cp "$root/deployed.json" "$root/previous.json"
         fi
-        python3 - "$sha" "$image" "$frontend" "$metadata" > "$root/deployed.json.next" <<'PY'
+        python3 - "$sha" "$image" "$frontend" "$metadata" "$mode" > "$root/deployed.json.next" <<'PY'
 import json
 import sys
-print(json.dumps(dict(zip(('sha', 'image', 'frontend', 'metadata'), sys.argv[1:]))))
+state = dict(zip(('sha', 'image', 'frontend', 'metadata', 'mode'), sys.argv[1:]))
+if state['mode'] == 'api':
+    state['api_release'] = state['frontend']
+    state['frontend'] = None
+print(json.dumps(state))
 PY
         cp "$bundle/deploy/docker-compose.vps.yml" "$root/backend/compose.yml"
         cp "$bundle/deploy/Makefile" "$root/backend/Makefile"
@@ -85,7 +106,7 @@ available=$(df -Pm "$root" | awk 'NR == 2 {print $4}')
 mkdir "$metadata"
 cp "$bundle/deploy/docker-compose.vps.yml" "$metadata/compose.yml"
 cp "$bundle/backend-image.txt" "$bundle/release.txt" "$metadata/"
-readlink "$root/frontend/current" > "$metadata/previous-frontend.txt" || true
+readlink "$current" > "$metadata/previous-frontend.txt" || true
 if [[ -f "$root/deployed.json" ]]; then
     cp "$root/deployed.json" "$metadata/previous.json"
 fi
@@ -125,9 +146,14 @@ umask 022
 "${compose[@]}" run --rm --no-deps backend python -m alembic check
 "${compose[@]}" up -d --wait --wait-timeout 180 backend
 curl --fail --silent --show-error http://127.0.0.1:8020/api/v1/ready > /dev/null
-cp -R "$bundle/frontend" "$frontend"
-chmod -R a+rX "$frontend"
-cp -R "$frontend/assets/." "$root/frontend/assets/"
+if [[ "$mode" == api ]]; then
+    mkdir "$frontend"
+    cp "$bundle/release.txt" "$frontend/release.txt"
+else
+    cp -R "$bundle/frontend" "$frontend"
+    chmod -R a+rX "$frontend"
+    cp -R "$frontend/assets/." "$root/frontend/assets/"
+fi
 switch_frontend "$frontend"
-python3 "$bundle/deploy/check-release.py" "$origin" "$frontend" "$sha"
-printf 'Candidate %s ready for browser smoke.\n' "$sha"
+check_release
+printf 'Candidate %s (%s) passed public release checks.\n' "$sha" "$mode"
